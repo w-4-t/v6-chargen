@@ -1,0 +1,12 @@
+{
+  "name":"VTM V6 Alpha Character Generator",
+  "short_name":"V6 Chargen",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#0d0e11",
+  "theme_color":"#111216",
+  "icons":[
+    {"src":"./icon-192.png","sizes":"192x192","type":"image/png"},
+    {"src":"./icon-512.png","sizes":"512x512","type":"image/png"}
+  ]
+}
