@@ -1,4 +1,4 @@
-# VTM V6 Alpha Character Generator — v0.4.1
+# VTM V6 Alpha Character Generator — v0.5.0
 
 Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 
@@ -8,83 +8,67 @@ Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 - Character-creation rules follow the V6 Alpha Player Packet unless a project house rule is explicitly labelled.
 - No V5 / V5.5 hybrid rules are intentionally imported.
 
-## v0.4.1 changes
+## v0.5.0 changes
 
-- Added the project **Lifepath Skill Cap** house rule. A Skill has a base chargen cap of 3, plus +1 for every selected Lifepath whose Skill list contains that Skill. The bonus applies even when that Lifepath assigns no Skill dot to it. Example: two selected Lifepaths both list Awareness → Awareness chargen cap 5.
-- The dynamic Skill cap applies both while spending Lifepath Skill dots and while spending the later free Skill dots.
-- If a Lifepath change lowers a Skill cap below the current rating, the generator removes excess free Skill dots first, then excess Lifepath dots, so an illegal hidden state is not retained. The affected Lifepath budget may then need to be reassigned.
-- Focus acquisition remains tied to the Alpha thresholds at Skill ratings 1, 3, and 5. A house-rule Skill rating of 6 or 7 does not invent new Focus thresholds.
-- Attribute selection now uses explicit numeric rating buttons instead of dot targets. The visual sheet can still render dots; chargen input prioritizes clarity.
-- Attribute choices that would exceed the current Physical/Social/Mental category budget are disabled immediately. Priority swaps are also disabled when the existing ratings would not fit the resulting budgets.
-- Attribute contextual help now displays the current rating, category budget, and the tier-specific character-creation cap.
-- Attribute help explicitly marks ratings 6–8 as an Alpha source gap: the packet allows those ratings for Ancilla/Elder character creation but supplies qualitative rating descriptions only through 5.
-- Skill contextual help was audited. The Alpha provides a general description for every Skill plus example Focuses and Focus descriptions, but it does not provide a 1–5 rating-by-rating qualitative scale comparable to Attributes. The generator shows the available Skill and Focus guidance and states this limitation.
+### Focuses
 
-## Current character-creation budgets
+- Focus slots remain tied to Skill ratings 1, 3, and 5.
+- Every Focus is now selected by the player.
+- Parenthetical Focuses printed in selected Lifepaths are treated as **recommendations**, matching the project interpretation and Demiplane behavior. They never lock or auto-fill a Focus.
+- Lifepath recommendations appear separately from the Skill's RAW example Focuses.
+- Custom relevant Focus text remains allowed.
+- The Focus page still separates Skills listed by selected Lifepaths from other Skills.
+- Migration from older builds intentionally clears saved Focus selections once, because v0.4.x could have auto-filled Lifepath Focuses.
 
-- Neonate: Attributes 7/5/3, Discipline dots 3 + sire 1, 4 powers, 1 Merit, 2 Clan Traits, 8 free Skill dots, 3 free Resource dots, max dots 5, chargen Discipline max 5.
-- Ancilla: Attributes 8/6/4, Discipline dots 5 + sire 1, 6 powers, 2 Merits, 3 Clan Traits, 8 free Skill dots, 5 free Resource dots, max dots 6, chargen Discipline max 6.
-- Elder: Attributes 9/7/5, Discipline dots 7 + sire 1, 8 powers, 3 Merits, 4 Clan Traits, 8 free Skill dots, 7 free Resource dots, max dots 8, chargen Discipline max 8.
+### Clan variable Discipline
+
+- Variable Clan Discipline choices such as Lasombra `Corruption / Oblivion` are made only on the Clan page.
+- The Discipline page no longer repeats the choice. If an imported/incomplete character reaches the page without resolving it, the generator shows a warning and a button back to the Clan step.
+
+### Final review
+
+- Skills are presented as individual compact entries with a numeric rating and Focus tags.
+- Disciplines and Powers are grouped by Discipline. Each selected Power is shown on its own row with its rank.
+- Clan Traits and Merits are separated from the Power list.
+- Skills and Disciplines/Powers use full-width review cards on desktop to avoid compressed text and overflow.
 
 ## Project house rule: Lifepath Skill Cap
 
-RAW Alpha sets every Skill to a character-creation cap of 3. This generator intentionally overrides that single rule:
+RAW Alpha sets every Skill to a character-creation cap of 3. This generator intentionally uses:
 
 `chargen Skill cap = 3 + number of selected Lifepaths that list the Skill`
 
-Examples:
+The bonus applies even if no Lifepath dot was assigned to that Skill.
 
-- Skill appears in no selected Lifepath → cap 3.
-- Skill appears in one selected Lifepath → cap 4.
-- Skill appears in two selected Lifepaths → cap 5.
-- Ancilla/Elder characters can reach higher caps if three or four selected Lifepaths all list the same Skill.
+## Current character-creation budgets
 
-The cap bonus depends on the Lifepath Skill list, not on where its 5 Lifepath Skill dots were actually spent.
+- Neonate: Attributes 7/5/3 above the free 1-dot baseline; Discipline dots 3 + sire 1; 4 powers; 1 Merit; 2 Clan Traits; 8 free Skill dots; 3 free Resource dots; Max Dots 5; chargen Discipline max 5.
+- Ancilla: Attributes 8/6/4 above baseline; Discipline dots 5 + sire 1; 6 powers; 2 Merits; 3 Clan Traits; 8 free Skill dots; 5 free Resource dots; Max Dots 6; chargen Discipline max 6.
+- Elder: Attributes 9/7/5 above baseline; Discipline dots 7 + sire 1; 8 powers; 3 Merits; 4 Clan Traits; 8 free Skill dots; 7 free Resource dots; Max Dots 8; chargen Discipline max 8.
 
-## Attribute caps audit
+Every Attribute starts at rating 1 for free. The category budgets are distributed above that baseline. Therefore all tier Attribute caps are reachable when the category has enough budget: Neonate 5, Ancilla 6, Elder 8.
 
-The Player Packet's `Creatures of the Night` table gives these character-creation **Maximum Dots** values:
+## Retained behavior
 
-- Vampire (Neonate): 5.
-- Vampire (Ancilla): 6.
-- Vampire (Elder): 8.
-
-Step 5 states that the creature/tier maximum applies when distributing dots, with Skills explicitly treated as the exception. The generator therefore treats 5/6/8 as the tier-level Attribute ceilings.
-
-There is an important interaction with the category budgets. The generator uses a 1-dot floor for each Attribute, consistent with the supplied Attribute scale and rules that reduce Attributes only to a minimum of 1. With three Attributes in a category, the highest rating reachable from the starting budgets is therefore 5 for a Neonate (7 budget), 6 for an Ancilla (8 budget), and 7 for an Elder (9 budget). Elder `Max Dots 8` is a valid tier ceiling, but the standard Elder chargen Attribute budget does not provide enough dots to reach 8 while the other two Attributes remain at 1.
-
-The later `Tiers of Play` table separately gives Blood Surge and Discipline maxima. It does not replace the chargen Attribute ceilings.
-
-## Other retained v0.3.0 behavior
-
-- Skills and Focuses remain split into Lifepath-derived and free-allocation sections.
-- Lifepath Skill dots remain protected floors when spending free Skill dots.
+- Attributes, Skills, and Focuses are separate steps.
+- Attribute input uses explicit numeric rating buttons; impossible ratings are disabled immediately.
+- Skills from Lifepaths retain their existing ratings on the free Skill page and cannot be reduced below Lifepath contributions there.
 - Sire-granted Discipline dots remain visible floors and cannot be removed.
-- Non-Clan Sire Disciplines remain separate locked rating-1 cards; free Discipline dots remain restricted to Clan Disciplines.
-- Discipline Powers remain grouped by Discipline.
-- Desktop left navigation shows per-step progress and remaining allocations.
-- Matching Lifepath Resources aggregate by Resource type + specific label; their dots are summed and contributing Lifepaths are shown.
-- Discipline allocation remains RAW: the Alpha gives a pool of dots to distribute among Clan Disciplines and states no mandatory spread such as 3/2/1.
+- Free Discipline dots are restricted to Clan Disciplines.
+- Discipline Powers are grouped by Discipline during selection.
+- Matching Lifepath Resources aggregate by Resource type + specific label, sum their dots, and list all contributing Lifepaths.
+- Desktop navigation shows per-step progress and remaining selections.
+- Desktop uses persistent contextual help; mobile opens help explicitly.
 
 ## Known Alpha source gaps
 
-The generator preserves explicit Alpha gaps instead of inventing replacements.
-
-- Several clans do not have complete clan entries in the supplied Chapter 3 material.
-- Blood Sorcery, Necromancy, Tellurgy, and Vicissitude appear in summaries but have no Chapter 5 power definitions in the supplied packet.
-- `Shared Soul` is listed in the Animalism power summary but has no full power entry later in the supplied packet.
-- Attribute qualitative examples are supplied only through 5 dots even though Ancilla/Elder character-creation maxima can exceed 5.
-- Skills have descriptions and example Focus guidance, but no rating-by-rating qualitative scale.
-- v0.4.1 enables Vampire tiers only. Ghoul/Duskborn remain outside the active flow.
+- Several clans do not have complete entries in the supplied Alpha packet.
+- Blood Sorcery, Necromancy, Tellurgy, and Vicissitude appear in summaries but lack Chapter 5 power definitions in the supplied packet.
+- `Shared Soul` is listed in the Animalism power summary but lacks a full power entry.
+- Attribute qualitative examples are supplied only through 5 dots even though Ancilla/Elder Max Dots can exceed 5.
+- Skills have descriptions and example Focus guidance but no Attribute-style rating-by-rating qualitative scale.
+- Ghoul/Duskborn are not yet enabled in the active generator flow.
 
 ## Deployment
 
 Upload the folder contents to any static web host or GitHub Pages. Keep `.nojekyll` in the deployment root.
-
-
-## v0.4.1 Attribute budget correction
-- Every Attribute has a free baseline rating of 1.
-- Tier category budgets are distributed above that baseline.
-- Neonate final category totals are 10 / 8 / 6 for 7 / 5 / 3 allocations.
-- Ancilla final category totals are 11 / 9 / 7; Elder 12 / 10 / 8.
-- Per-Attribute Max Dots remain Neonate 5, Ancilla 6, Elder 8.
