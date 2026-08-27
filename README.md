@@ -1,4 +1,4 @@
-# VTM V6 Alpha Character Generator — v0.6.0
+# VTM V6 Alpha Character Generator — v0.6.1
 
 Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 
@@ -8,7 +8,16 @@ Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 - Character-creation rules follow the V6 Alpha Player Packet unless a project interpretation or house rule is explicitly labelled.
 - No V5 / V5.5 hybrid rules are intentionally imported.
 
-## v0.6.0 desktop UI changes
+## v0.6.1 UI changes
+
+- Fixed Caitiff Discipline rows so checkbox, title, and description remain aligned.
+- Added equal-height treatment for comparable tiles within the same grid row.
+- Added mobile Export JSON, Import JSON, and Reset controls to the sticky mobile header.
+- Finish review now exposes contextual `?` help for rules-bearing entries (tier, generation, sire, clan, lifepaths, humanity/nature, attributes, skills, disciplines, powers, traits, merits, resources, Important Items, and weapons).
+- Clan Traits and Merits now use the same card language as Disciplines in Finish.
+- Power help no longer repeats the parent Discipline description as if it were the Power description.
+- Fixed long Lifepath values in Finish with a wider wrapping identity row.
+- Replaced the old CG/V5 app icon with a distinct V6/CG icon and updated all PWA icon sizes.
 
 ### Skills and Focuses
 
@@ -93,4 +102,4 @@ Every Attribute starts at rating 1 for free. The category budgets are distribute
 
 ## Deployment
 
-Upload the folder contents to any static web host or GitHub Pages. The service worker cache key is versioned as `vtm-v6-alpha-chargen-v0.6.0`.
+Upload the folder contents to any static web host or GitHub Pages. The service worker cache key is versioned as `vtm-v6-alpha-chargen-v0.6.1`.

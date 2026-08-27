@@ -1,4 +1,4 @@
-# QA — v0.6.0
+# QA — v0.6.1
 
 ## Rules / interpretation checks
 
@@ -21,7 +21,7 @@
 - [x] Focus UI contains no fixed/automatic Focus selection path.
 - [x] Lasombra variable Discipline picker is rendered by the Clan step only.
 - [x] Final review groups Powers by Discipline and renders Skills as structured rows.
-- [x] Service-worker cache key is `vtm-v6-alpha-chargen-v0.6.0`.
+- [x] Service-worker cache key is `vtm-v6-alpha-chargen-v0.6.1`.
 
 ## Browser / visual regression
 
@@ -38,3 +38,14 @@ The container's Chromium process does not terminate correctly in this runtime, s
 - [ ] Resource descriptions and `?` help are readable without stretching cards awkwardly.
 - [ ] Finish page follows the new hierarchy and does not allow Skills or Powers to dominate the layout.
 - [ ] Mobile remains functional; v0.6.0 was designed primarily as a desktop look-and-feel pass.
+
+
+## v0.6.1 checks
+
+- [x] `src/app.js` passes `node --check`.
+- [x] Caitiff selection uses a dedicated two-column checkbox/content row instead of the generic choice-row grid.
+- [x] Mobile header contains Export, Import, and Reset controls wired to the same handlers as desktop.
+- [x] Finish help hooks exist for Attributes, Skills, Disciplines, Powers, Clan Traits, Merits, Resources, Humanity/Nature, Tier, Generation, Sire, Clan, Lifepaths, Important Items, and Weapons.
+- [x] Power info identifies the parent Discipline in metadata without repeating the Discipline description as the Power summary.
+- [x] PWA icons are regenerated as V6/CG and service-worker cache key is v0.6.1.
+- [ ] Manual visual regression remains required in a real desktop/mobile browser because container Chromium still does not terminate reliably.

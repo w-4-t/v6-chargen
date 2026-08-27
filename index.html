@@ -129,13 +129,40 @@
   .sheetSkillRow{grid-template-columns:minmax(95px,auto) 86px minmax(0,1fr)}
 }
 
+
+/* v0.6.1 UI consistency */
+.equalTiles{align-items:stretch!important}
+.equalTiles>*{height:100%}
+.caitiffChoice{display:grid;grid-template-columns:28px minmax(0,1fr);gap:12px;align-items:start;border:1px solid var(--line);background:var(--panel2);border-radius:13px;padding:12px;color:var(--text);cursor:pointer}
+.caitiffChoice.selected{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.caitiffChoice input{width:18px;height:18px;margin:2px 0 0;justify-self:center}
+.powerMeta .tag,.tag{align-items:center;justify-content:center;text-align:center}
+.sheetInfoBtn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;min-width:22px;padding:0;border:1px solid var(--line2);border-radius:50%;background:transparent;color:var(--info);font-size:11px;font-weight:900;line-height:1;cursor:pointer;vertical-align:middle}
+.sheetInfoBtn:hover,.sheetInfoBtn:focus-visible{border-color:var(--accent);color:var(--text);outline:none}
+.sheetKVValue,.sheetAttrActions,.sheetResourceActions,.sheetDiscTitleRight,.sheetPowerActions{display:flex;align-items:center;justify-content:flex-end;gap:6px;min-width:0}
+.sheetKV.wide{grid-column:span 2;grid-template-columns:90px minmax(0,1fr)}
+.sheetKV.wide .sheetKVValue{justify-content:flex-start;text-align:left}
+.sheetKV.wide b{text-align:left}.sheetKVValue b{min-width:0;overflow-wrap:anywhere}
+.sheetSkillRow{grid-template-columns:minmax(105px,auto) 92px minmax(0,1fr) 24px}
+.sheetPowerActions{white-space:nowrap}
+.sheetRuleCard{min-height:74px}
+.sheetBlock h3 .sheetInfoBtn{margin-left:5px}
+.mobileActions{display:none}
+@media(max-width:900px){
+  .mobileActions{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:7px}
+  .mobileActions .btn{min-height:34px;padding:6px 8px;font-size:11px;text-align:center}
+  .mobileImportLabel{display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .sheetKV.wide{grid-column:span 1}
+  .sheetSkillRow{grid-template-columns:minmax(90px,auto) 82px minmax(0,1fr) 24px}
+}
+
 </style>
 </head>
 <body>
 <div class="drawerBack" id="drawerBack"></div>
 <div class="desktopShell">
   <aside class="leftNav">
-    <div class="brand">VTM V6 Alpha<br>Character Generator<small>v0.6.0 · adaptive PWA</small></div>
+    <div class="brand">VTM V6 Alpha<br>Character Generator<small>v0.6.1 · adaptive PWA</small></div>
     <div class="rawBadge">V6 Alpha · project house rules labelled</div>
     <div class="navSteps" id="navSteps"></div>
     <div class="navActions">
@@ -148,6 +175,7 @@
     <div class="mobileTop">
       <div class="mobileHead"><div class="mobileTitle">VTM V6 Alpha Chargen</div><button class="btn mobileInfoBtn" id="mobileInfoTop">Info</button></div>
       <div class="mobileProgress" id="mobileProgress"></div>
+      <div class="mobileActions"><button class="btn" id="mobileExportBtn">Export</button><label class="btn mobileImportLabel">Import<input id="mobileImportFile" type="file" accept="application/json" hidden></label><button class="btn danger" id="mobileResetBtn">Reset</button></div>
     </div>
     <div class="mainCard" id="mainCard"></div>
   </main>
