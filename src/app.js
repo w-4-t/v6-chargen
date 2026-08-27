@@ -1,8 +1,8 @@
 (()=>{
 'use strict';
 const D=window.V6_DATA;
-const STORAGE='vtm_v6_alpha_chargen_v0_8_0';
-const LEGACY_STORAGE=['vtm_v6_alpha_chargen_v0_7_0','vtm_v6_alpha_chargen_v0_6_1','vtm_v6_alpha_chargen_v0_6_0','vtm_v6_alpha_chargen_v0_5_0','vtm_v6_alpha_chargen_v0_4_2','vtm_v6_alpha_chargen_v0_4_1','vtm_v6_alpha_chargen_v0_4_0','vtm_v6_alpha_chargen_v0_3_0','vtm_v6_alpha_chargen_v0_2_1','vtm_v6_alpha_chargen_v0_2_0','vtm_v6_alpha_chargen_v0_1_0'];
+const STORAGE='vtm_v6_alpha_chargen_v0_8_1';
+const LEGACY_STORAGE=['vtm_v6_alpha_chargen_v0_8_0','vtm_v6_alpha_chargen_v0_7_0','vtm_v6_alpha_chargen_v0_6_1','vtm_v6_alpha_chargen_v0_6_0','vtm_v6_alpha_chargen_v0_5_0','vtm_v6_alpha_chargen_v0_4_2','vtm_v6_alpha_chargen_v0_4_1','vtm_v6_alpha_chargen_v0_4_0','vtm_v6_alpha_chargen_v0_3_0','vtm_v6_alpha_chargen_v0_2_1','vtm_v6_alpha_chargen_v0_2_0','vtm_v6_alpha_chargen_v0_1_0'];
 const STEPS=[
   ['Creature','What are you?'],['Clan','Your Clan'],['Sire','Sire & Generation'],['Lifepaths','Your Lifepaths'],
   ['Attributes','Attributes'],['Skills','Skills'],['Focuses','Focuses'],['Powers','Disciplines, Traits & Merits'],

@@ -5,7 +5,17 @@ let locale=localStorage.getItem(KEY)==='uk'?'uk':'en';
 const textOriginal=new WeakMap();
 const attrOriginal=new WeakMap();
 const MAP=new Map();
-const add=(en,uk)=>{if(typeof en==='string'&&typeof uk==='string'&&en&&uk&&en!==uk)MAP.set(en,uk);};
+const add=(en,uk)=>{
+ if(typeof en!=='string'||typeof uk!=='string'||!en||!uk||en===uk)return;
+ MAP.set(en,uk);
+ // The rules reference renders long source strings as separate paragraphs.
+ // Register aligned paragraph pairs as well as the complete source string,
+ // otherwise a translated multi-paragraph entry falls back to English after renderInfo() splits it.
+ const ep=en.split(/\n\n+/),up=uk.split(/\n\n+/);
+ if(ep.length===up.length&&ep.length>1){
+  for(let i=0;i<ep.length;i++){const a=ep[i],b=up[i];if(a&&b&&a!==b)MAP.set(a,b);}
+ }
+};
 
 const UI={
 'VTM V6 Alpha Character Generator':'VTM V6 Alpha — Генератор Персонажа',

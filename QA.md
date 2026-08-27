@@ -1,4 +1,4 @@
-# QA — v0.8.0
+# QA — v0.8.1
 
 ## Rules / interpretation regression
 
@@ -36,7 +36,7 @@
 - [x] English and Ukrainian rules-data trees pass structural comparison.
 - [x] i18n smoke tests cover representative static, dynamic, nested-data, validation, and Finish strings.
 - [x] `index.html` script order is V6 data → Ukrainian data → i18n runtime → app.
-- [x] Service-worker cache key is `vtm-v6-alpha-chargen-v0.8.0` and caches both language data files plus i18n runtime.
+- [x] Service-worker cache key is `vtm-v6-alpha-chargen-v0.8.1` and caches both language data files plus i18n runtime.
 - [x] Final ZIP passes `unzip -t`.
 
 ## Manual browser checks still required
@@ -53,3 +53,10 @@ Container Chromium remains unreliable in this runtime, including on minimal page
 ## Terminology status
 
 Current Ukrainian wording is a complete working localization pass, not the final terminology authority. A user-led terminology audit is planned after this build; disputed choices can be changed independently of rules logic and saved-character data.
+
+## v0.8.1 localization regression
+
+- [x] Multi-paragraph EN/UA data entries have matching paragraph counts.
+- [x] Every paragraph produced by splitting translated rules-data on blank lines resolves to Ukrainian through the runtime translator: 0 untranslated split data paragraphs.
+- [x] Spot checks pass for multi-paragraph Powers in Animalism, Auspex, and Celerity.
+- [x] v0.8.0 localStorage is included in legacy migration so existing character state is preserved.

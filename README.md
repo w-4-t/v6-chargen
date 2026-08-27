@@ -1,4 +1,4 @@
-# VTM V6 Alpha Character Generator — v0.8.0
+# VTM V6 Alpha Character Generator — v0.8.1
 
 Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 
@@ -8,7 +8,11 @@ Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 - Character-creation rules follow the V6 Alpha Player Packet unless a project interpretation or house rule is explicitly labelled.
 - No V5 / V5.5 hybrid rules are intentionally imported.
 
-## v0.8.0 — English / Ukrainian localization
+## v0.8.1 — rules-reference localization fix
+
+### v0.8.1 fix
+
+The contextual rules panel renders long rules entries as separate paragraphs. In v0.8.0 the localization map paired the complete English and Ukrainian source strings, but the renderer split those strings before translation; multi-paragraph Powers, Clan text, and similar entries could therefore fall back to English paragraph-by-paragraph. v0.8.1 registers aligned paragraph pairs in addition to each complete rules string. Character data and EN/UA switching behavior are unchanged.
 
 - `UA / EN` switches live without reloading the page or rebuilding character state.
 - Language preference is stored separately from character JSON. The same exported character file can be used in either language.
@@ -61,4 +65,4 @@ The number of known Powers is a separate chargen budget from Discipline dots. A 
 
 ## Deployment
 
-Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.8.0`.
+Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.8.1`.
