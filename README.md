@@ -1,4 +1,4 @@
-# VTM V6 Alpha Character Generator — v0.7.0
+# VTM V6 Alpha Character Generator — v0.8.0
 
 Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 
@@ -8,16 +8,20 @@ Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 - Character-creation rules follow the V6 Alpha Player Packet unless a project interpretation or house rule is explicitly labelled.
 - No V5 / V5.5 hybrid rules are intentionally imported.
 
-## v0.7.0 — live English / Ukrainian UI
+## v0.8.0 — English / Ukrainian localization
 
-- Added a persistent `UA / EN` language switch without page reload and without rebuilding or clearing the character state.
-- Desktop: the language switch sits on the opposite side of the utility area from `Reset character`; Export / Import remain directly below.
-- Mobile: language switch is the left-most utility action and Reset is the right-most action.
-- The selected UI language is stored separately from the character JSON. Exported characters therefore remain language-neutral and can be imported while either locale is active.
-- Navigation, step headings, controls, counters, validation/status labels, contextual-help labels, Attributes, Skills, Skill descriptions, Attribute rating descriptions, Sire types, Lifepaths, Resources, clan card descriptions, and Discipline summaries have Ukrainian localization.
-- Canonical VTM names that are useful for cross-reference with the English Alpha (clans, most Discipline names, Power names, Merit/Clan Trait/Nature names, and user-entered Focus values) are intentionally retained in their source form where translating the term could create an unofficial competing rules term.
-- Longer source-rule passages that do not yet have an explicit Ukrainian translation remain in the original English rather than being replaced with guessed or lossy paraphrase. This includes some full Power, Clan Trait, Merit, Nature, and clan chapter text. The locale switch is therefore functional and broad, but the rules-text translation layer is still being expanded.
-- New PWA cache key includes the language module and Ukrainian localization data.
+- `UA / EN` switches live without reloading the page or rebuilding character state.
+- Language preference is stored separately from character JSON. The same exported character file can be used in either language.
+- Ukrainian localization covers the generator UI and the rules content represented by the app: Attributes and rating descriptions, Skills and Focuses, Sire types, Lifepaths, Resources, Clans, Discipline descriptions and available Powers, Power metadata, Clan Traits, Merits, Natures, validation, contextual help, and Finish/review.
+- `data/v6_uk.js` mirrors the English rules-data tree so nested Powers, Traits, Merits, Focuses, and other entries can be paired recursively instead of relying on isolated string patches.
+- Power metadata such as Cost, Difficulty, Distance, Duration, and activation terms is localized.
+- Lifepath Focus recommendations and Resource labels are localized.
+- Defined VTM/game terms preserve terminological capitalization in Ukrainian when the English source uses capitalization as part of the term. Examples include `Kindred → Сородичі`, `Embrace → Обернення`, `Beast → Звір`, `Frenzy → Шаленство`, `Final Death → Остаточна Смерть`, and `Blood Bond → Кровний Зв’язок`.
+- Terms that become misleading or unnecessarily bulky when forced into Ukrainian can remain in source form in compact UI. Current examples include `Sire`, `Vitae`, `Duskborn`, `Oblivion`, `Vicissitude`, clan names, and several formal titles. Longer help text may retain an English term where cross-reference to the Alpha is useful.
+- Compact tiles avoid repetitive bilingual parentheses.
+- Current Ukrainian word choices are intentionally treated as provisional. A separate terminology audit is expected after the full localization pass; changing a translation does not require changing character-state IDs or JSON.
+- `Wealth` currently uses `Статки`, replacing the too-broad earlier `Добробут`.
+- Migration includes v0.7.0 and earlier supported builds. Focus selections are preserved for v0.5.0 and later; only older builds with the obsolete auto-Focus behavior clear Focus state during migration.
 
 ## Existing project decisions retained
 
@@ -43,7 +47,7 @@ Every Attribute begins at rating 1 for free. The category budgets are distribute
 
 ### Discipline Powers
 
-The number of known Powers is a separate chargen budget from Discipline dots. A character may know more than one Power in a Discipline with rating 1, but every selected Power must have rank less than or equal to that Discipline rating.
+The number of known Powers is a separate chargen budget from Discipline dots. A character may know multiple Powers in a Discipline with rating 1, provided every selected Power is rank 1. In general, a selected Power's rank must be less than or equal to that Discipline's current rating.
 
 ## Current Alpha source gaps
 
@@ -52,9 +56,9 @@ The number of known Powers is a separate chargen budget from Discipline dots. A 
 - `Shared Soul` is listed in the Animalism power summary but lacks a full power entry.
 - Attribute qualitative examples are supplied only through 5 dots even though Ancilla/Elder Max Dots can exceed 5.
 - Skills have descriptions and example Focus guidance but no Attribute-style rating-by-rating qualitative scale.
-- Resources generally use qualitative scaling. The Alpha does not provide exact currency brackets for Wealth 2–4 or a fixed equipment/weapon table for each Repository rating.
+- Resources generally use qualitative scaling rather than fixed currency/equipment brackets.
 - Ghoul/Duskborn are not yet enabled in the active generator flow.
 
 ## Deployment
 
-Upload the folder contents to any static web host or GitHub Pages. The service worker cache key is `vtm-v6-alpha-chargen-v0.7.0`.
+Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.8.0`.

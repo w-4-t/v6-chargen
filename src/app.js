@@ -1,8 +1,8 @@
 (()=>{
 'use strict';
 const D=window.V6_DATA;
-const STORAGE='vtm_v6_alpha_chargen_v0_7_0';
-const LEGACY_STORAGE=['vtm_v6_alpha_chargen_v0_6_0','vtm_v6_alpha_chargen_v0_5_0','vtm_v6_alpha_chargen_v0_4_2','vtm_v6_alpha_chargen_v0_4_1','vtm_v6_alpha_chargen_v0_4_0','vtm_v6_alpha_chargen_v0_3_0','vtm_v6_alpha_chargen_v0_2_1','vtm_v6_alpha_chargen_v0_2_0','vtm_v6_alpha_chargen_v0_1_0'];
+const STORAGE='vtm_v6_alpha_chargen_v0_8_0';
+const LEGACY_STORAGE=['vtm_v6_alpha_chargen_v0_7_0','vtm_v6_alpha_chargen_v0_6_1','vtm_v6_alpha_chargen_v0_6_0','vtm_v6_alpha_chargen_v0_5_0','vtm_v6_alpha_chargen_v0_4_2','vtm_v6_alpha_chargen_v0_4_1','vtm_v6_alpha_chargen_v0_4_0','vtm_v6_alpha_chargen_v0_3_0','vtm_v6_alpha_chargen_v0_2_1','vtm_v6_alpha_chargen_v0_2_0','vtm_v6_alpha_chargen_v0_1_0'];
 const STEPS=[
   ['Creature','What are you?'],['Clan','Your Clan'],['Sire','Sire & Generation'],['Lifepaths','Your Lifepaths'],
   ['Attributes','Attributes'],['Skills','Skills'],['Focuses','Focuses'],['Powers','Disciplines, Traits & Merits'],
@@ -32,7 +32,7 @@ function blankState(){
 }
 let state=load()||blankState();
 normalizeState();
-function load(){try{const current=JSON.parse(localStorage.getItem(STORAGE)||'null');if(current)return current;for(const key of LEGACY_STORAGE){const legacy=JSON.parse(localStorage.getItem(key)||'null');if(!legacy)continue;if(key.endsWith('_v0_1_0')){const oldStep=Number(legacy.step||0),map=[0,1,2,3,4,7,8,9,10];legacy.step=map[oldStep]??0;}if(key!=='vtm_v6_alpha_chargen_v0_5_0')legacy.focuses={};return legacy}return null}catch{return null}}
+function load(){try{const current=JSON.parse(localStorage.getItem(STORAGE)||'null');if(current)return current;for(const key of LEGACY_STORAGE){const legacy=JSON.parse(localStorage.getItem(key)||'null');if(!legacy)continue;if(key.endsWith('_v0_1_0')){const oldStep=Number(legacy.step||0),map=[0,1,2,3,4,7,8,9,10];legacy.step=map[oldStep]??0;}if(['vtm_v6_alpha_chargen_v0_4_2','vtm_v6_alpha_chargen_v0_4_1','vtm_v6_alpha_chargen_v0_4_0','vtm_v6_alpha_chargen_v0_3_0','vtm_v6_alpha_chargen_v0_2_1','vtm_v6_alpha_chargen_v0_2_0','vtm_v6_alpha_chargen_v0_1_0'].includes(key))legacy.focuses={};return legacy}return null}catch{return null}}
 function save(){localStorage.setItem(STORAGE,JSON.stringify(state));}
 function normalizeState(){
  if(!state||state.schemaVersion!==1)state=blankState();
