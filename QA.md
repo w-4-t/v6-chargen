@@ -1,57 +1,61 @@
-# QA — v0.2.0
+# QA — v0.4.1
 
-## Automated/static checks performed
+## Rules audit
 
-- `src/app.js` passes `node --check`.
-- `data/v6.js` passes `node --check`.
-- Mock-DOM runtime smoke test confirms:
-  - 11 chargen navigation steps render.
-  - Lasombra with unresolved third Discipline shows Corruption and Oblivion on the Clan page.
-  - the Discipline page also exposes the unresolved Lasombra choice.
-  - after choosing Oblivion, the Clan Discipline set resolves to Dominate / Potence / Oblivion.
-  - Attributes, Skills, and Focuses render as separate pages.
-- Data integrity checks confirm Lifepath and Clan Discipline references resolve and Discipline power identifiers are unique within each Discipline.
+- Step 1 creature table checked: Neonate 5/5, Ancilla 6/6, Elder 8/8 for Max Dots / Max Discipline at character creation.
+- Tier Attribute Max Dots checked: 5 / 6 / 8. Step 5 explicitly exempts Skills from the creature Max Dots rule; Attributes are not exempted. With the generator's 1-dot Attribute floor and 7/5/3, 8/6/4, 9/7/5 budgets, the highest normally reachable starting Attribute is 5 / 6 / 7 respectively.
+- Attribute qualitative descriptions checked: supplied only for ratings 1–5. No source text was found for Attribute rating descriptions 6–8.
+- Dot Distribution checked: Neonate 3+1 Discipline dots, Ancilla 5+1, Elder 7+1.
+- Discipline text checked: free dots are distributed among the three Clan Disciplines; Sire +1 is separate. No mandatory distribution pattern is stated.
+- Tiers of Play checked: later Discipline caps are Neonate Clan 5 / Non-Clan 3; Ancilla Clan 7 / Non-Clan 5; Elder Clan 8 / Non-Clan 7.
+- RAW Skill cap checked: 3 during character creation. v0.4.1 intentionally replaces this with the project Lifepath Skill Cap house rule.
+- Project Skill cap formula checked: base 3 +1 per selected Lifepath whose Skill list contains the Skill, independent of actual Lifepath dot assignment.
+- Focus text checked: Focuses are gained at Skill ratings 1/3/5. No additional threshold is defined above 5.
+- Skill guidance checked: every Skill has a general description and example Focus descriptions; there is no Attribute-style rating-by-rating Skill scale.
 
-## Manual browser regression checklist
+## Automated checks completed
 
-1. Desktop text-heavy lists.
-   - Clan and Sire rows keep their own natural height; adjacent entries do not stretch to the tallest row.
-2. Split pages.
-   - Step 5 = Attributes.
-   - Step 6 = Skills.
-   - Step 7 = Focuses.
-3. Mobile Attributes.
-   - tapping Attribute dots changes the rating without opening the rules drawer.
-   - tapping the Attribute Info button opens the drawer.
-4. Desktop Attributes.
-   - tapping dots updates the persistent right-side Attribute reference.
-5. Sire & Generation.
-   - Sire Type uses list rows.
-   - Generation uses direct chips.
-   - related Clan, when required, uses direct chips.
-   - Bonus Discipline uses direct choices.
-6. Lasombra.
-   - selecting Lasombra immediately exposes Corruption / Oblivion.
-   - leaving the choice unresolved produces a clear validation message.
-   - the Discipline page repeats the choice if still unresolved.
-   - after selecting one, three Clan Disciplines are available for dot allocation.
-7. Neonate / Brujah / Unknown Sire / Potence.
-   - Attribute budgets 7/5/3.
-   - Discipline budget 3 + sire 1.
-   - 4 powers, 2 Clan Traits, 1 Merit, 8 free Skill dots, 3 free Resource dots.
-8. Switch Neonate → Ancilla.
-   - Lifepaths become 3.
-   - Attribute budgets become 8/6/4.
-   - Generation choices become 10th/9th.
-9. Lifepath allocation.
-   - exactly 5 Skill dots and 3 Resource dots per normal Lifepath.
-   - final Skill cannot exceed chargen cap 3.
-10. Focuses.
-   - Skill 1–2 requires one Focus; Skill 3 requires two Focuses.
-11. Persistence.
-   - v0.1 saved state migrates to v0.2 navigation.
-   - refresh retains state.
-   - JSON export/import restores state.
-12. Responsive behavior.
-   - desktop ≥901 px: persistent left navigation + right rules panel.
-   - mobile ≤900 px: horizontal progress + explicit bottom rules drawer + fixed Back/Next bar.
+- [x] JavaScript syntax check passes for `src/app.js` and `data/v6.js`.
+- [x] Two zero-dot Lifepaths listing Awareness produce Awareness cap 5.
+- [x] A Skill absent from the selected Lifepaths remains cap 3.
+- [x] Neonate primary 7 budget permits 5/1/1 and blocks a further increase.
+- [x] Ancilla primary 8 budget permits a rating 6 Attribute.
+- [x] Elder tier reports Max Dots 8 while the 9-dot primary budget with 1-dot floors yields an effective starting maximum of 7.
+- [x] A house-rule Skill rating 7 still produces exactly three Focus slots (1/3/5).
+
+## Manual / browser regression checklist
+
+- [ ] Skill listed by no selected Lifepath has chargen cap 3.
+- [ ] Skill listed by one selected Lifepath has chargen cap 4 even if that Lifepath assigns 0 dots to it.
+- [ ] Skill listed by two selected Lifepaths has chargen cap 5 even if one or both assign 0 dots to it.
+- [ ] Lifepath Skill allocation cannot raise a Skill above its dynamic cap.
+- [ ] Free Skill allocation cannot raise a Skill above its dynamic cap.
+- [ ] Removing/changing a Lifepath lowers affected caps immediately and clears excess free dots before Lifepath dots.
+- [ ] Focus slots remain 1 at rating 1, 2 at rating 3, 3 at rating 5, and do not grow again at rating 7.
+- [ ] Skills from Lifepaths appear in the upper block at their existing rating, not 0.
+- [ ] A free Skill dot can raise a Lifepath Skill but cannot lower it below its Lifepath floor.
+- [ ] Other Skills appear in the lower free-allocation block.
+- [ ] Skill Info shows description, current rating, dynamic cap, Lifepath cap sources, and example Focus descriptions.
+- [ ] Attribute controls are numeric buttons rather than dot targets.
+- [ ] Attribute controls disable a rating that would exceed the current category budget.
+- [ ] Attribute priority selector disables a swap if the current category totals cannot fit the swapped budgets.
+- [ ] Fresh Neonate cannot exceed rating 5 in an Attribute.
+- [ ] Ancilla allows Attribute ratings through 6.
+- [ ] Elder shows tier Max Dots 8 but blocks rating 8 under the standard 9-dot primary budget while the other two Attributes retain their 1-dot floor; rating 7 is reachable.
+- [ ] Attribute Info shows source descriptions through rating 5 and a source-gap notice for 6–8.
+- [ ] Sire Discipline starts at rating 1 and cannot be reduced below that floor.
+- [ ] If the Sire Discipline is non-Clan, it appears as a separate locked card and receives no free Clan Discipline dots.
+- [ ] Powers are grouped under separate Discipline headings.
+- [ ] Left desktop navigation shows progress / remaining counts for every step.
+- [ ] Identical Lifepath Resources combine into one rating and list all contributing Lifepaths.
+- [ ] Aggregated Lifepath Resource rating cannot exceed the selected tier's character-creation max dots.
+- [ ] Existing v0.3.0 localStorage state migrates.
+- [ ] Mobile Attribute rating buttons do not auto-open Info.
+
+
+## v0.4.1 Attribute budget correction
+- Every Attribute has a free baseline rating of 1.
+- Tier category budgets are distributed above that baseline.
+- Neonate final category totals are 10 / 8 / 6 for 7 / 5 / 3 allocations.
+- Ancilla final category totals are 11 / 9 / 7; Elder 12 / 10 / 8.
+- Per-Attribute Max Dots remain Neonate 5, Ancilla 6, Elder 8.
