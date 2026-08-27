@@ -19,13 +19,123 @@
 .reviewWide{grid-column:1/-1}.reviewSkillGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.reviewSkillItem,.reviewDiscGroup{border:1px solid var(--line);background:var(--panel3);border-radius:11px;padding:9px 10px;min-width:0}.reviewItemHead,.reviewDiscHead{display:flex;align-items:center;justify-content:space-between;gap:8px}.reviewRating{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:24px;border:1px solid var(--line2);border-radius:8px;font-size:11px;font-weight:850;color:var(--accent)}.reviewTags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.reviewTag{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:4px 7px;font-size:9px;color:var(--info);line-height:1.2}.reviewEmpty{margin-top:6px;font-size:10px;color:var(--muted)}.reviewDiscGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.reviewPowerList{display:grid;gap:5px;margin-top:8px}.reviewPowerRow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:11px}.reviewPowerRow:first-child{border-top:0}.reviewPowerRank{font-size:9px;color:var(--muted);white-space:nowrap}.reviewSubsection{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
 @media(max-width:1280px){.reviewSkillGrid,.reviewDiscGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:900px){.reviewSkillGrid,.reviewDiscGrid{grid-template-columns:1fr}.reviewWide{grid-column:auto}}
+/* v0.6 desktop readability pass */
+.tag{align-items:center;justify-content:center;line-height:1.05;min-height:26px;padding:5px 8px;text-align:center}
+.infoTile{position:relative}
+.infoTile>.tileInfo{position:absolute;top:8px;right:8px}
+.infoTile{padding-right:44px}
+.tileInfo{display:inline-flex;align-items:center;justify-content:center;width:27px;height:27px;min-width:27px;padding:0;border:1px solid var(--line2);border-radius:50%;background:var(--panel3);color:var(--info);font-size:13px;font-weight:900;line-height:1;cursor:pointer}
+.tileInfo:hover,.tileInfo:focus-visible,.fieldInfoBtn:hover,.fieldInfoBtn:focus-visible{border-color:var(--accent);color:var(--text);outline:none}
+.tileInfo.inlineInfo{position:static!important;margin-left:auto;flex:0 0 27px}
+.powerCard,.traitCard,.meritCard,.natureCard{padding-right:44px}
+.powerMeta .tag{min-width:68px}
+
+.allocationStatus{display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid #665b35;background:rgba(225,201,125,.055);border-radius:14px;padding:12px 14px;margin:12px 0 15px}
+.allocationStatus>div{display:grid;grid-template-columns:auto auto;column-gap:12px;align-items:center}
+.allocationStatus span{grid-column:1;font-size:11px;text-transform:uppercase;letter-spacing:.075em;color:var(--warn);font-weight:800}
+.allocationStatus strong{grid-column:2;grid-row:1 / span 2;font-size:34px;line-height:1;color:var(--warn);min-width:42px;text-align:center}
+.allocationStatus small{grid-column:1;font-size:10px;color:var(--muted);margin-top:3px}
+.allocationStatus.complete{border-color:#39513d;background:rgba(183,214,182,.045)}
+.allocationStatus.complete span,.allocationStatus.complete strong{color:var(--good)}
+.allocationStatus.compact{margin:8px 0 12px;padding:10px 12px}
+.allocationStatus.compact strong{font-size:28px}
+.resetStepBtn{min-width:138px;background:transparent}
+
+.skillRow{transition:border-color .15s,background .15s}
+.skillRow.hasRating{border-color:#475947;background:linear-gradient(90deg,rgba(183,214,182,.07),var(--panel2) 38%)}
+.skillTitleLine{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:3px}
+.skillNameBtn{appearance:none;border:0;background:transparent;color:var(--text);padding:0;margin:0;font-size:15px;line-height:1.2;font-weight:850;text-align:left;cursor:pointer}
+.skillNameBtn:hover,.skillNameBtn:focus-visible{color:var(--info);outline:none}
+.skillRow.hasRating .skillNameBtn{color:var(--good)}
+.skillStat{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;padding:3px 7px;font-size:9px;line-height:1.1;text-transform:uppercase;letter-spacing:.045em;color:var(--muted);white-space:nowrap}
+.skillStat b{font-size:11px;color:var(--text)}
+.skillStat.current{margin-left:3px}
+.skillStat.cap{border-color:#3b4650;color:var(--info)}
+
+.fieldLabelRow,.sectionTitleWithInfo{display:flex;align-items:center;gap:7px}
+.fieldLabelRow label{margin:0!important}
+.fieldInfoBtn{display:inline-flex;align-items:center;justify-content:center;width:23px;height:23px;min-width:23px;padding:0;border:1px solid var(--line2);border-radius:50%;background:transparent;color:var(--info);font-size:11px;font-weight:900;line-height:1;cursor:pointer}
+.fieldHint{font-size:10px;line-height:1.35;color:var(--muted);margin-top:5px}
+.sectionTitleWithInfo{justify-content:flex-start}
+.resourceRules b{color:var(--text)}
+.resourceCard{padding-right:44px}
+.resourceTitle{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.resourceTitle b{font-size:15px}
+.resourceDots{color:var(--accent);font-weight:900;letter-spacing:1px;white-space:nowrap}
+.resourceDots small{font-size:10px;color:var(--muted);letter-spacing:0;margin-left:3px}
+.resourceDetailField{margin-top:10px}
+.resourceDetailField textarea,.resourceFreeDescription textarea{min-height:74px}
+.resourceEntry{position:relative;grid-template-columns:145px minmax(210px,1fr) 78px auto;border:1px solid var(--line);background:var(--panel2);border-radius:13px;padding:10px 44px 10px 10px;margin:8px 0;align-items:end}
+.resourceEntry .tileInfo{top:9px;right:9px}
+.resourceEntry .field{margin:0}
+.resourceEntry .btn{min-height:43px}
+.resourceFreeDescription{grid-column:1/-1;margin-top:4px!important}
+
+.sheetReview{display:grid;gap:10px}
+.sheetBlock{border:1px solid var(--line);background:var(--panel2);border-radius:14px;padding:12px 14px;min-width:0}
+.sheetBlock h3{margin:0 0 10px;font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--info)}
+.sheetIdentity{grid-column:1/-1}
+.sheetIdentityGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0 16px}
+.sheetKV{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line);font-size:11px}
+.sheetKV span{color:var(--muted)}
+.sheetKV b{font-size:12px;text-align:right;overflow-wrap:anywhere}
+.sheetHumanityLine{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.sheetHumanityLine>strong{font-size:19px}
+.sheetHumanityLine span{font-size:11px;color:var(--muted)}
+.sheetHumanityLine b{color:var(--text)}
+.sheetVitals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.vital{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:12px}
+.vital span{font-size:11px;color:var(--info);text-transform:uppercase;letter-spacing:.07em}
+.vital strong{grid-column:2;grid-row:1 / span 2;font-size:30px;line-height:1;color:var(--accent)}
+.vital small{font-size:10px;color:var(--muted);margin-top:3px}
+.sheetAttrGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.sheetAttrCol{border-left:1px solid var(--line);padding-left:12px}
+.sheetAttrCol:first-child{border-left:0;padding-left:0}
+.sheetAttrCol h4{margin:0 0 5px;font-size:13px;color:var(--accent)}
+.sheetAttrRow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;font-size:11px}
+.sheetDots{color:var(--accent);font-weight:900;letter-spacing:1.4px;white-space:nowrap}
+.sheetSkillGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px}
+.sheetSkillRow{display:grid;grid-template-columns:minmax(105px,auto) 92px minmax(0,1fr);gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:11px;min-width:0}
+.sheetSkillName{font-weight:800}
+.sheetFocuses{font-size:10px;color:var(--info);overflow-wrap:anywhere}
+.sheetDiscGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.sheetDiscGroup{border:1px solid var(--line);border-radius:11px;padding:9px 10px;background:var(--panel3);min-width:0}
+.sheetDiscTitle{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:850;color:var(--accent);margin-bottom:5px}
+.sheetPowerRow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:5px 0;border-top:1px solid var(--line);font-size:10px}
+.sheetPowerRow:first-of-type{border-top:0}
+.sheetPowerRank{color:var(--muted);white-space:nowrap}
+.sheetTwoCol{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.sheetChipList{display:flex;gap:6px;flex-wrap:wrap}
+.sheetChip{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;padding:5px 8px;font-size:10px;color:var(--info)}
+.sheetResourceGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 14px}
+.sheetResourceRow{border-bottom:1px solid var(--line);padding:6px 0;min-width:0}
+.sheetResourceHead{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px}
+.sheetResourceHead b{font-size:12px}
+.sheetResourceDetail{font-size:10px;color:var(--muted);line-height:1.35;margin-top:3px;white-space:pre-wrap}
+.sheetSimpleList{display:grid;gap:5px;font-size:11px}
+.sheetText{font-size:11px;line-height:1.45;white-space:pre-wrap}
+.sheetMuted{color:var(--muted);font-size:10px}
+
+@media(max-width:1280px){
+  .sheetIdentityGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sheetSkillGrid,.sheetDiscGrid,.sheetResourceGrid{grid-template-columns:1fr}
+}
+@media(max-width:900px){
+  .allocationStatus{align-items:stretch}.allocationStatus>div{flex:1}.allocationStatus .btn{min-width:0}
+  .skillTitleLine{gap:5px}.skillStat.current{margin-left:0}
+  .resourceEntry{grid-template-columns:1fr 1fr;padding-right:44px}.resourceEntry .btn{grid-column:1/-1}
+  .sheetIdentityGrid,.sheetVitals,.sheetAttrGrid,.sheetSkillGrid,.sheetDiscGrid,.sheetTwoCol,.sheetResourceGrid{grid-template-columns:1fr}
+  .sheetAttrCol{border-left:0;border-top:1px solid var(--line);padding:9px 0 0}.sheetAttrCol:first-child{border-top:0;padding-top:0}
+  .sheetSkillRow{grid-template-columns:minmax(95px,auto) 86px minmax(0,1fr)}
+}
+
 </style>
 </head>
 <body>
 <div class="drawerBack" id="drawerBack"></div>
 <div class="desktopShell">
   <aside class="leftNav">
-    <div class="brand">VTM V6 Alpha<br>Character Generator<small>v0.5.0 · adaptive PWA</small></div>
+    <div class="brand">VTM V6 Alpha<br>Character Generator<small>v0.6.0 · adaptive PWA</small></div>
     <div class="rawBadge">V6 Alpha · project house rules labelled</div>
     <div class="navSteps" id="navSteps"></div>
     <div class="navActions">

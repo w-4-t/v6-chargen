@@ -1,4 +1,4 @@
-# QA — v0.5.0
+# QA — v0.6.0
 
 ## Rules / interpretation checks
 
@@ -6,29 +6,35 @@
 - [x] Attribute Max Dots: Neonate 5, Ancilla 6, Elder 8.
 - [x] RAW Focus thresholds remain 1 / 3 / 5.
 - [x] Project interpretation: Lifepath parenthetical Focuses are recommendations, never mandatory or auto-filled.
+- [x] Generic Lifepath instructions such as `choose an art form` are not treated as concrete Suggested Focus names.
 - [x] Project Lifepath Skill Cap house rule remains base 3 +1 for every selected Lifepath that lists the Skill.
 - [x] Variable Clan Discipline is resolved on the Clan page only.
+- [x] Important Item count is one additional item per Lifepath; item slots are generic rather than permanently assigned to a single Lifepath.
+- [x] Important Item help includes the possible +1 die for creative/interesting use.
+- [x] Physical and Social Assets can be made character-specific.
 
-## Automated/static checks
+## Static checks
 
 - [x] `src/app.js` passes Node syntax check.
 - [x] `data/v6.js` passes Node syntax check.
-- [x] v0.4.2 localStorage is included in migration sources.
+- [x] v0.5.0 localStorage is included in migration sources and its already-correct Focus selections are preserved.
 - [x] Focus UI contains no fixed/automatic Focus selection path.
 - [x] Lasombra variable Discipline picker is rendered by the Clan step only.
-- [x] Final review groups Powers by Discipline and renders Skills as structured entries.
-- [x] Headless Chromium smoke test renders the desktop Focus and final Review pages without page errors.
-- [x] Headless Chromium mobile Review smoke test reports no horizontal document overflow.
+- [x] Final review groups Powers by Discipline and renders Skills as structured rows.
+- [x] Service-worker cache key is `vtm-v6-alpha-chargen-v0.6.0`.
 
-## Manual browser regression
+## Browser / visual regression
 
-- [ ] Select Criminal and give Fighting a Focus slot: Fighting Dirty appears as a Lifepath suggestion, but Hand-to-Hand and custom Focus remain selectable.
-- [ ] Select Military and give Medicine a Focus slot: First Aid appears as a suggestion and is not auto-filled.
-- [ ] Artist Expression shows the Lifepath prompt to choose an art form without creating a fixed value.
-- [ ] Diplomat Persuasion offers Fraternizing and Negotiation as suggestions without restricting custom Focus.
+The container's Chromium process does not terminate correctly in this runtime, so v0.6.0 browser screenshots could not be treated as a reliable automated regression result. These items remain manual:
+
+- [ ] Desktop Skills: non-zero Skills are highlighted and `Current` / `Cap` labels remain readable at 1280 px and wider.
+- [ ] Desktop Skills / Attributes / Focuses: reset actions only reset the intended allocations.
+- [ ] Artist Expression does not show `choose an art form` as a literal Suggested Focus.
+- [ ] Criminal Fighting can suggest Fighting Dirty without restricting Hand-to-Hand or a custom Focus.
 - [ ] Rating 2 Skill has exactly one Focus slot; rating 3 has two; rating 5 has three.
 - [ ] Lasombra shows Corruption / Oblivion on Clan step and does not repeat the picker on Discipline step.
-- [ ] Final review Skills wrap cleanly and show Focus tags per Skill.
-- [ ] Final review Powers are grouped under their Disciplines and do not overlap/overflow.
-- [ ] Mobile Focus selection remains usable with explicit Info behavior.
-- [ ] Desktop review remains readable at 1280 px and wider.
+- [ ] Power / Merit / Trait / Nature help uses compact `?` controls without covering selectable content.
+- [ ] Cost / Action tags are optically centered.
+- [ ] Resource descriptions and `?` help are readable without stretching cards awkwardly.
+- [ ] Finish page follows the new hierarchy and does not allow Skills or Powers to dominate the layout.
+- [ ] Mobile remains functional; v0.6.0 was designed primarily as a desktop look-and-feel pass.
