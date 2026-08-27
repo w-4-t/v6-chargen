@@ -1,14 +1,15 @@
 (()=>{
 'use strict';
 const D=window.V6_DATA;
-const STORAGE='vtm_v6_alpha_chargen_v0_6_0';
-const LEGACY_STORAGE=['vtm_v6_alpha_chargen_v0_5_0','vtm_v6_alpha_chargen_v0_4_2','vtm_v6_alpha_chargen_v0_4_1','vtm_v6_alpha_chargen_v0_4_0','vtm_v6_alpha_chargen_v0_3_0','vtm_v6_alpha_chargen_v0_2_1','vtm_v6_alpha_chargen_v0_2_0','vtm_v6_alpha_chargen_v0_1_0'];
+const STORAGE='vtm_v6_alpha_chargen_v0_7_0';
+const LEGACY_STORAGE=['vtm_v6_alpha_chargen_v0_6_0','vtm_v6_alpha_chargen_v0_5_0','vtm_v6_alpha_chargen_v0_4_2','vtm_v6_alpha_chargen_v0_4_1','vtm_v6_alpha_chargen_v0_4_0','vtm_v6_alpha_chargen_v0_3_0','vtm_v6_alpha_chargen_v0_2_1','vtm_v6_alpha_chargen_v0_2_0','vtm_v6_alpha_chargen_v0_1_0'];
 const STEPS=[
   ['Creature','What are you?'],['Clan','Your Clan'],['Sire','Sire & Generation'],['Lifepaths','Your Lifepaths'],
   ['Attributes','Attributes'],['Skills','Skills'],['Focuses','Focuses'],['Powers','Disciplines, Traits & Merits'],
   ['Humanity','Humanity & Nature'],['Resources','Your Resources'],['Finish','Finishing Touches']
 ];
 const byId=(arr,id)=>arr.find(x=>x.id===id);
+const T=s=>window.V6I18N?.getLocale()==='uk'?window.V6I18N.tr(s):String(s??'');
 const e=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const dots=n=>'●'.repeat(Math.max(0,Number(n)||0));
 const sum=o=>Object.values(o||{}).reduce((a,b)=>a+(Number(b)||0),0);
@@ -203,7 +204,7 @@ function validateStep(i){const out=[];const c=creature();
 function allIssues(){return STEPS.flatMap((_,i)=>validateStep(i).map(x=>({...x,step:i})))}
 function isStepDone(i){return !validateStep(i).some(x=>['error','incomplete'].includes(x.severity))}
 
-function render(){ensureGeneration();ensureLpSlots();ensureFocusSlots();ensureItems();renderNav();renderMain();renderInfo();save();}
+function render(){ensureGeneration();ensureLpSlots();ensureFocusSlots();ensureItems();renderNav();renderMain();renderInfo();save();window.V6I18N?.apply(document);}
 function stepProgress(i){const c=creature();
  if(i===0)return state.creature?'1/1 selected':'0/1 selected';
  if(i===1){const cl=clanById(state.clan.id),base=cl?1:0,extra=cl?.disciplineRule?.choice?`${state.clan.choice?1:0}/1 Discipline`:cl?.disciplineRule?.random?`${(state.clan.caitiffDisciplines||[]).length}/3 Disciplines`:'';return `${base}/1 Clan${extra?` · ${extra}`:''}`}
@@ -277,7 +278,7 @@ function kv(k,v){return `<div class="kv"><span>${e(k)}</span><b>${e(v)}</b></div
 
 function bindMain(){const root=document.getElementById('mainCard');
  root.querySelectorAll('[data-action="prev"]').forEach(b=>b.onclick=()=>goStep(state.step-1));root.querySelectorAll('[data-action="next"]').forEach(b=>b.onclick=()=>goStep(Math.min(state.step+1,STEPS.length-1)));root.querySelectorAll('[data-action="go-clan"]').forEach(b=>b.onclick=()=>goStep(1));
- const ra=root.querySelector('[data-action="reset-attributes"]');if(ra)ra.onclick=()=>{if(confirm('Reset all Attribute ratings to their 1-dot baseline?')){D.attributes.forEach(a=>state.attributes.ratings[a.id]=1);render()}};const rs=root.querySelector('[data-action="reset-skills"]');if(rs)rs.onclick=()=>{if(confirm('Reset all free Skill dots? Lifepath Skill dots will stay.')){state.freeSkills={};ensureFocusSlots();render()}};const rf=root.querySelector('[data-action="reset-focuses"]');if(rf)rf.onclick=()=>{if(confirm('Clear all selected Focuses?')){state.focuses={};ensureFocusSlots();render()}};
+ const ra=root.querySelector('[data-action="reset-attributes"]');if(ra)ra.onclick=()=>{if(confirm(T('Reset all Attribute ratings to their 1-dot baseline?'))){D.attributes.forEach(a=>state.attributes.ratings[a.id]=1);render()}};const rs=root.querySelector('[data-action="reset-skills"]');if(rs)rs.onclick=()=>{if(confirm(T('Reset all free Skill dots? Lifepath Skill dots will stay.'))){state.freeSkills={};ensureFocusSlots();render()}};const rf=root.querySelector('[data-action="reset-focuses"]');if(rf)rf.onclick=()=>{if(confirm(T('Clear all selected Focuses?'))){state.focuses={};ensureFocusSlots();render()}};
  root.querySelectorAll('[data-info-step]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();setInfo(infoForStep(Number(b.dataset.infoStep)),true)});root.querySelectorAll('[data-info-review-tier]').forEach(b=>b.onclick=()=>setInfo(infoReviewTier(),true));root.querySelectorAll('[data-info-review-generation]').forEach(b=>b.onclick=()=>setInfo(infoReviewGeneration(),true));root.querySelectorAll('[data-info-review-sire]').forEach(b=>b.onclick=()=>setInfo(infoReviewSire(),true));root.querySelectorAll('[data-info-review-lifepaths]').forEach(b=>b.onclick=()=>setInfo(infoReviewLifepaths(),true));root.querySelectorAll('[data-info-review-humanity]').forEach(b=>b.onclick=()=>setInfo(infoReviewHumanity(),true));root.querySelectorAll('[data-info-apparent-age]').forEach(b=>b.onclick=()=>setInfo(infoApparentAge(),true));root.querySelectorAll('[data-info-important-items]').forEach(b=>b.onclick=()=>setInfo(infoImportantItems(),true));root.querySelectorAll('[data-info-weapons]').forEach(b=>b.onclick=()=>setInfo(infoWeapons(),true));
  root.querySelectorAll('[data-creature]').forEach(b=>b.onclick=()=>{const id=b.dataset.creature;if(id!==state.creature){const oldIdentity=state.identity;state=blankState();state.creature=id;state.identity={...state.identity,name:oldIdentity.name,alias:oldIdentity.alias};ensureGeneration();ensureLpSlots();ensureItems();}render()});
  const young=root.querySelector('#youngToggle');if(young)young.onchange=()=>{state.young=young.checked;state.lifepaths=[];state.freeSkills={};state.focuses={};state.resources.free=[];ensureLpSlots();ensureFocusSlots();ensureItems();render()};
@@ -317,8 +318,8 @@ function togglePower(did,pid){const idx=state.disciplines.powers.findIndex(x=>x.
 function toggleLimited(arr,id,max){const i=arr.indexOf(id);if(i>=0)arr.splice(i,1);else if(arr.length<max)arr.push(id)}
 
 function exportJson(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`vtm-v6-alpha-${(state.identity.name||'character').replace(/[^a-z0-9_-]+/gi,'_')}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-function importJson(file){const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(x.schemaVersion!==1)throw new Error('Unsupported schema');state=x;normalizeState();render()}catch(err){alert('Could not import this character JSON: '+err.message)}};r.readAsText(file)}
+function importJson(file){const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(x.schemaVersion!==1)throw new Error('Unsupported schema');state=x;normalizeState();render()}catch(err){alert(T('Could not import this character JSON: ')+err.message)}};r.readAsText(file)}
 
-function bindGlobal(){const reset=()=>{if(confirm('Reset the current character?')){state=blankState();render()}};document.getElementById('exportBtn').onclick=exportJson;document.getElementById('importFile').onchange=e=>{if(e.target.files[0])importJson(e.target.files[0]);e.target.value=''};document.getElementById('resetBtn').onclick=reset;const me=document.getElementById('mobileExportBtn');if(me)me.onclick=exportJson;const mi=document.getElementById('mobileImportFile');if(mi)mi.onchange=e=>{if(e.target.files[0])importJson(e.target.files[0]);e.target.value=''};const mr=document.getElementById('mobileResetBtn');if(mr)mr.onclick=reset;document.getElementById('drawerClose').onclick=closeDrawer;document.getElementById('drawerBack').onclick=closeDrawer;document.getElementById('mobileInfoTop').onclick=()=>{renderInfo();openDrawer()};}
+function bindGlobal(){const reset=()=>{if(confirm(T('Reset the current character?'))){state=blankState();render()}};document.getElementById('exportBtn').onclick=exportJson;document.getElementById('importFile').onchange=e=>{if(e.target.files[0])importJson(e.target.files[0]);e.target.value=''};document.getElementById('resetBtn').onclick=reset;const me=document.getElementById('mobileExportBtn');if(me)me.onclick=exportJson;const mi=document.getElementById('mobileImportFile');if(mi)mi.onchange=e=>{if(e.target.files[0])importJson(e.target.files[0]);e.target.value=''};const mr=document.getElementById('mobileResetBtn');if(mr)mr.onclick=reset;const lang=()=>{window.V6I18N?.toggle();render()};const lb=document.getElementById('langToggleBtn');if(lb)lb.onclick=lang;const mlb=document.getElementById('mobileLangToggleBtn');if(mlb)mlb.onclick=lang;document.getElementById('drawerClose').onclick=closeDrawer;document.getElementById('drawerBack').onclick=closeDrawer;document.getElementById('mobileInfoTop').onclick=()=>{renderInfo();window.V6I18N?.apply(document);openDrawer()};window.V6I18N?.updateControls();}
 bindGlobal();render();
 })();

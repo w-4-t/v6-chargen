@@ -1,4 +1,4 @@
-# VTM V6 Alpha Character Generator — v0.6.1
+# VTM V6 Alpha Character Generator — v0.7.0
 
 Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 
@@ -8,67 +8,20 @@ Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 - Character-creation rules follow the V6 Alpha Player Packet unless a project interpretation or house rule is explicitly labelled.
 - No V5 / V5.5 hybrid rules are intentionally imported.
 
-## v0.6.1 UI changes
+## v0.7.0 — live English / Ukrainian UI
 
-- Fixed Caitiff Discipline rows so checkbox, title, and description remain aligned.
-- Added equal-height treatment for comparable tiles within the same grid row.
-- Added mobile Export JSON, Import JSON, and Reset controls to the sticky mobile header.
-- Finish review now exposes contextual `?` help for rules-bearing entries (tier, generation, sire, clan, lifepaths, humanity/nature, attributes, skills, disciplines, powers, traits, merits, resources, Important Items, and weapons).
-- Clan Traits and Merits now use the same card language as Disciplines in Finish.
-- Power help no longer repeats the parent Discipline description as if it were the Power description.
-- Fixed long Lifepath values in Finish with a wider wrapping identity row.
-- Replaced the old CG/V5 app icon with a distinct V6/CG icon and updated all PWA icon sizes.
+- Added a persistent `UA / EN` language switch without page reload and without rebuilding or clearing the character state.
+- Desktop: the language switch sits on the opposite side of the utility area from `Reset character`; Export / Import remain directly below.
+- Mobile: language switch is the left-most utility action and Reset is the right-most action.
+- The selected UI language is stored separately from the character JSON. Exported characters therefore remain language-neutral and can be imported while either locale is active.
+- Navigation, step headings, controls, counters, validation/status labels, contextual-help labels, Attributes, Skills, Skill descriptions, Attribute rating descriptions, Sire types, Lifepaths, Resources, clan card descriptions, and Discipline summaries have Ukrainian localization.
+- Canonical VTM names that are useful for cross-reference with the English Alpha (clans, most Discipline names, Power names, Merit/Clan Trait/Nature names, and user-entered Focus values) are intentionally retained in their source form where translating the term could create an unofficial competing rules term.
+- Longer source-rule passages that do not yet have an explicit Ukrainian translation remain in the original English rather than being replaced with guessed or lossy paraphrase. This includes some full Power, Clan Trait, Merit, Nature, and clan chapter text. The locale switch is therefore functional and broad, but the rules-text translation layer is still being expanded.
+- New PWA cache key includes the language module and Ukrainian localization data.
 
-### Skills and Focuses
+## Existing project decisions retained
 
-- The free Skill allocation page now has a prominent remaining-dot counter.
-- Non-zero Skills receive a visual highlight.
-- Skill names are larger/bolder.
-- `Current` and `Cap` are shown as separate labelled values instead of an ambiguous bare fraction.
-- Added `Reset Skills`, `Reset Attributes`, and `Reset Focuses` actions.
-- Focuses remain player-selected at Skill ratings 1, 3, and 5.
-- Concrete parenthetical Focuses printed in Lifepaths are shown as recommendations only.
-- Generic instructions such as `choose an art form` are not rendered as Suggested Focus names.
-- RAW Skill examples and custom relevant Focus text remain available.
-
-### Contextual help controls
-
-- Full-text `Read full power`, `Read Merit`, `Read clan`, and similar tile actions were replaced with small `?` controls.
-- Discipline Power metadata tags use centered text for Cost / Action / similar compact fields.
-
-### Resources
-
-- The Resources step now explains the shared Resource mechanics: Resource tests, quality/potential, temporarily spending dots, and downtime recovery.
-- Every Resource type has contextual guidance describing what its dots actually scale under the Alpha text.
-- Physical and Social Assets can be made character-specific with labels/descriptions.
-- Aggregated Lifepath Resources still sum matching entries and list all contributing Lifepaths.
-- The generator deliberately does not invent missing price tables or weapon-quality tables where the Alpha gives only qualitative guidance.
-
-### Finish / review
-
-The final review now uses a character-sheet hierarchy rather than equal-weight dashboard cards:
-
-1. Identity across the full width.
-2. Humanity.
-3. Vitae and Willpower.
-4. Attributes split into Physical / Social / Mental.
-5. Skills.
-6. Disciplines and Powers grouped by Discipline.
-7. Clan Traits and Merits.
-8. Resources.
-9. Important Items and weapons/combat gear.
-10. Flaws, when present.
-
-Dots are used again in the review where they improve scanability.
-
-### Character details / equipment clarification
-
-- `Apparent Age` has contextual help explaining that it means how old the character looks; `Actual Age` is the chronological field.
-- Important Items use generic slots with a total count equal to the number of Lifepaths. Slots are not permanently tied one-to-one to specific Lifepaths, but RAW still says each item should fit the character's Lifepath background.
-- Important Items help explains the possible +1 die for creative/interesting use.
-- Weapons/combat gear are kept in a separate optional field. The supplied Alpha gives weapon categories but no fixed chargen weapon count.
-
-## Project house rule: Lifepath Skill Cap
+### Lifepath Skill Cap house rule
 
 RAW Alpha sets every Skill to a character-creation cap of 3. This generator intentionally uses:
 
@@ -76,21 +29,23 @@ RAW Alpha sets every Skill to a character-creation cap of 3. This generator inte
 
 The bonus applies even if no Lifepath dot was assigned to that Skill.
 
-## Focus interpretation used by this project
+### Focus interpretation
 
-The generator treats parenthetical Focuses printed beside Lifepath Skills as recommendations rather than mandatory values. Every Focus slot is chosen by the player. This matches the project decision after comparison with the Demiplane implementation.
+Parenthetical Focuses printed beside Lifepath Skills are recommendations rather than mandatory values. Every Focus slot is chosen by the player. RAW Focus thresholds remain 1 / 3 / 5.
 
-RAW Focus thresholds remain 1 / 3 / 5 and the Alpha's general Skill Focus lists remain examples.
+### Attribute allocation
 
-## Current vampire character-creation budgets
+Every Attribute begins at rating 1 for free. The category budgets are distributed above that baseline.
 
-- Neonate: Attributes 7/5/3 above the free 1-dot baseline; Discipline dots 3 + sire 1; 4 powers; 1 Merit; 2 Clan Traits; 8 free Skill dots; 3 free Resource dots; Max Dots 5; chargen Discipline max 5.
-- Ancilla: Attributes 8/6/4 above baseline; Discipline dots 5 + sire 1; 6 powers; 2 Merits; 3 Clan Traits; 8 free Skill dots; 5 free Resource dots; Max Dots 6; chargen Discipline max 6.
-- Elder: Attributes 9/7/5 above baseline; Discipline dots 7 + sire 1; 8 powers; 3 Merits; 4 Clan Traits; 8 free Skill dots; 7 free Resource dots; Max Dots 8; chargen Discipline max 8.
+- Neonate: Attributes 7/5/3; Max Dots 5.
+- Ancilla: Attributes 8/6/4; Max Dots 6.
+- Elder: Attributes 9/7/5; Max Dots 8.
 
-Every Attribute starts at rating 1 for free. The category budgets are distributed above that baseline.
+### Discipline Powers
 
-## Known Alpha source gaps
+The number of known Powers is a separate chargen budget from Discipline dots. A character may know more than one Power in a Discipline with rating 1, but every selected Power must have rank less than or equal to that Discipline rating.
+
+## Current Alpha source gaps
 
 - Several clans do not have complete entries in the supplied Alpha packet.
 - Blood Sorcery, Necromancy, Tellurgy, and Vicissitude appear in summaries but lack Chapter 5 power definitions in the supplied packet.
@@ -102,4 +57,4 @@ Every Attribute starts at rating 1 for free. The category budgets are distribute
 
 ## Deployment
 
-Upload the folder contents to any static web host or GitHub Pages. The service worker cache key is versioned as `vtm-v6-alpha-chargen-v0.6.1`.
+Upload the folder contents to any static web host or GitHub Pages. The service worker cache key is `vtm-v6-alpha-chargen-v0.7.0`.
