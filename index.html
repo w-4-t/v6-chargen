@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
-    <title>VTM V6 Alpha Character Generator</title>
+    <title>VTM V6 Alpha</title>
     <style>
       :root {
         color-scheme: dark;
@@ -1916,11 +1916,11 @@
     <div class="desktopShell">
       <aside class="leftNav">
         <div class="brand">
-          VTM V6 Alpha<br />Character Generator<small
-            >v0.8.1 · adaptive PWA</small
+          VTM V6 Alpha<br /><span data-i18n="s_8f7d030265a6"></span><small
+            >v0.10.0 · adaptive PWA</small
           >
         </div>
-        <div class="rawBadge">V6 Alpha · project house rules labelled</div>
+        <div class="rawBadge" data-i18n="s_edca59466b78"></div>
         <div class="navSteps" id="navSteps"></div>
         <div class="navActions">
           <div class="navActionEdge">
@@ -1928,17 +1928,13 @@
               class="btn langBtn"
               id="langToggleBtn"
               type="button"
-              title="Перемкнути українською"
-              aria-label="Перемкнути українською"
-            >
-              UA
-            </button>
-            <button class="btn danger" id="resetBtn">Reset character</button>
+            ></button>
+            <button class="btn danger" id="resetBtn" data-i18n="s_37f710d1e891"></button>
           </div>
           <div class="navActionPair">
-            <button class="btn" id="exportBtn">Export JSON</button>
+            <button class="btn" id="exportBtn" data-i18n="s_bc399052d420"></button>
             <label class="btn" style="text-align: center; cursor: pointer"
-              ><span id="importLabelText">Import JSON</span
+              ><span id="importLabelText" data-i18n="s_1a5894339f89"></span
               ><input
                 id="importFile"
                 type="file"
@@ -1951,8 +1947,8 @@
       <main class="main">
         <div class="mobileTop">
           <div class="mobileHead">
-            <div class="mobileTitle">VTM V6 Alpha Chargen</div>
-            <button class="btn mobileInfoBtn" id="mobileInfoTop">Info</button>
+            <div class="mobileTitle" data-i18n="s_268e54a290da"></div>
+            <button class="btn mobileInfoBtn" id="mobileInfoTop" data-i18n="s_4b631f698425"></button>
           </div>
           <div class="mobileProgress" id="mobileProgress"></div>
           <div class="mobileActions">
@@ -1960,19 +1956,16 @@
               class="btn langBtn"
               id="mobileLangToggleBtn"
               type="button"
-              title="Перемкнути українською"
-              aria-label="Перемкнути українською"
-            >
-              UA</button
-            ><button class="btn" id="mobileExportBtn">Export</button
+            ></button
+            ><button class="btn" id="mobileExportBtn" data-i18n="s_f3e4fadb9e37"></button
             ><label class="btn mobileImportLabel"
-              ><span id="mobileImportLabelText">Import</span
+              ><span id="mobileImportLabelText" data-i18n="s_d6fbc9d2bdd5"></span
               ><input
                 id="mobileImportFile"
                 type="file"
                 accept="application/json"
                 hidden /></label
-            ><button class="btn danger" id="mobileResetBtn">Reset</button>
+            ><button class="btn danger" id="mobileResetBtn" data-i18n="s_44c57abd888a"></button>
           </div>
         </div>
         <div class="mainCard" id="mainCard"></div>
@@ -1982,8 +1975,10 @@
         <div id="infoContent"></div>
       </aside>
     </div>
-    <script src="./data/v6.js"></script>
-    <script src="./data/v6_uk.js"></script>
+    <script src="./data/core.js"></script>
+    <script src="./data/en.js"></script>
+    <script src="./data/uk.js"></script>
+    <script src="./src/data.js"></script>
     <script src="./src/i18n.js"></script>
     <script src="./src/app.js"></script>
     <script>

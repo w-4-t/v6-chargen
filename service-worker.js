@@ -1,10 +1,12 @@
-const CACHE = "vtm-v6-alpha-chargen-v0.8.1";
+const CACHE = "vtm-v6-alpha-chargen-v0.10.0";
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./data/v6.js",
-  "./data/v6_uk.js",
+  "./data/core.js",
+  "./data/en.js",
+  "./data/uk.js",
+  "./src/data.js",
   "./src/i18n.js",
   "./src/app.js",
   "./icon-192.png",

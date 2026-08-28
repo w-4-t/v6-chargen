@@ -1,4 +1,4 @@
-# VTM V6 Alpha Character Generator — v0.8.1
+# VTM V6 Alpha Character Generator — v0.10.0
 
 Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 
@@ -8,24 +8,60 @@ Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 - Character-creation rules follow the V6 Alpha Player Packet unless a project interpretation or house rule is explicitly labelled.
 - No V5 / V5.5 hybrid rules are intentionally imported.
 
-## v0.8.1 — rules-reference localization fix
+## v0.10.0 — full data / locale separation
 
-### v0.8.1 fix
+This release completes the separation between machine rules, localized content, and application logic. English and Ukrainian content are independent locale packs that share only stable machine IDs. Application code no longer translates canonical English strings or scans rendered DOM text to find translations.
 
-The contextual rules panel renders long rules entries as separate paragraphs. In v0.8.0 the localization map paired the complete English and Ukrainian source strings, but the renderer split those strings before translation; multi-paragraph Powers, Clan text, and similar entries could therefore fall back to English paragraph-by-paragraph. v0.8.1 registers aligned paragraph pairs in addition to each complete rules string. Character data and EN/UA switching behavior are unchanged.
+### Runtime structure
 
-- `UA / EN` switches live without reloading the page or rebuilding character state.
-- Language preference is stored separately from character JSON. The same exported character file can be used in either language.
-- Ukrainian localization covers the generator UI and the rules content represented by the app: Attributes and rating descriptions, Skills and Focuses, Sire types, Lifepaths, Resources, Clans, Discipline descriptions and available Powers, Power metadata, Clan Traits, Merits, Natures, validation, contextual help, and Finish/review.
-- `data/v6_uk.js` mirrors the English rules-data tree so nested Powers, Traits, Merits, Focuses, and other entries can be paired recursively instead of relying on isolated string patches.
-- Power metadata such as Cost, Difficulty, Distance, Duration, and activation terms is localized.
-- Lifepath Focus recommendations and Resource labels are localized.
-- Defined VTM/game terms preserve terminological capitalization in Ukrainian when the English source uses capitalization as part of the term. Examples include `Kindred → Сородичі`, `Embrace → Обернення`, `Beast → Звір`, `Frenzy → Шаленство`, `Final Death → Остаточна Смерть`, and `Blood Bond → Кровний Зв’язок`.
-- Terms that become misleading or unnecessarily bulky when forced into Ukrainian can remain in source form in compact UI. Current examples include `Sire`, `Vitae`, `Duskborn`, `Oblivion`, `Vicissitude`, clan names, and several formal titles. Longer help text may retain an English term where cross-reference to the Alpha is useful.
-- Compact tiles avoid repetitive bilingual parentheses.
-- Current Ukrainian word choices are intentionally treated as provisional. A separate terminology audit is expected after the full localization pass; changing a translation does not require changing character-state IDs or JSON.
-- `Wealth` currently uses `Статки`, replacing the too-broad earlier `Добробут`.
-- Migration includes v0.7.0 and earlier supported builds. Focus selections are preserved for v0.5.0 and later; only older builds with the obsolete auto-Focus behavior clear Focus state during migration.
+- `data/core.js` — language-independent machine data only: stable IDs, tiers, dot budgets, caps, Discipline relationships, structured prerequisites, Focus references, Resource label keys, and other values used by chargen logic.
+- `data/en.js` — English rules/content pack and English UI string catalog.
+- `data/uk.js` — Ukrainian rules/content pack and Ukrainian UI string catalog. It uses the same stable IDs as the English pack; translated text is not used as an identifier.
+- `src/data.js` — generic data facade. It merges `core.js` with the active locale for rendering while preserving the same machine fields in every language.
+- `src/app.js` — chargen state, calculations, validation, event handling, and rendering. Rules checks operate on IDs and structured machine data instead of English names or translated strings. Static UI copy is requested only by stable text IDs; dynamic copy is requested only by message IDs.
+- `src/i18n.js` — generic key lookup and message interpolation. It contains no English-to-Ukrainian value map, no regex formatter, no DOM text walker, no Ukrainian copy, and no game-rule logic.
+- Static UI text lives under `strings.text` in each locale pack. Dynamic validation, progress, status, ARIA, budget, and mixed-value phrases live under `strings.messages`.
+- `src/data.js` owns generic locale/data lookup helpers, including cross-locale migration lookup for old Focus display strings. `src/app.js` does not hard-code `en` or `uk`.
+
+The old `data/v6.js`, `data/v6_uk.js`, and duplicated `v6_uk_full.json` data trees were removed.
+
+### Locale-independent character state
+
+Character JSON is now schema version 2.
+
+- Built-in Focus choices are stored as stable references such as `{ "ref": "running" }` instead of the displayed English/Ukrainian label.
+- User-entered Focuses remain explicit free text as `{ "custom": "..." }`.
+- Lifepath Resource details use stable `labelKey` identifiers rather than localized Resource labels.
+- v0.8.1 and earlier schema-version-1 state is migrated automatically when loaded or imported.
+
+This allows the same saved character to switch EN ↔ UA without changing rule identifiers or losing Focus/Resource associations.
+
+### Logic no longer parses display text
+
+The following locale/data dependencies were removed from chargen logic:
+
+- Attribute category checks against strings such as `"Physical"`.
+- Discipline lookup by localized Discipline name.
+- Merit/Clan Trait prerequisite parsing from English prose.
+- Sire Discipline eligibility hard-coded inside `app.js`.
+- Focus recommendation detection based on English phrases such as `"choose ..."`.
+- Lifepath Resource aggregation based on localized labels.
+- Translation by comparing rendered English strings with Ukrainian strings.
+- Locale-specific regex formatting of dynamic phrases.
+- DOM tree-walking to rewrite visible English text after rendering.
+
+Prerequisites are represented as structured requirements in `data/core.js`. Attribute/Resource categories and all relationships use stable IDs.
+
+### Verification
+
+Run:
+
+```text
+node tools/qa-data.cjs
+node tools/smoke-app.cjs
+```
+
+`qa-data.cjs` checks locale/core topology, verifies that locale overlays cannot override machine data, validates stable IDs and references, verifies EN/UA static-text and message-key parity, checks that every UI key used by the app exists in both locale packs, and rejects legacy value-based translation machinery. `smoke-app.cjs` executes the real locale engine and application with a minimal DOM harness in EN and UA, verifies keyed static/dynamic rendering, and verifies schema-v1 → schema-v2 Focus migration.
 
 ## Existing project decisions retained
 
@@ -65,4 +101,4 @@ The number of known Powers is a separate chargen budget from Discipline dots. A 
 
 ## Deployment
 
-Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.8.1`.
+Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.0`.

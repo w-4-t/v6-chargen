@@ -1,8 +1,15 @@
 (() => {
   "use strict";
-  const D = window.V6_DATA;
-  const STORAGE = "vtm_v6_alpha_chargen_v0_8_1";
+  const R = window.V6Data.core;
+  const D = window.V6Data.current;
+  const ATTR_CATEGORIES = ["physical", "social", "mental"];
+  const attrCategoryLabel = (id) => window.V6Data.categoryLabel("attributes", id);
+  const attrCategorySingularLabel = (id) =>
+    window.V6Data.locales[window.V6Data.getLocale()]?.categories?.attributeSingular?.[id] || attrCategoryLabel(id);
+  const resourceCategoryLabel = (id) => window.V6Data.categoryLabel("resources", id);
+  const STORAGE = "vtm_v6_alpha_chargen_v0_9_0";
   const LEGACY_STORAGE = [
+    "vtm_v6_alpha_chargen_v0_8_1",
     "vtm_v6_alpha_chargen_v0_8_0",
     "vtm_v6_alpha_chargen_v0_7_0",
     "vtm_v6_alpha_chargen_v0_6_1",
@@ -16,22 +23,14 @@
     "vtm_v6_alpha_chargen_v0_2_0",
     "vtm_v6_alpha_chargen_v0_1_0",
   ];
-  const STEPS = [
-    ["Creature", "What are you?"],
-    ["Clan", "Your Clan"],
-    ["Sire", "Sire & Generation"],
-    ["Lifepaths", "Your Lifepaths"],
-    ["Attributes", "Attributes"],
-    ["Skills", "Skills"],
-    ["Focuses", "Focuses"],
-    ["Powers", "Disciplines, Traits & Merits"],
-    ["Humanity", "Humanity & Nature"],
-    ["Resources", "Your Resources"],
-    ["Finish", "Finishing Touches"],
-  ];
+  const STEP_IDS = R.config.stepIds;
+  const stepText = (i) => {
+    const id = STEP_IDS[i];
+    return window.V6Data.locales[window.V6Data.getLocale()]?.interface?.steps?.[id] || { nav: id, title: id };
+  };
   const byId = (arr, id) => arr.find((x) => x.id === id);
-  const T = (s) =>
-    window.V6I18N?.getLocale() === "uk" ? window.V6I18N.tr(s) : String(s ?? "");
+  const S = (key) => window.V6I18N?.text?.(key) ?? String(key);
+  const M = (key, vars = {}) => window.V6I18N?.msg?.(key, vars) ?? String(key);
   const e = (s) =>
     String(s ?? "").replace(
       /[&<>'"]/g,
@@ -44,18 +43,15 @@
           '"': "&quot;",
         })[c],
     );
+  const L = (markup) =>
+    String(markup ?? "").replace(/\[\[(s_[0-9a-f]{12})\]\]/g, (_m, key) => e(S(key)));
   const dots = (n) => "●".repeat(Math.max(0, Number(n) || 0));
   const sum = (o) =>
     Object.values(o || {}).reduce((a, b) => a + (Number(b) || 0), 0);
-  const tierOf = () =>
-    state.creature.includes("elder")
-      ? "elder"
-      : state.creature.includes("ancilla")
-        ? "ancilla"
-        : "neonate";
+  const tierOf = () => creature()?.tier || "neonate";
   const tierRank = (t) => D.tierRank[t] || 0;
   const creature = () =>
-    byId(D.creatures, state.creature) || byId(D.creatures, "vampire_neonate");
+    byId(D.creatures, state.creature) || byId(D.creatures, R.config.defaultCreature);
   const attrById = (id) => byId(D.attributes, id),
     skillById = (id) => byId(D.skills, id),
     discById = (id) => byId(D.disciplines, id),
@@ -67,9 +63,9 @@
     const attrs = {};
     D.attributes.forEach((a) => (attrs[a.id] = 1));
     return {
-      schemaVersion: 1,
+      schemaVersion: 2,
       step: 0,
-      creature: "vampire_neonate",
+      creature: R.config.defaultCreature,
       young: false,
       clan: { id: null, choice: null, caitiffDisciplines: [] },
       sire: { type: null, relatedClan: null, bonusDiscipline: null },
@@ -135,8 +131,50 @@
   function save() {
     localStorage.setItem(STORAGE, JSON.stringify(state));
   }
+  function focusRefForLabel(skillId, value) {
+    return window.V6Data.focusRefForLabel(skillId, value);
+  }
+  function normalizeFocusEntry(skillId, value) {
+    if (value && typeof value === "object") {
+      if (typeof value.ref === "string" && value.ref) return { ref: value.ref };
+      if (typeof value.custom === "string" && value.custom.trim())
+        return { custom: value.custom.trim() };
+      return null;
+    }
+    const text = String(value || "").trim();
+    if (!text) return null;
+    const ref = focusRefForLabel(skillId, text);
+    return ref ? { ref } : { custom: text };
+  }
+  function migrateResourceDetailKeys(details) {
+    const out = { ...(details || {}) };
+    for (const locale of window.V6Data.localeIds()) {
+      const data = window.V6Data.forLocale(locale);
+      for (const lp of data.lifepaths || []) {
+        for (const r of lp.resources || []) {
+          const old = `${r.type}|${normalizeResourceLabel(r.label)}`;
+          const next = `${r.type}|${r.labelKey || ""}`;
+          if (old in out && !(next in out)) out[next] = out[old];
+        }
+      }
+    }
+    return out;
+  }
+  function migrateStateV1(old) {
+    const next = old && typeof old === "object" ? old : blankState();
+    next.schemaVersion = 2;
+    next.focuses = next.focuses || {};
+    for (const s of R.skills || []) {
+      const values = Array.isArray(next.focuses[s.id]) ? next.focuses[s.id] : [];
+      next.focuses[s.id] = values.map((v) => normalizeFocusEntry(s.id, v));
+    }
+    next.resources = next.resources || { free: [], details: {} };
+    next.resources.details = migrateResourceDetailKeys(next.resources.details);
+    return next;
+  }
   function normalizeState() {
-    if (!state || state.schemaVersion !== 1) state = blankState();
+    if (!state || ![1, 2].includes(Number(state.schemaVersion))) state = blankState();
+    if (Number(state.schemaVersion) === 1) state = migrateStateV1(state);
     if (!state.attributes?.ratings) state.attributes = blankState().attributes;
     D.attributes.forEach((a) => {
       if (!Number.isFinite(Number(state.attributes.ratings[a.id])))
@@ -163,14 +201,17 @@
     const arr = tierGenerations();
     if (!arr.includes(Number(state.generation))) state.generation = arr[0];
   }
+  function youngRuleApplies() {
+    return state.young && tierOf() === R.config.youngCharacter.tier;
+  }
   function lpCount() {
-    return state.young && tierOf() === "neonate" ? 1 : creature().lifepaths;
+    return youngRuleApplies() ? R.config.youngCharacter.lifepaths : creature().lifepaths;
   }
   function lpSkillBudget() {
-    return state.young && tierOf() === "neonate" ? 8 : 5;
+    return youngRuleApplies() ? R.config.youngCharacter.skillDots : 5;
   }
   function lpResourceBudget() {
-    return state.young && tierOf() === "neonate" ? 5 : 3;
+    return youngRuleApplies() ? R.config.youngCharacter.resourceDots : 3;
   }
   function ensureLpSlots() {
     const n = lpCount();
@@ -208,13 +249,15 @@
     const c = x.custom || {};
     return {
       id: "__custom__",
-      name: c.name || "Custom Lifepath",
+      name: c.name || S("s_be07deb375e0"),
       description: c.description || "",
       type: "custom",
       tier: "custom",
       skills: (c.skills || []).map((id) => ({ skill: id, focus: "" })),
-      resources: (c.resources || []).map((r) => ({
+      resources: (c.resources || []).map((r, i) => ({
+        id: `custom:${i}`,
         type: r.type,
+        labelKey: `custom:${normalizeResourceLabel(r.label)}`,
         label: r.label || "",
       })),
     };
@@ -243,7 +286,7 @@
     return out;
   }
   function skillCap(id) {
-    return 3 + lifepathCapSources(id).length;
+    return R.config.skillBaseChargenCap + lifepathCapSources(id).length;
   }
   function finalSkill(id) {
     return lifepathSkillRating(id) + Number(state.freeSkills[id] || 0);
@@ -280,7 +323,7 @@
   }
   function focusThresholds(id) {
     const n = finalSkill(id);
-    return [1, 3, 5].filter((t) => n >= t);
+    return R.config.focusThresholds.filter((t) => n >= t);
   }
   function requiredFocuses(id) {
     return focusThresholds(id).length;
@@ -293,13 +336,26 @@
   }
   function ensureFocusSlots() {
     state.focuses = state.focuses || {};
-    D.skills.forEach((s) => {
+    R.skills.forEach((s) => {
       const slots = focusSlotDefs(s.id),
         old = Array.isArray(state.focuses[s.id]) ? state.focuses[s.id] : [],
         a = [];
-      slots.forEach((slot, i) => (a[i] = String(old[i] || "").trim()));
+      slots.forEach((slot, i) => {
+        a[i] = normalizeFocusEntry(s.id, old[i]);
+      });
       state.focuses[s.id] = a;
     });
+  }
+  function focusRefLabel(skillId, ref) {
+    return window.V6Data.focusLabel(skillId, ref);
+  }
+  function focusEntryLabel(skillId, entry) {
+    if (!entry) return "";
+    if (entry.ref) return focusRefLabel(skillId, entry.ref);
+    return String(entry.custom || "");
+  }
+  function focusEntryFilled(entry) {
+    return Boolean(entry?.ref || String(entry?.custom || "").trim());
   }
   function lifepathFocusRecommendations(id) {
     const out = [];
@@ -308,29 +364,25 @@
         x = lpSkillEntry(d, id);
       if (!d || !x) return;
       const values = [];
-      (x.focusOptions || []).forEach((v) => {
-        if (v && !values.includes(v)) values.push(v);
-      });
-      if (
-        x.focus &&
-        !/^choose /i.test(String(x.focus).trim()) &&
-        !values.includes(x.focus)
-      )
-        values.push(x.focus);
+      for (const ref of x.recommendationIds || []) {
+        const label = x.recommendationLabels?.[ref] || focusRefLabel(id, ref);
+        if (label && !values.some((v) => v.ref === ref)) values.push({ ref, label });
+      }
       if (values.length) out.push({ source: d.name, values });
     });
     return out;
   }
   function rawFocusSuggestions(id) {
-    return (skillById(id)?.focuses || []).map((f) => f.name).filter(Boolean);
+    return (skillById(id)?.focuses || [])
+      .map((f) => ({ ref: f.id, label: f.name }))
+      .filter((x) => x.ref && x.label);
   }
   function lifepathFocusLabel(x) {
     if (!x) return "";
-    if (Array.isArray(x.focusOptions) && x.focusOptions.length)
-      return x.focusOptions.join(" / ");
-    if (x.focusPrompt || /^choose /i.test(String(x.focus || "").trim()))
-      return "";
-    return x.focus || "";
+    const labels = (x.recommendationIds || [])
+      .map((ref) => x.recommendationLabels?.[ref] || focusRefLabel(x.skill, ref))
+      .filter(Boolean);
+    return labels.length ? labels.join(" / ") : "";
   }
   function clanDisciplineIds() {
     const c = clanById(state.clan.id);
@@ -352,17 +404,8 @@
   function sireAllowedDisciplines() {
     const s = byId(D.sires, state.sire.type);
     if (!s) return [];
-    if (["adoptive_sire", "brood_child"].includes(s.id))
-      return allClanPossibleDiscs(state.sire.relatedClan);
-    const map = {
-      caring_sire: ["fortitude", "potence", "presence"],
-      cruel_sire: ["dominate", "fortitude", "obfuscate"],
-      manipulative_sire: ["dominate", "potence", "presence"],
-      secretive_sire: ["auspex", "celerity", "obfuscate"],
-      unknown_sire: ["celerity", "fortitude", "potence"],
-      vigilant_sire: ["auspex", "dominate", "fortitude"],
-    };
-    return map[s.id] || [];
+    if (s.relation === "clan") return allClanPossibleDiscs(state.sire.relatedClan);
+    return s.allowedDisciplines || [];
   }
   function disciplineRating(id) {
     return (
@@ -412,7 +455,7 @@
   }
   function roleBudget(cat) {
     const c = creature();
-    const role = state.attributes.roles[cat.toLowerCase()];
+    const role = state.attributes.roles[cat];
     return role === "primary"
       ? c.attributeBudgets[0]
       : role === "secondary"
@@ -440,13 +483,7 @@
     return creature().maxDots || 5;
   }
   function tierDisciplineCaps() {
-    return (
-      {
-        neonate: { clan: 5, nonClan: 3 },
-        ancilla: { clan: 7, nonClan: 5 },
-        elder: { clan: 8, nonClan: 7 },
-      }[tierOf()] || { clan: 5, nonClan: 3 }
-    );
+    return R.config.disciplineCapsByTier[tierOf()] || R.config.disciplineCapsByTier.neonate;
   }
   function freeResourceSpent() {
     return state.resources.free.reduce((n, r) => n + Number(r.dots || 0), 0);
@@ -464,6 +501,7 @@
           out.push({
             source: d.name,
             type: r.type,
+            labelKey: r.labelKey || "",
             label: r.label || "",
             dots: n,
           });
@@ -477,17 +515,18 @@
       .replace(/\s+/g, " ")
       .toLowerCase();
   }
-  function resourceKey(type, label) {
-    return `${type}|${normalizeResourceLabel(label)}`;
+  function resourceKey(type, labelKey) {
+    return `${type}|${String(labelKey || "")}`;
   }
   function aggregatedLifepathResources() {
     const map = new Map();
     for (const r of sourceResourceEntries()) {
-      const key = resourceKey(r.type, r.label);
+      const key = resourceKey(r.type, r.labelKey);
       if (!map.has(key))
         map.set(key, {
           key,
           type: r.type,
+          labelKey: r.labelKey || "",
           label: r.label || "",
           dots: 0,
           sources: [],
@@ -509,54 +548,30 @@
     return byId(D.resourceTypes, id);
   }
 
-  function prereqEligible(text) {
-    text = String(text || "")
-      .replace(/\s+/g, " ")
-      .trim();
-    const tr = tierRank(tierOf());
-    if (/Ancilla or stronger/i.test(text) && tr < 2) return false;
-    if (/Neonate or stronger/i.test(text) && tr < 1) return false;
-    const attrMatch = text.match(/At least\s+(\d+)\s+dots?\s+in\s+Stamina/i);
-    if (
-      attrMatch &&
-      Number(state.attributes.ratings.stamina) < Number(attrMatch[1])
-    )
-      return false;
-    const either = [
-      ...text.matchAll(
-        /(?:at least\s+)?(\d+)\s+dots?\s+in\s+either\s+([A-Za-z ]+?)\s+or\s+([A-Za-z ]+?)(?:\.|$)/gi,
-      ),
-    ];
-    for (const m of either) {
-      const n = Number(m[1]),
-        a = discIdByName(m[2]),
-        b = discIdByName(m[3]);
-      if (Math.max(disciplineRating(a), disciplineRating(b)) < n) return false;
+  function requirementsEligible(req) {
+    const r = req || {};
+    if (Array.isArray(r.creatureKinds) && r.creatureKinds.length) {
+      if (!r.creatureKinds.includes(creature().kind)) return false;
     }
-    let stripped = text.replace(
-      /(?:at least\s+)?\d+\s+dots?\s+in\s+either\s+[A-Za-z ]+?\s+or\s+[A-Za-z ]+?(?:\.|$)/gi,
-      "",
-    );
-    const reqs = [
-      ...stripped.matchAll(
-        /(?:At least\s+)?(\d+)\s+dots?\s+in\s+([A-Za-z ]+?)(?=\s+and|\.|$)/gi,
-      ),
-    ];
-    for (const m of reqs) {
-      const id = discIdByName(m[2]);
-      if (id && disciplineRating(id) < Number(m[1])) return false;
+    for (const x of r.attributes || []) {
+      if (Number(state.attributes.ratings[x.id] || 0) < Number(x.min || 0))
+        return false;
+    }
+    for (const x of r.all || []) {
+      if (disciplineRating(x.id) < Number(x.min || 0)) return false;
+    }
+    for (const x of r.any || []) {
+      const best = Math.max(
+        0,
+        ...(x.disciplines || []).map((id) => disciplineRating(id)),
+      );
+      if (best < Number(x.min || 0)) return false;
     }
     return true;
   }
-  function discIdByName(name) {
-    const n = String(name || "")
-      .trim()
-      .toLowerCase();
-    return D.disciplines.find((d) => d.name.toLowerCase() === n)?.id || null;
-  }
   function traitEligible(t) {
     return (
-      tierRank(tierOf()) >= tierRank(t.tier) && prereqEligible(t.prerequisites)
+      tierRank(tierOf()) >= tierRank(t.tier) && requirementsEligible(t.requirements)
     );
   }
 
@@ -568,81 +583,81 @@
   function infoForStep(i) {
     const defs = [
       {
-        kicker: "Step 1 · Player Packet",
-        title: "What Are You?",
+        kicker: S("s_6b74730c1fa8"),
+        title: S("s_e458f8c1f366"),
         summary:
-          "Choose the vampire tier. The tier sets maximum dots and the character-creation budgets for Lifepaths, Attributes, Disciplines, powers, Merits, Clan Traits, Skills, and Resources.",
-        body: "This build focuses on Vampire Neonate, Ancilla, and Elder. Ghoul and Duskborn remain outside the enabled flow for now.",
+          S("s_7a86e32b667f"),
+        body: S("s_0bce06af27e4"),
       },
       {
-        kicker: "Step 2 · Player Packet",
-        title: "Your Clan",
+        kicker: S("s_93e867006f47"),
+        title: S("s_c0dce5113590"),
         summary:
-          "Clan determines your curse, Beast/frenzy expression, clan Disciplines, and available Clan Traits.",
-        body: "Select a clan, then resolve any required variable Discipline immediately. For Lasombra this means choosing Corruption or Oblivion before Discipline-dot allocation.",
+          S("s_5eba94f8eb0c"),
+        body: S("s_f968928dd6a6"),
       },
       {
-        kicker: "Step 3 · Player Packet",
-        title: "Sire & Generation",
+        kicker: S("s_c84165902437"),
+        title: S("s_91086a4d7284"),
         summary:
-          "Your sire type grants 1 additional Discipline dot. Generation places you in a power category and sets the generation modifier.",
-        body: "The Storyteller typically chooses generation. Neonates are 13th–11th generation, Ancillae 10th–9th, and Elders 8th–6th in the supplied Alpha rules.",
+          S("s_4c4391d44b76"),
+        body: S("s_3a22a44e5401"),
       },
       {
-        kicker: "Step 4 · Player Packet",
-        title: "Lifepaths",
+        kicker: S("s_0447f8fce29d"),
+        title: S("s_35136d138aa4"),
         summary:
-          "Lifepaths represent past professions, identities, and roles. Each Lifepath gives Skill and Resource dots.",
-        body: `Each Lifepath normally grants 5 Skill dots among its listed Skills and 3 Resource dots among its listed Resources. ${D.lifepathCompetence}`,
+          S("s_0c8d307769e5"),
+        body: `${S("s_62afcf0ac07b")} ${D.lifepathCompetence}`,
       },
       {
-        kicker: "Step 5 · Player Packet",
-        title: "Attributes",
+        kicker: S("s_888cbc4ee772"),
+        title: S("s_a6652617f2c7"),
         summary:
-          "Attributes define the character’s potential in Physical, Social, and Mental categories.",
-        body: "Assign primary, secondary, and tertiary category budgets. Each Attribute begins at 1. Use the Info button to read what each rating means; changing dots on mobile no longer opens the help drawer automatically.",
+          S("s_c863282730d9"),
+        body: S("s_4b0931b0a70e"),
       },
       {
-        kicker: "Step 5 · Player Packet + house rule",
-        title: "Skills",
+        kicker: S("s_0af602e1cfbd"),
+        title: S("s_e09212c7d3ea"),
         summary:
-          "Skills define learned competency. Lifepaths contribute dots first, then you distribute the free Skill dots from the tier budget.",
-        body: "House rule: the base chargen Skill cap is 3, and each selected Lifepath that lists a Skill raises that Skill’s cap by +1, whether or not a Lifepath dot was assigned to it. Focus selection is handled on the next page.",
+          S("s_95dd68b6f8d5"),
+        body: S("s_75e4b6763084"),
       },
       {
-        kicker: "Step 5 · Player Packet",
-        title: "Focuses",
+        kicker: S("s_888cbc4ee772"),
+        title: S("s_7e5ef51d0b0a"),
         summary:
-          "A Skill has one Focus at rating 1, a second at 3, and a third at 5. Rating 2 therefore still has exactly one Focus.",
-        body: "All Focus slots are player choices. Parenthetical Focuses printed in selected Lifepaths are shown as recommendations during selection, alongside the Skill’s RAW example Focuses. They never lock or auto-fill a Focus, and you may type another relevant Focus.",
+          S("s_276ab8afd966"),
+        body: S("s_9d3594c5c91c"),
       },
       {
-        kicker: "Step 6 · Player Packet",
-        title: "Disciplines, Clan Traits & Merits",
+        kicker: S("s_f20e8a60f277"),
+        title: S("s_185385a394e5"),
         summary:
-          "Discipline dots unlock powers by rank. Clan Traits and Merits provide distinctive passive or activated abilities.",
-        body: "Choose the exact number of powers, Clan Traits, and Merits from the Dot Distribution table. A power’s rank cannot exceed your dots in its Discipline. Prerequisites are enforced when the Alpha text provides them.",
+          S("s_24e8ebf0392e"),
+        body: S("s_2279914d74bc"),
       },
       {
-        kicker: "Step 7 · Player Packet",
-        title: "Humanity Scale & Nature",
+        kicker: S("s_9451b2ae56ee"),
+        title: S("s_423845be217f"),
         summary:
-          "A vampire begins balanced in the center of the seven-position Humanity Scale. Nature defines the mortal axis and its outburst.",
-        body: "Ancillae may begin at stage 1 toward either side if the Storyteller chooses an unbalanced beginning. Elders may begin at stage 2 toward either side.",
+          S("s_294f11225936"),
+        body: S("s_9361e50b0341"),
       },
       {
-        kicker: "Step 8 · Player Packet",
-        title: "Resources",
+        kicker: S("s_81a164992cdb"),
+        title: S("s_87df60de337f"),
         summary:
-          "Resources are Physical Assets, Social Assets, and Wealth. Lifepaths grant Resource dots; the Dot Distribution table grants additional free Resource dots.",
+          S("s_1d51847696ab"),
         body: D.resourceRuleText,
       },
       {
-        kicker: "Step 9 · Player Packet",
-        title: "Finishing Touches",
+        kicker: S("s_d7fdd44e17fd"),
+        title: S("s_576d45922f56"),
         summary:
-          "Calculate Vitae and Willpower, then define identity details, important items, and optional Flaws.",
-        body: "Vitae Maximum = 10 + Stamina. Willpower Maximum = 5 + Composure + Resolve. You receive one additional important item per Lifepath, provided it fits that Lifepath. Flaws have no fixed mechanical bonus or penalty in the Alpha packet.",
+          S("s_af96fe7898ac"),
+        body: S("s_d6f6623ba186"),
       },
     ];
     return defs[i];
@@ -650,82 +665,82 @@
   function infoAttribute(id) {
     const a = attrById(id);
     return {
-      kicker: `${a.category} Attribute`,
+      kicker: M("attributeKicker", { category: attrCategorySingularLabel(a.category) }),
       title: a.name,
       summary: a.description,
       meta: [
-        ["Current rating", String(state.attributes.ratings[id])],
-        ["Tier Max Dots", String(attrMax())],
-        ["Highest legal now", String(maxLegalAttrRating(a))],
+        [S("s_d917a6a13dfc"), String(state.attributes.ratings[id])],
+        [S("s_0e774a36d81a"), String(attrMax())],
+        [S("s_002aec72fe56"), String(maxLegalAttrRating(a))],
         [
-          "Category allocation",
-          `${categorySpent(a.category)} / ${roleBudget(a.category)} distributed`,
+          S("s_3f80363119b9"),
+          M("distributed", { used: categorySpent(a.category), total: roleBudget(a.category) }),
         ],
-        ["Final category total", String(categorySum(a.category))],
+        [S("s_a2221d5d58ed"), String(categorySum(a.category))],
       ],
       ratings: a.ratings,
       maxRating: attrMax(),
       currentRating: Number(state.attributes.ratings[id]),
       body: (a.mechanics || []).join("\n\n"),
-      source: "Player Packet · Step 1 + Step 5: Maximum Dots and Attributes",
+      source: S("s_2793aab3b7f2"),
     };
   }
   function infoSkill(id) {
     const s = skillById(id),
       caps = lifepathCapSources(id);
     return {
-      kicker: "Skill",
+      kicker: S("s_ec9f630c8693"),
       title: s.name,
       summary: s.description,
       meta: [
-        ["Current rating", String(finalSkill(id))],
-        ["Chargen cap", String(skillCap(id))],
+        [S("s_d917a6a13dfc"), String(finalSkill(id))],
+        [S("s_e5d078fd7ca2"), String(skillCap(id))],
         [
-          "Lifepath cap bonus",
+          S("s_5deaef543a60"),
           caps.length ? `+${caps.length} · ${caps.join(" · ")}` : "—",
         ],
-        ["Focus slots", String(requiredFocuses(id))],
+        [S("s_a218e1d22bd1"), String(requiredFocuses(id))],
       ],
-      body: `The Alpha packet provides a Skill description and example Focuses, but no rating-by-rating Skill scale comparable to Attributes.\n\n${(s.focuses || []).map((f) => `${f.name}: ${f.description}`).join("\n\n")}`,
+      body: `${S("s_e2471d3d6c65")}\n\n${(s.focuses || []).map((f) => `${f.name}: ${f.description}`).join("\n\n")}`,
       source:
-        "Player Packet · Step 5: Skills & Focuses · cap modified by project house rule",
+        S("s_f0fca5da9b18"),
     };
   }
   function infoClan(id) {
     const c = clanById(id);
     return {
       kicker: c.complete
-        ? "Clan · Alpha entry complete"
-        : "Clan · Alpha entry incomplete",
+        ? S("s_50c5a0f29d19")
+        : S("s_310f416783ae"),
       title: c.name,
       summary: c.description,
       meta: [
-        ["Disciplines", c.disciplineText],
-        ["Curse", c.curseName],
-        ["Frenzy", c.frenzyName],
+        [S("s_3ed4ae577398"), c.disciplineText],
+        [S("s_0b3d98d5a8a2"), c.curseName],
+        [S("s_c095734e905e"), c.frenzyName],
       ],
       body: [c.overview, c.beastText, c.curseText, c.frenzyText]
         .filter(Boolean)
         .join("\n\n"),
-      source: "Player Packet · Chapter 3: The Clans",
+      source: S("s_a9c6ab0505df"),
     };
   }
   function infoLp(slot) {
     const d = lpDef(slot);
     if (!d) return infoForStep(3);
     return {
-      kicker: "Lifepath",
+      kicker: S("s_51a33f5c1e2e"),
       title: d.name,
       summary: d.description,
       meta: [
         [
-          "Skill dots",
+          S("s_f3310e5bbc05"),
           `${sum(state.lifepaths[slot].skillDots)} / ${lpSkillBudget()}`,
         ],
-        ["Resource dots", `${lpResourceSpent(slot)} / ${lpResourceBudget()}`],
+        [S("s_ab3884347a09"), `${lpResourceSpent(slot)} / ${lpResourceBudget()}`],
       ],
-      body: `Skills: ${(d.skills || []).map((x) => skillById(x.skill)?.name + (lifepathFocusLabel(x) ? ` (suggested Focus: ${lifepathFocusLabel(x)})` : "")).join(", ")}\n\nResources: ${(d.resources || []).map((x) => (resourceType(x.type)?.name || x.type) + (x.label ? `: ${x.label}` : "")).join(", ")}\n\n${D.lifepathCompetence}`,
-      source: "Player Packet · Step 4: Lifepaths",
+      body: `${M("lifepathSkillsBody", { skills: (d.skills || []).map((x) => lifepathFocusLabel(x) ? M("lifepathSuggestedFocus", { skill: skillById(x.skill)?.name || x.skill, focus: lifepathFocusLabel(x) }) : (skillById(x.skill)?.name || x.skill)).join(", ") })}\n\n${M("lifepathResourcesBody", { resources: (d.resources || []).map((x) => (resourceType(x.type)?.name || x.type) + (x.label ? `: ${x.label}` : "")).join(", ") })}\n\n${D.lifepathCompetence}`,
+      source: S("s_a23c10b98141"),
     };
   }
   function infoPower(did, pid) {
@@ -733,124 +748,124 @@
       p = d?.powers.find((x) => x.id === pid);
     if (!p) return infoForStep(7);
     return {
-      kicker: `${d.name} · ${p.rank}-dot ${p.category}`,
+      kicker: M("disciplinePowerKicker", { discipline: d.name, rank: p.rank, category: p.category }),
       title: p.name,
-      summary: "Discipline Power",
+      summary: S("s_baec6cbbd048"),
       meta: [
-        ["Discipline", d.name],
-        ["Activate", p.activate || "—"],
-        ["Attribute", p.attribute || "—"],
-        ["Cost", p.cost || "—"],
-        ["Difficulty", p.difficulty || "—"],
-        ["Distance", p.distance || "—"],
-        ["Duration", p.duration || "—"],
+        [S("s_14877e80cbce"), d.name],
+        [S("s_92ef08325a48"), p.activate || "—"],
+        [S("s_a086d942884a"), p.attribute || "—"],
+        [S("s_64ae43e8fe76"), p.cost || "—"],
+        [S("s_7945d3c8f7a0"), p.difficulty || "—"],
+        [S("s_423208095dd7"), p.distance || "—"],
+        [S("s_1370004da76f"), p.duration || "—"],
       ],
       body: p.text,
-      source: `Player Packet · Chapter 5: ${d.name}`,
+      source: M("chapter5Source", { discipline: d.name }),
     };
   }
   function infoDiscipline(id) {
     const d = discById(id);
     return {
-      kicker: "Discipline",
+      kicker: S("s_14877e80cbce"),
       title: d.name,
       summary: d.description,
       meta: [
-        ["Current rating", String(disciplineRating(d.id))],
-        ["Alpha powers", String(d.powers.length)],
+        [S("s_d917a6a13dfc"), String(disciplineRating(d.id))],
+        [S("s_2bd9ab68600c"), String(d.powers.length)],
       ],
       body: d.powers.length
-        ? "Powers are listed by rank. Open an individual power for activation, cost, Difficulty, distance, duration, and full rules text."
-        : "The supplied Alpha packet lists this Discipline in clan summaries but does not provide Chapter 5 power definitions for it.",
-      source: "Player Packet · Chapter 5: Powers of the Blood",
+        ? S("s_6d467bbf24d9")
+        : S("s_91f12d9e6b85"),
+      source: S("s_e1543c54dcfc"),
     };
   }
   function infoTrait(t) {
     return {
-      kicker: `Clan Trait · ${t.tier}`,
+      kicker: M("clanTraitKicker", { tier: t.tier }),
       title: t.name,
-      summary: `Prerequisites: ${t.prerequisites}`,
+      summary: M("prerequisites", { value: t.prerequisites }),
       body: t.text,
-      source: "Player Packet · Chapter 3: The Clans",
+      source: S("s_a9c6ab0505df"),
     };
   }
   function infoMerit(m) {
     return {
-      kicker: "Merit",
+      kicker: S("s_56005f735049"),
       title: m.name,
       summary: m.summary,
-      meta: [["Prerequisites", m.prerequisites || "—"]],
+      meta: [[S("s_eed036e414a3"), m.prerequisites || "—"]],
       body: m.text,
-      source: "Player Packet · Step 6: Merits",
+      source: S("s_a930af0fa76c"),
     };
   }
   function infoNature(n) {
     return {
-      kicker: "Nature",
+      kicker: S("s_bddc7adb1204"),
       title: n.name,
       summary: n.summary,
       body: n.text,
-      source: "Player Packet · Step 7: Humanity Scale and Your Nature",
+      source: S("s_e90e12240c44"),
     };
   }
   function infoReviewTier() {
     const c = creature();
     return {
-      kicker: "Tier of Play",
+      kicker: S("s_0cb84c5dbd1e"),
       title: c.name,
       summary:
-        "The selected vampire tier sets character-creation budgets and maximum ratings.",
+        S("s_0ad43f5d6677"),
       meta: [
-        ["Maximum Dots", String(c.maxDots)],
-        ["Maximum Discipline at chargen", String(c.maxDisciplineDots)],
-        ["Lifepaths", String(lpCount())],
+        [S("s_23423b80c319"), String(c.maxDots)],
+        [S("s_b672cc452b9f"), String(c.maxDisciplineDots)],
+        [S("s_35136d138aa4"), String(lpCount())],
       ],
-      body: "Tier determines the scale of the character and the chargen budgets used throughout this generator. The sidebar and each allocation step apply the selected tier automatically.",
-      source: "Player Packet · Step 1: What Are You?",
+      body: S("s_6be9c5fe6ad8"),
+      source: S("s_b16d86448469"),
     };
   }
   function infoReviewGeneration() {
     return {
-      kicker: "Generation",
-      title: `Generation ${state.generation}`,
+      kicker: S("s_8d441fb5f62f"),
+      title: M("generation", { generation: state.generation }),
       summary:
-        "Generation measures how far the vampire is descended from the First Vampire.",
-      meta: [["Generation Modifier", String(generationModifier())]],
-      body: "Lower generations have stronger blood. Generation Modifier is used by multiple blood- and generation-related rules. The allowed generation range depends on the selected tier.",
-      source: "Player Packet · Step 3: Generation",
+        S("s_a9dc68728a37"),
+      meta: [[S("s_7fcd0b0c2ed7"), String(generationModifier())]],
+      body: S("s_ee4abcdc8b43"),
+      source: S("s_a7cedb33ba16"),
     };
   }
   function infoReviewSire() {
     const sire = byId(D.sires, state.sire.type);
     return {
-      kicker: "Sire Type",
-      title: sire?.name || "Sire",
+      kicker: S("s_927b41aad7da"),
+      title: sire?.name || S("s_0a2795b612ad"),
       summary:
         sire?.description ||
-        "The vampire relationship that shaped the character’s early nights.",
+        S("s_d9feb2156cb1"),
       meta: [
         [
-          "Bonus Discipline",
+          S("s_923461b005c9"),
           state.sire.bonusDiscipline
             ? discById(state.sire.bonusDiscipline)?.name || "—"
             : "—",
         ],
       ],
       body: sire?.discipline
-        ? `This Sire type grants: ${sire.discipline}. The selected bonus dot is already included in the Discipline rating and cannot be removed during chargen.`
-        : "The Sire step determines the bonus Discipline dot.",
-      source: "Player Packet · Step 3: Your Sire and Generation",
+        ? M("sireGrantInfo", { discipline: sire.discipline })
+        : S("s_3db4351ea582"),
+      source: S("s_a682be9fd0ef"),
     };
   }
   function infoReviewLifepaths() {
     const names = state.lifepaths.map((_, i) => lpDef(i)?.name).filter(Boolean);
     return {
-      kicker: "Lifepaths",
-      title: "Selected Lifepaths",
-      summary: names.join(" · ") || "No Lifepaths selected",
-      meta: [["Count", String(names.length)]],
-      body: `Lifepaths represent major roles and experiences from the character’s past. They grant Skill and Resource allocations and can also establish suggested Focuses.\n\n${D.lifepathCompetence}`,
-      source: "Player Packet · Step 4: Lifepaths",
+      kicker: S("s_35136d138aa4"),
+      title: S("s_fb8f768276ea"),
+      summary: names.join(" · ") || S("s_2843922e9869"),
+      meta: [[S("s_66e12969c225"), String(names.length)]],
+      body: `${S("s_48865785331d")}\n\n${D.lifepathCompetence}`,
+      source: S("s_a23c10b98141"),
     };
   }
   function infoReviewHumanity() {
@@ -858,97 +873,97 @@
       humanityPositions().find((x) => x.v === state.humanity.position)?.l ||
       "—";
     return {
-      kicker: "Humanity Scale",
+      kicker: S("s_b283d8b5f50f"),
       title: pos,
       summary:
-        "The Humanity Scale tracks the character between Beast-driven and mortal impulses.",
-      body: "The starting position depends on tier and Storyteller options. Nature represents the mortal axis that continues to pull on the character. Open the Nature entry separately for its specific rules text.",
-      source: "Player Packet · Step 7: Humanity Scale and Nature",
+        S("s_e2d50e533bec"),
+      body: S("s_dcecd1fd7253"),
+      source: S("s_9847b7a9bc31"),
     };
   }
   function infoApparentAge() {
     return {
-      kicker: "Character Detail",
-      title: "Apparent Age",
-      summary: "How old or young the character looks.",
-      body: "Vampires stop aging when they are Embraced. Apparent Age is the age someone would estimate from the character’s visible appearance. For a vampire that appearance is normally the body preserved from the Embrace, but the field asks how old the character looks rather than asking for the exact age-at-Embrace number. Actual Age is the chronological field: how old the character really is, how old they were at the Embrace, and how long ago that was.",
-      source: "Player Packet · Step 9: Character Details",
+      kicker: S("s_29a1bcad04d0"),
+      title: S("s_ca051f59e015"),
+      summary: S("s_7d9fef6db018"),
+      body: S("s_1e875593c6d5"),
+      source: S("s_cfa83195d1a7"),
     };
   }
   function infoImportantItems() {
     return {
-      kicker: "Step 8 · Equipment",
-      title: "Important Items",
+      kicker: S("s_035c7abf4d6e"),
+      title: S("s_f836fce0ec05"),
       summary:
-        "A short list of key objects the character carries that may matter during play.",
+        S("s_c3d35b2b566a"),
       meta: [
-        ["Baseline gear", "ID, cellphone, and keys to the haven are assumed"],
-        ["Allowance", "One additional Important Item per Lifepath"],
+        [S("s_d8a235db08cc"), S("s_f942c3fc5495")],
+        [S("s_0fa0f7ae68ce"), S("s_c146a87f96a2")],
       ],
-      body: "RAW says each additional Important Item must fit the character’s Lifepath background. The rule limits the number of items by the number of Lifepaths; it does not require a permanent one-to-one slot assignment to a particular Lifepath. If an Important Item is used creatively or interestingly during a test, the Storyteller might award +1 die. Important Items are therefore practical narrative equipment with a possible situational bonus, not a Touchstone-style relationship mechanic.\n\nWeapons are described separately. The Alpha gives weapon categories and says to work with the Storyteller to decide which weapon or weapons suit the character; it does not state a fixed chargen weapon count.",
-      source: "Player Packet · Step 8: Important Items and Weapons",
+      body: S("s_9005943434bf"),
+      source: S("s_97ba9d01b175"),
     };
   }
   function infoWeapons() {
     return {
-      kicker: "Step 8 · Equipment",
-      title: "Weapons",
+      kicker: S("s_035c7abf4d6e"),
+      title: S("s_f32d0645a833"),
       summary:
-        "Weapons use broad categories that determine base damage and effective distance.",
+        S("s_8390e618e362"),
       meta: [
-        ["Light", "Damage 2 · Close/Medium · +1 die to hide"],
-        ["Medium", "Damage 3 · Close/Long"],
-        ["Heavy", "Damage 4 · Close/Far Away · −1 die to hide"],
+        [S("s_a36ef8aba229"), S("s_7ba2335f1684")],
+        [S("s_d404968ea90b"), S("s_63f6d0e7995b")],
+        [S("s_84d7adf04f3b"), S("s_a9bd860d67e4")],
       ],
-      body: "Unarmed attacks deal damage equal to half Strength and have Close distance. The weapon categories are deliberately loose. RAW says to work with the Storyteller to decide which weapon or weapons suit the character and how they are handled in play. The supplied Alpha does not state a fixed number of weapons granted during character creation.",
-      source: "Player Packet · Step 8: Weapons",
+      body: S("s_a7d43bc86fa5"),
+      source: S("s_a23024858339"),
     };
   }
 
   function resourceGuidance(id) {
     const map = {
       haven:
-        "Each dot increases the Haven’s size and security and raises the Difficulty for others trying to find or break into it. The Alpha does not give a fixed square-meter or security-system table by rating.",
+        S("s_e2b1c8926c84"),
       property:
-        "Each dot increases the size, number, and overall value of your holdings, ranging from a handful of dilapidated fixer-uppers toward a massive downtown office tower.",
+        S("s_60ce6365fd66"),
       repository:
-        "Each dot increases the size and complexity of the collection, from a modest collection with limited items toward a hoard that would make a museum jealous. For a weapons Repository, RAW does not map dots to specific weapon tiers or prices.",
+        S("s_e48f36d289d3"),
       vehicle:
-        "Each dot increases the vehicle’s size, value, and prestige, from small vehicles toward extremely expensive or prestigious ones. The Alpha gives no exact price brackets.",
-      ally: "An Ally helps when doing so does not cost them too much or put them at great risk. The packet does not provide a separate 1–5 Ally scale beyond the Minions and Retainer variants.",
-      minions: "Each dot represents three weak individuals at your disposal.",
-      retainer: "The dot rating is the Retainer’s NPC Level.",
+        S("s_0bfddaa563f2"),
+      ally: S("s_c085fb772c22"),
+      minions: resourceType("minions")?.description || "",
+      retainer: S("s_b7fd6bfa5d4c"),
       contact:
-        "Each dot represents greater proficiency, knowledge, and access to restricted or confidential information.",
-      fame: "Each dot increases the reach of your fame, from a small niche toward an international audience.",
-      herd: "Each dot represents a small group of mortals you can safely feed on if needed.",
-      mask: "Each dot represents a distinct alternate identity and improves the quality of your masks.",
+        S("s_e7cce698f013"),
+      fame: S("s_b184171d0a6f"),
+      herd: S("s_ff92de542624"),
+      mask: S("s_d34899124c51"),
       status:
-        "Dots represent relative power and influence in a specific society. 1 dot is a basic but respectable member; 5 dots place you among its top authority figures.",
+        S("s_5a2e2dbb9aa6"),
       wealth:
-        "Dots increase overall financial worth and routine purchasing power. 1 dot supports frugal/economic habits; 5 dots makes you probably one of the wealthiest individuals in your city. The Alpha gives no fixed currency values for ratings 2–4. It explicitly gives an example where Wealth 2 can be strained by spending 1 dot for a particularly expensive purchase or several nights in a luxurious hotel.",
+        S("s_14be55eb1cdb"),
     };
     return map[id] || "";
   }
   function infoResource(id) {
     const r = resourceType(id);
     return {
-      kicker: r.category,
+      kicker: resourceCategoryLabel(r.category),
       title: r.name,
       summary: r.description,
       meta: [
         [
-          "How tests use it",
-          "Resource dots + an Attribute chosen by the Storyteller",
+          S("s_0dc54af53c59"),
+          S("s_4d555de01caf"),
         ],
         [
-          "Straining a Resource",
-          "Temporarily spend a dot for a greater effect",
+          S("s_e91dc373ffba"),
+          S("s_db0a99516418"),
         ],
-        ["Recovery", "Spent dots recover through downtime"],
+        [S("s_ea924f72d31e"), S("s_08c8c44610b3")],
       ],
-      body: `${resourceGuidance(id)}\n\nPhysical and Social Assets must be specific to the character. Most Resource types do not have an exact 1–5 shopping list in the Alpha; their dots scale the quality, size, reach, access, or NPC Level described by that type.`,
-      source: "Player Packet · Step 8: Your Resources",
+      body: `${resourceGuidance(id)}\n\n${S("s_4c20a09282a0")}`,
+      source: S("s_bd473fe2d257"),
     };
   }
   function renderInfo() {
@@ -969,7 +984,7 @@
           const n = i + 1,
             t = I.ratings[String(n)],
             missing = !t;
-          return `<div class="ratingItem ${n === I.currentRating ? "active" : ""}"><div class="ratingDots">Rating ${n} · ${dots(n)}</div><div class="meta">${e(t || "The supplied Alpha packet gives no qualitative description for this Attribute rating.")}</div>${missing ? '<div class="tagrow"><span class="tag warn">Alpha source gap</span></div>' : ""}</div>`;
+          return `<div class="ratingItem ${n === I.currentRating ? "active" : ""}"><div class="ratingDots">${e(M("ratingDots", { rating: n }))} · ${dots(n)}</div><div class="meta">${e(t || S("s_3ea93adb60fe"))}</div>${missing ? '<div class="tagrow"><span class="tag warn">[[s_d6330c5ff7a7]]</span></div>' : ""}</div>`;
         }).join("") +
         "</div>";
     }
@@ -978,8 +993,9 @@
       .filter(Boolean)
       .map((p) => `<p>${e(p)}</p>`)
       .join("");
-    document.getElementById("infoContent").innerHTML =
-      `<div class="infoKicker">${e(I.kicker || "Rules reference")}</div><h2>${e(I.title || "Information")}</h2><div class="infoSummary">${e(I.summary || "")}</div>${meta ? `<div class="infoMeta">${meta}</div>` : ""}${ratings}<div class="infoBody">${body}</div><div class="infoSource">${e(I.source || "VTM V6 Alpha Player Packet")}</div>`;
+    document.getElementById("infoContent").innerHTML = L(
+      `<div class="infoKicker">${e(I.kicker || S("s_2bfbc2406946"))}</div><h2>${e(I.title || S("s_0eb5ed506e49"))}</h2><div class="infoSummary">${e(I.summary || "")}</div>${meta ? `<div class="infoMeta">${meta}</div>` : ""}${ratings}<div class="infoBody">${body}</div><div class="infoSource">${e(I.source || S("s_29dc4dcf1b49"))}</div>`,
+    );
   }
   function openDrawer() {
     document.getElementById("infoPanel").classList.add("open");
@@ -1002,89 +1018,89 @@
           state.creature,
         )
       )
-        out.push(issue("error", "Choose a supported Vampire tier."));
+        out.push(issue("error", S("s_4a21eeed24ce")));
     }
     if (i === 1) {
       const cl = clanById(state.clan.id);
-      if (!cl) out.push(issue("incomplete", "Choose a Clan."));
+      if (!cl) out.push(issue("incomplete", S("s_fa84ba249563")));
       else {
         const r = cl.disciplineRule || {};
         if (r.choice && !state.clan.choice)
           out.push(
             issue(
               "incomplete",
-              `Choose ${cl.name}’s variable third Discipline.`,
+              M("validationChooseVariableDiscipline", { clan: cl.name }),
             ),
           );
         if (r.random && (state.clan.caitiffDisciplines || []).length !== 3)
           out.push(
             issue(
               "incomplete",
-              "Caitiff requires 3 randomly determined Disciplines.",
+              S("s_ea3371b4af5e"),
             ),
           );
         if (!cl.complete)
           out.push(
             issue(
               "warning",
-              "This clan remains partially in development in the supplied Alpha packet.",
+              S("s_0db58fcd9f64"),
             ),
           );
       }
     }
     if (i === 2) {
       if (!state.sire.type)
-        out.push(issue("incomplete", "Choose a sire type."));
+        out.push(issue("incomplete", S("s_943cb1478e3c")));
       if (
         ["adoptive_sire", "brood_child"].includes(state.sire.type) &&
         !state.sire.relatedClan
       )
         out.push(
-          issue("incomplete", "Choose the adoptive sire / broodmate Clan."),
+          issue("incomplete", S("s_da5b43a11f6e")),
         );
       if (!state.sire.bonusDiscipline)
         out.push(
           issue(
             "incomplete",
-            "Choose the bonus Discipline granted by the sire type.",
+            S("s_9fba51a373e7"),
           ),
         );
       if (!tierGenerations().includes(Number(state.generation)))
-        out.push(issue("error", "Generation is outside the selected tier."));
+        out.push(issue("error", S("s_93a49d3105d0")));
     }
     if (i === 3) {
       ensureLpSlots();
       state.lifepaths.forEach((lp, slot) => {
         const d = lpDef(slot);
-        if (!d) out.push(issue("incomplete", `Choose Lifepath ${slot + 1}.`));
+        if (!d) out.push(issue("incomplete", M("validationChooseLifepath", { n: slot + 1 })));
         else {
           if (lp.id === "__custom__") {
             if (!lp.custom?.name?.trim())
               out.push(
                 issue(
                   "incomplete",
-                  `Custom Lifepath ${slot + 1} needs a name.`,
+                  M("validationCustomName", { n: slot + 1 }),
                 ),
               );
             if ((lp.custom?.skills || []).length !== 5)
               out.push(
                 issue(
                   "incomplete",
-                  `Custom Lifepath ${slot + 1} must define exactly 5 Skills.`,
+                  M("validationCustomSkills", { n: slot + 1 }),
                 ),
               );
             if ((lp.custom?.resources || []).length !== 3)
               out.push(
                 issue(
                   "incomplete",
-                  `Custom Lifepath ${slot + 1} must define exactly 3 Resources.`,
+                  M("validationCustomResources", { n: slot + 1 }),
                 ),
               );
             if ((lp.custom?.resources || []).some((r) => !resourceType(r.type)))
               out.push(
                 issue(
                   "incomplete",
-                  `Custom Lifepath ${slot + 1}: choose all 3 Resource types.`,
+                  M("validationCustomResourceTypes", { n: slot + 1 }),
                 ),
               );
           }
@@ -1092,26 +1108,26 @@
             out.push(
               issue(
                 "incomplete",
-                `${d.name}: spend exactly ${lpSkillBudget()} Lifepath Skill dots.`,
+                M("validationLpSkillDots", { lifepath: d.name, count: lpSkillBudget() }),
               ),
             );
           if (lpResourceSpent(slot) !== lpResourceBudget())
             out.push(
               issue(
                 "incomplete",
-                `${d.name}: spend exactly ${lpResourceBudget()} Lifepath Resource dots.`,
+                M("validationLpResourceDots", { lifepath: d.name, count: lpResourceBudget() }),
               ),
             );
         }
       });
     }
     if (i === 4) {
-      ["Physical", "Social", "Mental"].forEach((cat) => {
+      ATTR_CATEGORIES.forEach((cat) => {
         if (categorySpent(cat) !== roleBudget(cat))
           out.push(
             issue(
               "incomplete",
-              `${cat}: distribute exactly ${roleBudget(cat)} Attribute dots above the three baseline dots (${categorySpent(cat)} distributed).`,
+              M("validationAttributeDots", { category: attrCategoryLabel(cat), count: roleBudget(cat), distributed: categorySpent(cat) }),
             ),
           );
       });
@@ -1120,14 +1136,14 @@
         out.push(
           issue(
             "error",
-            "Physical, Social, and Mental must use different primary/secondary/tertiary budgets.",
+            S("s_47e756779db7"),
           ),
         );
       D.attributes.forEach((a) => {
         const n = Number(state.attributes.ratings[a.id]);
         if (n < 1 || n > attrMax())
           out.push(
-            issue("error", `${a.name} must be between 1 and ${attrMax()}.`),
+            issue("error", M("validationAttributeRange", { attribute: a.name, max: attrMax() })),
           );
       });
     }
@@ -1136,7 +1152,7 @@
         out.push(
           issue(
             "incomplete",
-            `Spend exactly ${c.freeSkillDots} free Skill dots.`,
+            M("validationFreeSkillDots", { count: c.freeSkillDots }),
           ),
         );
       D.skills.forEach((s) => {
@@ -1146,7 +1162,7 @@
           out.push(
             issue(
               "error",
-              `${s.name} exceeds its house-rule character-creation cap of ${cap}.`,
+              M("validationSkillCap", { skill: s.name, cap }),
             ),
           );
       });
@@ -1161,14 +1177,14 @@
           out.push(
             issue(
               "error",
-              `${s.name} exceeds its house-rule character-creation cap of ${cap}.`,
+              M("validationSkillCap", { skill: s.name, cap }),
             ),
           );
-        if (arr.length !== req || arr.some((x) => !String(x).trim()))
+        if (arr.length !== req || arr.some((x) => !focusEntryFilled(x)))
           out.push(
             issue(
               "incomplete",
-              `${s.name}: fill ${req} Focus slot${req === 1 ? "" : "s"} for rating ${n}.`,
+              M("validationFocusSlots", { skill: s.name, count: req, slotWord: M(req === 1 ? "focusSlotsOne" : "focusSlotsOther"), rating: n }),
             ),
           );
       });
@@ -1177,13 +1193,13 @@
       const cds = clanDisciplineIds();
       if (cds.length !== 3)
         out.push(
-          issue("incomplete", "Resolve the Clan’s three Disciplines first."),
+          issue("incomplete", S("s_4df4cb79ead7")),
         );
       if (totalClanDisciplineDots() !== c.disciplineDots)
         out.push(
           issue(
             "incomplete",
-            `Distribute exactly ${c.disciplineDots} Clan Discipline dots.`,
+            M("validationClanDisciplineDots", { count: c.disciplineDots }),
           ),
         );
       D.disciplines.forEach((d) => {
@@ -1191,7 +1207,7 @@
           out.push(
             issue(
               "error",
-              `${d.name} exceeds maximum ${c.maxDisciplineDots} dots for this tier.`,
+              M("validationDisciplineMax", { discipline: d.name, max: c.maxDisciplineDots }),
             ),
           );
       });
@@ -1199,7 +1215,7 @@
         out.push(
           issue(
             "incomplete",
-            `Choose exactly ${c.disciplinePowers} Discipline powers.`,
+            M("chooseExactPowers", { count: c.disciplinePowers }),
           ),
         );
       state.disciplines.powers.forEach((x) => {
@@ -1210,29 +1226,29 @@
           out.push(
             issue(
               "error",
-              "A selected Discipline power no longer meets its rank requirement.",
+              S("s_713b9a525949"),
             ),
           );
         else if (p.detailsMissing)
           out.push(
             issue(
               "warning",
-              `${p.name} is listed in the Alpha power summary but its full rules entry is missing from the supplied packet.`,
+              M("validationMissingPowerEntry", { power: p.name }),
             ),
           );
       });
       if (state.traits.length !== c.clanTraits)
         out.push(
-          issue("incomplete", `Choose exactly ${c.clanTraits} Clan Traits.`),
+          issue("incomplete", M("chooseExactTraits", { count: c.clanTraits })),
         );
       if (state.merits.length !== c.merits)
-        out.push(issue("incomplete", `Choose exactly ${c.merits} Merits.`));
+        out.push(issue("incomplete", M("chooseExactMerits", { count: c.merits })));
       const cl = clanById(state.clan.id);
       if (cl && !cl.complete)
         out.push(
           issue(
             "warning",
-            "Full Clan Traits are unavailable for this clan in the supplied Alpha packet.",
+            S("s_f39322fb54fa"),
           ),
         );
       const usedIncomplete = D.disciplines.filter(
@@ -1242,19 +1258,19 @@
         out.push(
           issue(
             "warning",
-            `No power definitions are supplied for: ${usedIncomplete.map((d) => d.name).join(", ")}.`,
+            M("validationNoPowerDefinitions", { disciplines: usedIncomplete.map((d) => d.name).join(", ") }),
           ),
         );
     }
     if (i === 8) {
       if (!state.humanity.nature)
-        out.push(issue("incomplete", "Choose a Nature."));
+        out.push(issue("incomplete", S("s_7856f741dc3")));
       const allowedHumanity = humanityPositions();
       if (!allowedHumanity.some((x) => x.v === state.humanity.position))
         out.push(
           issue(
             "error",
-            "Starting Humanity position is not allowed for this tier.",
+            S("s_f58f020996c1"),
           ),
         );
     }
@@ -1263,7 +1279,7 @@
         out.push(
           issue(
             "incomplete",
-            `Spend exactly ${c.freeResourceDots} free Resource dots.`,
+            M("validationFreeResourceDots", { count: c.freeResourceDots }),
           ),
         );
       aggregatedLifepathResources().forEach((r) => {
@@ -1271,7 +1287,7 @@
           out.push(
             issue(
               "error",
-              `${resourceType(r.type)?.name || r.type}${r.label ? `: ${r.label}` : ""} exceeds the ${attrMax()}-dot character-creation maximum after Lifepath sources are combined.`,
+              M("validationResourceMax", { resource: `${resourceType(r.type)?.name || r.type}${r.label ? `: ${r.label}` : ""}`, max: attrMax() }),
             ),
           );
         if (
@@ -1282,24 +1298,24 @@
           out.push(
             issue(
               "incomplete",
-              `${resourceType(r.type)?.name || r.type} from Lifepaths must be made specific with a character description.`,
+              M("validationResourceSpecific", { resource: resourceType(r.type)?.name || r.type }),
             ),
           );
       });
       state.resources.free.forEach((r, idx) => {
         if (!resourceType(r.type))
           out.push(
-            issue("error", `Free Resource ${idx + 1} has an unknown type.`),
+            issue("error", M("validationFreeResourceUnknown", { n: idx + 1 })),
           );
         if (Number(r.dots) < 1 || Number(r.dots) > attrMax())
           out.push(
-            issue("error", `Free Resource ${idx + 1} has an invalid rating.`),
+            issue("error", M("validationFreeResourceRating", { n: idx + 1 })),
           );
         if (r.type !== "wealth" && !String(r.label || "").trim())
           out.push(
             issue(
               "incomplete",
-              `${resourceType(r.type)?.name || "Resource"} needs a specific label.`,
+              M("validationResourceLabel", { resource: resourceType(r.type)?.name || S("s_021493f340d3") }),
             ),
           );
       });
@@ -1307,16 +1323,16 @@
     if (i === 10) {
       ensureItems();
       if (!state.identity.name.trim())
-        out.push(issue("incomplete", "Enter a character name."));
+        out.push(issue("incomplete", S("s_c804c336534d")));
       state.identity.items.forEach((x, j) => {
         if (!String(x).trim())
-          out.push(issue("incomplete", `Important item ${j + 1} is empty.`));
+          out.push(issue("incomplete", M("validationImportantItem", { n: j + 1 })));
       });
     }
     return out;
   }
   function allIssues() {
-    return STEPS.flatMap((_, i) =>
+    return STEP_IDS.flatMap((_, i) =>
       validateStep(i).map((x) => ({ ...x, step: i })),
     );
   }
@@ -1339,16 +1355,16 @@
   }
   function stepProgress(i) {
     const c = creature();
-    if (i === 0) return state.creature ? "1/1 selected" : "0/1 selected";
+    if (i === 0) return M("progressSelected", { done: state.creature ? 1 : 0 });
     if (i === 1) {
       const cl = clanById(state.clan.id),
         base = cl ? 1 : 0,
         extra = cl?.disciplineRule?.choice
-          ? `${state.clan.choice ? 1 : 0}/1 Discipline`
+          ? ` · ${state.clan.choice ? 1 : 0}/1 ${S("s_14877e80cbce")}`
           : cl?.disciplineRule?.random
-            ? `${(state.clan.caitiffDisciplines || []).length}/3 Disciplines`
+            ? M("progressDisciplinesExtra", { done: (state.clan.caitiffDisciplines || []).length })
             : "";
-      return `${base}/1 Clan${extra ? ` · ${extra}` : ""}`;
+      return M("progressClan", { done: base, extra });
     }
     if (i === 2) {
       const related = ["adoptive_sire", "brood_child"].includes(
@@ -1360,7 +1376,7 @@
           (state.sire.bonusDiscipline ? 1 : 0) +
           (related && state.sire.relatedClan ? 1 : 0),
         total = 3 + (related ? 1 : 0);
-      return `${done}/${total} choices · ${Math.max(0, total - done)} left`;
+      return M("progressChoices", { done, total, left: Math.max(0, total - done) });
     }
     if (i === 3) {
       const chosen = state.lifepaths.filter((_, j) => !!lpDef(j)).length,
@@ -1376,43 +1392,43 @@
               : lpResourceBudget()),
           0,
         );
-      return `${chosen}/${lpCount()} paths · ${skillLeft + resLeft} dots left`;
+      return M("progressPaths", { done: chosen, total: lpCount(), left: skillLeft + resLeft });
     }
     if (i === 4) {
       const total = c.attributeBudgets.reduce((a, b) => a + b, 0),
         used = totalAttributeSpent(),
         left = Math.max(0, total - used);
-      return `${used}/${total} distributed · ${left} left`;
+      return M("progressDistributed", { used, total, left });
     }
     if (i === 5) {
       const used = sum(state.freeSkills),
         left = Math.max(0, c.freeSkillDots - used);
-      return `${used}/${c.freeSkillDots} free dots · ${left} left`;
+      return M("progressFreeDots", { used, total: c.freeSkillDots, left });
     }
     if (i === 6) {
       const req = D.skills.reduce((n, x) => n + requiredFocuses(x.id), 0),
         filled = D.skills.reduce(
           (n, x) =>
             n +
-            (state.focuses[x.id] || []).filter((v) => String(v).trim()).length,
+            (state.focuses[x.id] || []).filter(focusEntryFilled).length,
           0,
         );
-      return `${filled}/${req} Focuses · ${Math.max(0, req - filled)} left`;
+      return M("progressFocuses", { used: filled, total: req, left: Math.max(0, req - filled) });
     }
     if (i === 7) {
-      return `Dots ${totalClanDisciplineDots()}/${c.disciplineDots} · Powers ${state.disciplines.powers.length}/${c.disciplinePowers} · Traits ${state.traits.length}/${c.clanTraits} · Merits ${state.merits.length}/${c.merits}`;
+      return M("progressPowers", { dotsUsed: totalClanDisciplineDots(), dotsTotal: c.disciplineDots, powersUsed: state.disciplines.powers.length, powersTotal: c.disciplinePowers, traitsUsed: state.traits.length, traitsTotal: c.clanTraits, meritsUsed: state.merits.length, meritsTotal: c.merits });
     }
-    if (i === 8) return `${state.humanity.nature ? 1 : 0}/1 Nature`;
+    if (i === 8) return M("progressNature", { done: state.humanity.nature ? 1 : 0 });
     if (i === 9) {
       const used = freeResourceSpent();
-      return `${used}/${c.freeResourceDots} free dots · ${Math.max(0, c.freeResourceDots - used)} left`;
+      return M("progressFreeDots", { used, total: c.freeResourceDots, left: Math.max(0, c.freeResourceDots - used) });
     }
     if (i === 10) {
       const req = 1 + lpCount(),
         done =
           (state.identity.name.trim() ? 1 : 0) +
           state.identity.items.filter((x) => String(x).trim()).length;
-      return `${done}/${req} required fields · ${Math.max(0, req - done)} left`;
+      return M("progressRequiredFields", { done, total: req, left: Math.max(0, req - done) });
     }
     return "";
   }
@@ -1421,36 +1437,37 @@
       mob = document.getElementById("mobileProgress");
     nav.innerHTML = "";
     mob.innerHTML = "";
-    STEPS.forEach((s, i) => {
+    STEP_IDS.forEach((_, i) => {
+      const s = stepText(i);
       const issues = validateStep(i);
       const blocked = issues.some((x) => x.severity === "error");
       const done = isStepDone(i);
       const b = document.createElement("button");
       b.className = `navStep ${i === state.step ? "active" : ""} ${done ? "done" : ""} ${blocked ? "blocked" : ""}`;
-      b.innerHTML = `<span class="navStepLabel">${i + 1}. ${e(s[0])}</span><span class="navProgress">${e(stepProgress(i))}</span>`;
+      b.innerHTML = `<span class="navStepLabel">${i + 1}. ${e(s.nav)}</span><span class="navProgress">${e(stepProgress(i))}</span>`;
       b.onclick = () => goStep(i);
       nav.appendChild(b);
       const m = document.createElement("button");
       m.className = `mobileStep ${i === state.step ? "active" : ""}`;
-      m.textContent = `${i + 1} ${s[0]}`;
+      m.textContent = `${i + 1} ${s.nav}`;
       m.onclick = () => goStep(i);
       mob.appendChild(m);
     });
   }
   function goStep(i) {
-    state.step = Math.max(0, Math.min(STEPS.length - 1, i));
+    state.step = Math.max(0, Math.min(STEP_IDS.length - 1, i));
     state.info = infoForStep(state.step);
     closeDrawer();
     render();
     scrollTo({ top: 0, behavior: "instant" });
   }
   function navFooter() {
-    return `<div class="bottomNav"><button class="btn" data-action="prev" ${state.step === 0 ? "disabled" : ""}>Back</button><button class="btn primary" data-action="next">${state.step === STEPS.length - 1 ? "Review" : "Next"}</button></div>`;
+    return `<div class="bottomNav"><button class="btn" data-action="prev" ${state.step === 0 ? "disabled" : ""}>[[s_b52b36b7269f]]</button><button class="btn primary" data-action="next">${e(S(state.step === STEP_IDS.length - 1 ? "s_e29a79fe0c34" : "s_bc981983e7f5"))}</button></div>`;
   }
   function issuesHtml(i) {
     const a = validateStep(i);
     if (!a.length)
-      return '<div class="notice good">This step is complete.</div>';
+      return '<div class="notice good">[[s_2751329afa45]]</div>';
     return `<div class="issues">${a.map((x) => `<div class="issue ${x.severity}">${e(x.msg)}</div>`).join("")}</div>`;
   }
   function renderMain() {
@@ -1467,26 +1484,26 @@
       renderResources,
       renderFinish,
     ][state.step];
-    document.getElementById("mainCard").innerHTML = f() + navFooter();
+    document.getElementById("mainCard").innerHTML = L(f() + navFooter());
     bindMain();
   }
 
   function renderCreature() {
     const options = D.creatures.filter((c) => c.id.startsWith("vampire_"));
-    return `<section class="step active"><h1>Step 1 · What Are You?</h1><div class="lead">Choose the vampire tier used for this character. It controls the RAW creation budgets and maximum ratings.</div><div class="grid3">${options.map((c) => `<button class="choiceCard ${state.creature === c.id ? "selected" : ""}" data-creature="${c.id}"><h3>${e(c.name)}</h3><div class="meta">Max dots ${c.maxDots} · Chargen max Discipline ${c.maxDisciplineDots} · Generation Modifier ${c.generationModifier}</div><div class="tagrow"><span class="tag">${c.lifepaths} Lifepaths</span><span class="tag">Attributes ${c.attributeBudgets.join("/")}</span><span class="tag">${c.disciplineDots}+${c.sireBonus} Discipline dots</span></div></button>`).join("")}</div>${tierOf() === "neonate" ? `<div class="sectionTitle">Optional young character rule</div><label class="card checkline"><input type="checkbox" id="youngToggle" ${state.young ? "checked" : ""}><div><b>Use one Lifepath</b><div class="meta">${e(D.youngCharacter)} The project Lifepath Skill Cap house rule overrides the RAW cap-3 sentence: a Skill listed by this Lifepath has chargen cap 4.</div></div></label>` : ""}${issuesHtml(0)}</section>`;
+    return `<section class="step active"><h1>[[s_ff7f77cc88bd]]</h1><div class="lead">[[s_f59ac5cba69f]]</div><div class="grid3">${options.map((c) => `<button class="choiceCard ${state.creature === c.id ? "selected" : ""}" data-creature="${c.id}"><h3>${e(c.name)}</h3><div class="meta">${e(M("creatureMeta", { maxDots: c.maxDots, maxDiscipline: c.maxDisciplineDots, modifier: c.generationModifier }))}</div><div class="tagrow"><span class="tag">${e(M("creatureLifepaths", { count: c.lifepaths }))}</span><span class="tag">${e(M("creatureAttributes", { budgets: c.attributeBudgets.join("/") }))}</span><span class="tag">${e(M("creatureDisciplineDots", { dots: c.disciplineDots, bonus: c.sireBonus }))}</span></div></button>`).join("")}</div>${tierOf() === "neonate" ? `<div class="sectionTitle">[[s_43397f29829c]]</div><label class="card checkline"><input type="checkbox" id="youngToggle" ${state.young ? "checked" : ""}><div><b>[[s_160d9b4c3d17]]</b><div class="meta">${e(D.youngCharacter)} ${e(S("s_4973c42c631e"))}</div></div></label>` : ""}${issuesHtml(0)}</section>`;
   }
   function renderClan() {
     const selected = clanById(state.clan.id);
-    return `<section class="step active"><h1>Step 2 · Your Clan</h1><div class="lead">Choose a clan. Long descriptions use list rows on desktop so each entry keeps its natural height.</div>${selected ? `<div class="selectedSummary"><div><div class="meta">Selected clan</div><b>${e(selected.name)}</b><div class="tagrow"><span class="tag">${e(selected.disciplineText)}</span>${selected.complete ? '<span class="tag good">Full Alpha entry</span>' : '<span class="tag warn">In development</span>'}</div></div><button class="tileInfo inlineInfo" data-info-clan="${selected.id}" aria-label="Read ${e(selected.name)} clan rules">?</button></div>${renderClanDisciplineChoice()}` : ""}<div class="sectionTitle">Clan list</div><div class="optionList">${D.clans.map((c) => `<button class="choiceRow ${state.clan.id === c.id ? "selected" : ""} ${!c.complete ? "incomplete" : ""}" data-clan="${c.id}"><div class="choiceRowMain"><div class="choiceRowTitle">${e(c.name)}</div><div class="choiceRowMeta">${e(c.description)}</div></div><div class="choiceRowAside"><span class="tag">${e(c.disciplineText)}</span>${c.complete ? '<span class="tag good">Full Alpha</span>' : '<span class="tag warn">In development</span>'}</div></button>`).join("")}</div>${issuesHtml(1)}</section>`;
+    return `<section class="step active"><h1>[[s_17afcda150ef]]</h1><div class="lead">[[s_2da1d5349de3]]</div>${selected ? `<div class="selectedSummary"><div><div class="meta">[[s_cfad8f685677]]</div><b>${e(selected.name)}</b><div class="tagrow"><span class="tag">${e(selected.disciplineText)}</span>${selected.complete ? '<span class="tag good">[[s_a6700df73fa9]]</span>' : '<span class="tag warn">[[s_f6146d719b7b]]</span>'}</div></div><button class="tileInfo inlineInfo" data-info-clan="${selected.id}" aria-label="${e(M("readClanRules", { name: selected.name }))}">?</button></div>${renderClanDisciplineChoice()}` : ""}<div class="sectionTitle">[[s_a55c248714f4]]</div><div class="optionList">${D.clans.map((c) => `<button class="choiceRow ${state.clan.id === c.id ? "selected" : ""} ${!c.complete ? "incomplete" : ""}" data-clan="${c.id}"><div class="choiceRowMain"><div class="choiceRowTitle">${e(c.name)}</div><div class="choiceRowMeta">${e(c.description)}</div></div><div class="choiceRowAside"><span class="tag">${e(c.disciplineText)}</span>${c.complete ? '<span class="tag good">[[s_cd8e66e3508a]]</span>' : '<span class="tag warn">[[s_f6146d719b7b]]</span>'}</div></button>`).join("")}</div>${issuesHtml(1)}</section>`;
   }
   function renderClanDisciplineChoice() {
     const c = clanById(state.clan.id);
     if (!c) return "";
     const r = c.disciplineRule || {};
     if (r.choice)
-      return `<div class="requiredChoice"><div class="sectionTitle" style="margin-top:0">Required · choose ${e(c.name)}’s third Discipline</div><div class="grid2 equalTiles">${r.choice.map((id) => `<button class="choiceCompact ${state.clan.choice === id ? "selected" : ""}" data-clan-choice="${id}"><b>${e(discById(id)?.name)}</b><span>${e(discById(id)?.description)}</span></button>`).join("")}</div></div>`;
+      return `<div class="requiredChoice"><div class="sectionTitle" style="margin-top:0">${e(M("requiredThirdDiscipline", { clan: c.name }))}</div><div class="grid2 equalTiles">${r.choice.map((id) => `<button class="choiceCompact ${state.clan.choice === id ? "selected" : ""}" data-clan-choice="${id}"><b>${e(discById(id)?.name)}</b><span>${e(discById(id)?.description)}</span></button>`).join("")}</div></div>`;
     if (r.random)
-      return `<div class="requiredChoice"><div class="sectionTitle" style="margin-top:0">Caitiff · 3 randomly determined Disciplines</div><div class="notice warn">RAW says these are randomly determined. Use Randomize for a RAW selection; manual changes remain available for table adjudication.</div><button class="btn" data-action="random-caitiff">Randomize 3</button><div class="optionList caitiffList" style="margin-top:9px">${D.disciplines.map((d) => `<label class="caitiffChoice ${(state.clan.caitiffDisciplines || []).includes(d.id) ? "selected" : ""}"><input type="checkbox" data-caitiff-disc="${d.id}" ${(state.clan.caitiffDisciplines || []).includes(d.id) ? "checked" : ""}><div class="choiceRowMain"><div class="choiceRowTitle">${e(d.name)}</div><div class="choiceRowMeta">${e(d.description)}</div></div></label>`).join("")}</div></div>`;
+      return `<div class="requiredChoice"><div class="sectionTitle" style="margin-top:0">[[s_f8c192193934]]</div><div class="notice warn">[[s_263a34e33825]]</div><button class="btn" data-action="random-caitiff">[[s_7322c289ed12]]</button><div class="optionList caitiffList" style="margin-top:9px">${D.disciplines.map((d) => `<label class="caitiffChoice ${(state.clan.caitiffDisciplines || []).includes(d.id) ? "selected" : ""}"><input type="checkbox" data-caitiff-disc="${d.id}" ${(state.clan.caitiffDisciplines || []).includes(d.id) ? "checked" : ""}><div class="choiceRowMain"><div class="choiceRowTitle">${e(d.name)}</div><div class="choiceRowMeta">${e(d.description)}</div></div></label>`).join("")}</div></div>`;
     return "";
   }
   function renderSire() {
@@ -1495,23 +1512,23 @@
         state.sire.type,
       ),
       allowed = sireAllowedDisciplines();
-    return `<section class="step active"><h1>Step 3 · Sire & Generation</h1><div class="lead">Choose each part directly. This page no longer uses dropdowns for the primary chargen choices.</div><div class="sectionTitle">Sire type</div><div class="optionList">${D.sires.map((x) => `<button class="choiceRow ${state.sire.type === x.id ? "selected" : ""}" data-sire-type="${x.id}"><div class="choiceRowMain"><div class="choiceRowTitle">${e(x.name)}</div><div class="choiceRowMeta">${e(x.description)}</div></div><div class="choiceRowAside"><span class="tag">Bonus: ${e(x.discipline)}</span></div></button>`).join("")}</div><div class="sectionTitle">Generation</div><div class="choiceChipGrid">${tierGenerations()
+    return `<section class="step active"><h1>[[s_1b63ea19f8e9]]</h1><div class="lead">[[s_3915eebd224f]]</div><div class="sectionTitle">[[s_fae0d8a2bb23]]</div><div class="optionList">${D.sires.map((x) => `<button class="choiceRow ${state.sire.type === x.id ? "selected" : ""}" data-sire-type="${x.id}"><div class="choiceRowMain"><div class="choiceRowTitle">${e(x.name)}</div><div class="choiceRowMeta">${e(x.description)}</div></div><div class="choiceRowAside"><span class="tag">${e(M("bonus", { value: x.discipline }))}</span></div></button>`).join("")}</div><div class="sectionTitle">[[s_8d441fb5f62f]]</div><div class="choiceChipGrid">${tierGenerations()
       .map(
         (g) =>
-          `<button class="choiceChip ${Number(state.generation) === g ? "selected" : ""}" data-generation="${g}"><b>${g}th</b><span>Modifier ${D.generationModifiers[String(g)]}</span></button>`,
+          `<button class="choiceChip ${Number(state.generation) === g ? "selected" : ""}" data-generation="${g}"><b>${e(M("generationOrdinal", { generation: g }))}</b><span>${e(M("modifier", { value: D.generationModifiers[String(g)] }))}</span></button>`,
       )
       .join(
         "",
-      )}</div>${relatedNeeded ? `<div class="sectionTitle">${state.sire.type === "adoptive_sire" ? "Adoptive sire" : "Broodmate"} Clan</div><div class="choiceChipGrid">${D.clans.map((c) => `<button class="choiceChip ${state.sire.relatedClan === c.id ? "selected" : ""}" data-related-clan="${c.id}"><b>${e(c.name)}</b></button>`).join("")}</div>` : ""}<div class="sectionTitle">Bonus Discipline</div>${allowed.length ? `<div class="grid3">${allowed.map((id) => `<button class="choiceCompact ${state.sire.bonusDiscipline === id ? "selected" : ""}" data-sire-bonus="${id}"><b>${e(discById(id)?.name)}</b><span>${e(discById(id)?.description)}</span></button>`).join("")}</div>` : '<div class="notice warn">Choose the sire type' + (relatedNeeded ? " and related Clan" : "") + " first.</div>"}${s ? `<div class="notice"><b>${e(s.name)}</b> · ${e(s.discipline)}</div>` : ""}${issuesHtml(2)}</section>`;
+      )}</div>${relatedNeeded ? `<div class="sectionTitle">${e(S(state.sire.type === "adoptive_sire" ? "s_89c526bf651d" : "s_f6bcb7d6144e"))}</div><div class="choiceChipGrid">${D.clans.map((c) => `<button class="choiceChip ${state.sire.relatedClan === c.id ? "selected" : ""}" data-related-clan="${c.id}"><b>${e(c.name)}</b></button>`).join("")}</div>` : ""}<div class="sectionTitle">[[s_923461b005c9]]</div>${allowed.length ? `<div class="grid3">${allowed.map((id) => `<button class="choiceCompact ${state.sire.bonusDiscipline === id ? "selected" : ""}" data-sire-bonus="${id}"><b>${e(discById(id)?.name)}</b><span>${e(discById(id)?.description)}</span></button>`).join("")}</div>` : `<div class="notice warn">${e(M(relatedNeeded ? "chooseSireAndClanFirst" : "chooseSireFirst"))}</div>`}${s ? `<div class="notice"><b>${e(s.name)}</b> · ${e(s.discipline)}</div>` : ""}${issuesHtml(2)}</section>`;
   }
   function renderLifepaths() {
     ensureLpSlots();
-    return `<section class="step active"><h1>Step 4 · Your Lifepaths</h1><div class="lead">Choose ${lpCount()} Lifepath${lpCount() === 1 ? "" : "s"}. Allocate ${lpSkillBudget()} Skill dots and ${lpResourceBudget()} Resource dots inside each.</div>${state.lifepaths.map((lp, i) => renderLpSlot(lp, i)).join("")}${issuesHtml(3)}</section>`;
+    return `<section class="step active"><h1>[[s_1c173828f39d]]</h1><div class="lead">${e(M("chooseLifepathsLead", { count: lpCount(), pathWord: M(lpCount() === 1 ? "lifepathSingular" : "lifepathPlural"), skillDots: lpSkillBudget(), resourceDots: lpResourceBudget() }))}</div>${state.lifepaths.map((lp, i) => renderLpSlot(lp, i)).join("")}${issuesHtml(3)}</section>`;
   }
   function renderLpSlot(lp, slot) {
     const d = lpDef(slot),
       allowed = allowedLifepaths();
-    return `<div class="lpCard"><div class="lpHead"><div><div class="sectionTitle" style="margin:0 0 6px">Lifepath ${slot + 1}</div>${d ? `<b style="font-size:18px">${e(d.name)}</b><div class="meta">${e(d.description)}</div>` : '<div class="meta">Choose a Lifepath.</div>'}</div><div class="field" style="margin:0"><label>Selection</label><select data-lp-select="${slot}"><option value="">Choose…</option>${allowed.map((x) => `<option value="${x.id}" ${lp.id === x.id ? "selected" : ""}>${e(x.name)}${x.type === "vampire" ? ` · ${x.tier}` : ""}</option>`).join("")}<option value="__custom__" ${lp.id === "__custom__" ? "selected" : ""}>Custom Lifepath (RAW)</option></select></div></div>${lp.id === "__custom__" ? renderCustomLp(lp, slot) : ""}${d ? `<div class="budgetBar"><span class="pill ${sum(lp.skillDots) === lpSkillBudget() ? "good" : "warn"}">Skill dots ${sum(lp.skillDots)} / ${lpSkillBudget()}</span><span class="pill ${lpResourceSpent(slot) === lpResourceBudget() ? "good" : "warn"}">Resource dots ${lpResourceSpent(slot)} / ${lpResourceBudget()}</span><button class="fieldInfoBtn" data-info-lp="${slot}" aria-label="Read Lifepath details">?</button></div><div class="sectionTitle">Lifepath Skills</div><div class="lpSkillGrid">${(d.skills || []).map((x) => renderLpSkill(slot, x)).join("")}</div><div class="sectionTitle">Lifepath Resources</div><div class="lpResGrid">${(d.resources || []).map((r, ri) => renderLpResource(slot, r, ri)).join("")}</div>` : ""}</div>`;
+    return `<div class="lpCard"><div class="lpHead"><div><div class="sectionTitle" style="margin:0 0 6px">${e(M("lifepathNumber", { n: slot + 1 }))}</div>${d ? `<b style="font-size:18px">${e(d.name)}</b><div class="meta">${e(d.description)}</div>` : '<div class="meta">[[s_ab9fee6941a5]]</div>'}</div><div class="field" style="margin:0"><label>[[s_d1f8e5ea93b2]]</label><select data-lp-select="${slot}"><option value="">[[s_c3b69e661eec]]</option>${allowed.map((x) => `<option value="${x.id}" ${lp.id === x.id ? "selected" : ""}>${e(x.name)}${x.type === "vampire" ? ` · ${e(({ neonate: S("s_c994f9e6adb6"), ancilla: S("s_6ca3aa935891"), elder: S("s_f429030cf5c0") })[x.tier] || x.tier)}` : ""}</option>`).join("")}<option value="__custom__" ${lp.id === "__custom__" ? "selected" : ""}>[[s_47388a3e9202]]</option></select></div></div>${lp.id === "__custom__" ? renderCustomLp(lp, slot) : ""}${d ? `<div class="budgetBar"><span class="pill ${sum(lp.skillDots) === lpSkillBudget() ? "good" : "warn"}">${e(M("skillDotsProgress", { used: sum(lp.skillDots), total: lpSkillBudget() }))}</span><span class="pill ${lpResourceSpent(slot) === lpResourceBudget() ? "good" : "warn"}">${e(M("resourceDotsProgress", { used: lpResourceSpent(slot), total: lpResourceBudget() }))}</span><button class="fieldInfoBtn" data-info-lp="${slot}" aria-label="[[s_226781712bbe]]">?</button></div><div class="sectionTitle">[[s_bb2ff987995e]]</div><div class="lpSkillGrid">${(d.skills || []).map((x) => renderLpSkill(slot, x)).join("")}</div><div class="sectionTitle">[[s_5590f2a6ebe7]]</div><div class="lpResGrid">${(d.resources || []).map((r, ri) => renderLpResource(slot, r, ri)).join("")}</div>` : ""}</div>`;
   }
   function renderCustomLp(lp, slot) {
     const c = lp.custom || {
@@ -1521,12 +1538,12 @@
       resources: [],
     };
     const skillSet = new Set(c.skills || []);
-    return `<div class="grid2"><div class="field"><label>Custom Lifepath name</label><input data-custom-name="${slot}" value="${e(c.name || "")}"></div><div class="field"><label>Description</label><input data-custom-desc="${slot}" value="${e(c.description || "")}"></div></div><div class="sectionTitle">Choose exactly 5 Skills</div><div class="gridAuto">${D.skills.map((s) => `<label class="card checkline"><input type="checkbox" data-custom-skill="${slot}:${s.id}" ${skillSet.has(s.id) ? "checked" : ""}><div><b>${e(s.name)}</b><div class="meta">${e(s.description)}</div></div></label>`).join("")}</div><div class="sectionTitle">Define exactly 3 Resource types</div><div class="grid3">${[
+    return `<div class="grid2"><div class="field"><label>[[s_29024d7d22ea]]</label><input data-custom-name="${slot}" value="${e(c.name || "")}"></div><div class="field"><label>[[s_55f8ebc805e6]]</label><input data-custom-desc="${slot}" value="${e(c.description || "")}"></div></div><div class="sectionTitle">[[s_cdca8eca3a50]]</div><div class="gridAuto">${D.skills.map((s) => `<label class="card checkline"><input type="checkbox" data-custom-skill="${slot}:${s.id}" ${skillSet.has(s.id) ? "checked" : ""}><div><b>${e(s.name)}</b><div class="meta">${e(s.description)}</div></div></label>`).join("")}</div><div class="sectionTitle">[[s_0bb4dbf25a37]]</div><div class="grid3">${[
       0, 1, 2,
     ]
       .map((ri) => {
         const r = c.resources?.[ri] || { type: "", label: "" };
-        return `<div class="card"><div class="field"><label>Resource ${ri + 1}</label><select data-custom-res-type="${slot}:${ri}"><option value="">Choose…</option>${D.resourceTypes.map((x) => `<option value="${x.id}" ${r.type === x.id ? "selected" : ""}>${e(x.name)}</option>`).join("")}</select></div><div class="field"><label>Specific label</label><input data-custom-res-label="${slot}:${ri}" value="${e(r.label || "")}"></div></div>`;
+        return `<div class="card"><div class="field"><label>${e(M("resourceNumber", { n: ri + 1 }))}</label><select data-custom-res-type="${slot}:${ri}"><option value="">[[s_c3b69e661eec]]</option>${D.resourceTypes.map((x) => `<option value="${x.id}" ${r.type === x.id ? "selected" : ""}>${e(x.name)}</option>`).join("")}</select></div><div class="field"><label>[[s_d15a04bf03ea]]</label><input data-custom-res-label="${slot}:${ri}" value="${e(r.label || "")}"></div></div>`;
       })
       .join("")}</div>`;
   }
@@ -1536,12 +1553,12 @@
       cap = skillCap(x.skill),
       sources = lifepathCapSources(x.skill),
       suggested = lifepathFocusLabel(x);
-    return `<div class="row"><div><div class="rowname">${e(s?.name || x.skill)} ${suggested ? `<span class="tag">Suggested Focus: ${e(suggested)}</span>` : ""}</div><div class="rowmeta">Current ${finalSkill(x.skill)} · Cap ${cap} · house-rule cap bonus +${sources.length}</div></div>${stepper(`lp-skill:${slot}:${x.skill}`, n, 0, lpSkillBudget())}</div>`;
+    return `<div class="row"><div><div class="rowname">${e(s?.name || x.skill)} ${suggested ? `<span class="tag">${e(M("suggestedFocus", { focus: suggested }))}</span>` : ""}</div><div class="rowmeta">${e(M("currentCapHouse", { current: finalSkill(x.skill), cap, bonus: sources.length }))}</div></div>${stepper(`lp-skill:${slot}:${x.skill}`, n, 0, lpSkillBudget())}</div>`;
   }
   function renderLpResource(slot, r, ri) {
     const n = Number(state.lifepaths[slot].resourceDots?.[String(ri)] || 0),
       rt = resourceType(r.type);
-    return `<div class="row"><div><div class="rowname">${e(rt?.name || r.type)}${r.label ? `: ${e(r.label)}` : ""}</div><div class="rowmeta">${e(rt?.category || "Resource")}</div></div>${stepper(`lp-res:${slot}:${ri}`, n, 0, lpResourceBudget())}</div>`;
+    return `<div class="row"><div><div class="rowname">${e(rt?.name || r.type)}${r.label ? `: ${e(r.label)}` : ""}</div><div class="rowmeta">${e(rt ? resourceCategoryLabel(rt.category) : S("s_021493f340d3"))}</div></div>${stepper(`lp-res:${slot}:${ri}`, n, 0, lpResourceBudget())}</div>`;
   }
   function stepper(key, n, min, max) {
     return `<div class="stepper"><button data-stepper="${key}" data-delta="-1" ${n <= min ? "disabled" : ""}>−</button><div class="n">${n}</div><button data-stepper="${key}" data-delta="1" ${n >= max ? "disabled" : ""}>+</button></div>`;
@@ -1563,8 +1580,8 @@
       return r === "primary" ? b[0] : r === "secondary" ? b[1] : b[2];
     };
     return (
-      categorySpent(key[0].toUpperCase() + key.slice(1)) <= budgetFor(key) &&
-      categorySpent(other[0].toUpperCase() + other.slice(1)) <= budgetFor(other)
+      categorySpent(key) <= budgetFor(key) &&
+      categorySpent(other) <= budgetFor(other)
     );
   }
   function maxLegalAttrRating(a) {
@@ -1582,28 +1599,29 @@
   function renderAttributes() {
     const total = creature().attributeBudgets.reduce((a, b) => a + b, 0),
       left = Math.max(0, total - totalAttributeSpent());
-    return `<section class="step active"><h1>Step 5 · Attributes</h1><div class="lead">Every Attribute starts at 1. Assign the primary, secondary, and tertiary budgets as additional dots above that baseline. Choices are blocked immediately when they would exceed the category allocation or the tier’s Max Dots.</div><div class="allocationStatus ${left === 0 ? "complete" : ""}"><div><span>Attribute dots remaining</span><strong>${left}</strong><small>${totalAttributeSpent()} of ${total} distributed</small></div><button class="btn resetStepBtn" data-action="reset-attributes">Reset Attributes</button></div><div class="notice">RAW tier Max Dots: Neonate 5, Ancilla 6, Elder 8. Attribute budgets (7/5/3, 8/6/4, 9/7/5) are dots distributed above the free 1-dot baseline in every Attribute. Final category totals are therefore budget + 3. The Alpha provides qualitative rating descriptions only through 5.</div><div class="attrCols">${["Physical", "Social", "Mental"].map(renderAttrCat).join("")}</div><div class="derived" style="margin-top:10px"><div class="card"><div class="meta">Vitae Maximum</div><b>${vitaeMax()}</b><div class="meta">10 + Stamina</div></div><div class="card"><div class="meta">Willpower Maximum</div><b>${willpowerMax()}</b><div class="meta">5 + Composure + Resolve</div></div></div>${issuesHtml(4)}</section>`;
+    return `<section class="step active"><h1>[[s_d1491c761cf3]]</h1><div class="lead">[[s_93b9dac31ca1]]</div><div class="allocationStatus ${left === 0 ? "complete" : ""}"><div><span>[[s_d3bc3d68e50a]]</span><strong>${left}</strong><small>${e(M("distributedOf", { used: totalAttributeSpent(), total }))}</small></div><button class="btn resetStepBtn" data-action="reset-attributes">[[s_5e4e5bd526ff]]</button></div><div class="notice">[[s_4a6686dc5fae]]</div><div class="attrCols">${ATTR_CATEGORIES.map(renderAttrCat).join("")}</div><div class="derived" style="margin-top:10px"><div class="card"><div class="meta">[[s_a522e333addb]]</div><b>${vitaeMax()}</b><div class="meta">[[s_55471d5f3de4]]</div></div><div class="card"><div class="meta">[[s_815d46237b83]]</div><b>${willpowerMax()}</b><div class="meta">[[s_d3355d77c43a]]</div></div></div>${issuesHtml(4)}</section>`;
   }
   function renderAttrCat(cat) {
-    const key = cat.toLowerCase(),
+    const key = cat,
+      label = attrCategoryLabel(cat),
       target = roleBudget(cat),
       spent = categorySpent(cat),
       left = Math.max(0, target - spent),
       finalTotal = categorySum(cat);
-    return `<div class="attrCol"><div class="attrColHead"><div><b>${cat}</b><div class="meta">${spent} / ${target} distributed · ${left} left · final ${finalTotal}</div></div><select class="roleSelect" data-role="${key}" aria-label="${cat} category priority">${["primary", "secondary", "tertiary"].map((r) => `<option value="${r}" ${state.attributes.roles[key] === r ? "selected" : ""} ${roleSwapValid(key, r) ? "" : "disabled"}>${r[0].toUpperCase() + r.slice(1)}</option>`).join("")}</select></div>${D.attributes
+    return `<div class="attrCol"><div class="attrColHead"><div><b>${e(label)}</b><div class="meta">${e(M("distributedLeftFinal", { used: spent, total: target, left, final: finalTotal }))}</div></div><select class="roleSelect" data-role="${key}" aria-label="${e(M("categoryPriority", { category: label }))}">${["primary", "secondary", "tertiary"].map((r) => `<option value="${r}" ${state.attributes.roles[key] === r ? "selected" : ""} ${roleSwapValid(key, r) ? "" : "disabled"}>${e(({ primary: S("s_a9a96ec01949"), secondary: S("s_025de599ea0a"), tertiary: S("s_b710a1f98200") })[r] || r)}</option>`).join("")}</select></div>${D.attributes
       .filter((a) => a.category === cat)
       .map((a) => {
         const n = Number(state.attributes.ratings[a.id]);
-        return `<div class="attrItem"><div class="attrItemTop"><button class="attrNameBtn" data-info-attr="${a.id}">${e(a.name)}</button><span class="attrCurrent">Rating ${n} · max now ${maxLegalAttrRating(a)}</span></div><div class="attrRatings">${Array.from(
+        return `<div class="attrItem"><div class="attrItemTop"><button class="attrNameBtn" data-info-attr="${a.id}">${e(a.name)}</button><span class="attrCurrent">${e(M("ratingMaxNow", { rating: n, max: maxLegalAttrRating(a) }))}</span></div><div class="attrRatings">${Array.from(
           { length: attrMax() },
           (_, i) => {
             const r = i + 1,
               allowed = attrRatingAllowed(a, r) || r === n;
-            return `<button class="ratingBtn ${r === n ? "selected" : ""}" data-attr="${a.id}" data-rating="${r}" ${allowed ? "" : "disabled"} aria-label="Set ${e(a.name)} to ${r}">${r}</button>`;
+            return `<button class="ratingBtn ${r === n ? "selected" : ""}" data-attr="${a.id}" data-rating="${r}" ${allowed ? "" : "disabled"} aria-label="${e(M("setAttribute", { attribute: a.name, rating: r }))}">${r}</button>`;
           },
         ).join(
           "",
-        )}<button class="fieldInfoBtn" data-info-attr="${a.id}" aria-label="Read ${e(a.name)} description and rating scale">?</button></div></div>`;
+        )}<button class="fieldInfoBtn" data-info-attr="${a.id}" aria-label="${e(M("readDescriptionScale", { name: a.name }))}">?</button></div></div>`;
       })
       .join("")}</div>`;
   }
@@ -1612,7 +1630,7 @@
       freeOnly = D.skills.filter((s) => lifepathSkillRating(s.id) === 0),
       used = sum(state.freeSkills),
       left = Math.max(0, creature().freeSkillDots - used);
-    return `<section class="step active"><h1>Step 6 · Skills</h1><div class="lead">Ratings earned through Lifepaths stay in place. Spend ${creature().freeSkillDots} additional Skill dots without reducing any Lifepath rating.</div><div class="allocationStatus ${left === 0 ? "complete" : ""}"><div><span>Free Skill dots remaining</span><strong>${left}</strong><small>${used} of ${creature().freeSkillDots} distributed</small></div><button class="btn resetStepBtn" data-action="reset-skills">Reset Skills</button></div><div class="budgetBar"><span class="pill">House rule: base cap 3 +1 per Lifepath listing the Skill</span></div><div class="sectionTitle">From Lifepaths</div>${fromLp.length ? `<div class="optionList">${fromLp.map(renderSkillRow).join("")}</div>` : '<div class="notice">No Skill dots have been assigned through Lifepaths yet.</div>'}<div class="sectionTitle">Other Skills · free allocation</div><div class="optionList">${freeOnly.map(renderSkillRow).join("")}</div>${issuesHtml(5)}</section>`;
+    return `<section class="step active"><h1>[[s_4b9f7c999804]]</h1><div class="lead">${e(M("skillsLead", { count: creature().freeSkillDots }))}</div><div class="allocationStatus ${left === 0 ? "complete" : ""}"><div><span>[[s_d5ad6bf8fba7]]</span><strong>${left}</strong><small>${e(M("distributedOf", { used, total: creature().freeSkillDots }))}</small></div><button class="btn resetStepBtn" data-action="reset-skills">[[s_f4dd509ac115]]</button></div><div class="budgetBar"><span class="pill">[[s_8a66c3199e81]]</span></div><div class="sectionTitle">[[s_829318c8d255]]</div>${fromLp.length ? `<div class="optionList">${fromLp.map(renderSkillRow).join("")}</div>` : '<div class="notice">[[s_b5fcfbeba84a]]</div>'}<div class="sectionTitle">[[s_0e49bb3a8b01]]</div><div class="optionList">${freeOnly.map(renderSkillRow).join("")}</div>${issuesHtml(5)}</section>`;
   }
   function renderSkillRow(s) {
     const base = lifepathSkillRating(s.id),
@@ -1622,8 +1640,20 @@
       capSources = lifepathCapSources(s.id),
       cap = skillCap(s.id);
     const canDown = free > 0,
-      canUp = sum(state.freeSkills) < creature().freeSkillDots && total < cap;
-    return `<div class="skillRow ${total > 0 ? "hasRating" : ""}"><div class="skillRowMain"><div class="skillTitleLine"><button class="skillNameBtn" data-info-skill="${s.id}">${e(s.name)}</button><span class="skillStat current">Current <b>${total}</b></span><span class="skillStat cap">Cap <b>${cap}</b></span></div><div class="rowmeta">${capSources.length ? `House-rule cap +${capSources.length} (${capSources.map(e).join(" · ")})` : ""}${base ? `${capSources.length ? " · " : ""}Lifepath dots ${base}${sources.length ? ` (${sources.map((x) => `${e(x.source)} +${x.dots}`).join(" · ")})` : ""}` : ""}${free ? ` · Free +${free}` : ""}</div><div class="choiceRowMeta">${e(s.description)}</div></div><div class="stepper"><button data-stepper="free-skill:${s.id}" data-delta="-1" ${canDown ? "" : "disabled"}>−</button><div class="n">${total}</div><button data-stepper="free-skill:${s.id}" data-delta="1" ${canUp ? "" : "disabled"}>+</button></div></div>`;
+      canUp = sum(state.freeSkills) < creature().freeSkillDots && total < cap,
+      allocationParts = [];
+    if (capSources.length)
+      allocationParts.push(
+        M("capDetail", { bonus: capSources.length, sources: capSources.join(" · "), rest: "" }),
+      );
+    if (base) {
+      const sourceText = sources.length
+        ? ` (${sources.map((x) => M("resourceSourceTag", { source: x.source, dots: x.dots })).join(" · ")})`
+        : "";
+      allocationParts.push(M("lifepathDotsDetail", { dots: base, rest: sourceText }));
+    }
+    if (free) allocationParts.push(M("freePlus", { dots: free }));
+    return `<div class="skillRow ${total > 0 ? "hasRating" : ""}"><div class="skillRowMain"><div class="skillTitleLine"><button class="skillNameBtn" data-info-skill="${s.id}">${e(s.name)}</button><span class="skillStat current">${e(S("s_4fc0e2bc8073"))} <b>${total}</b></span><span class="skillStat cap">${e(S("s_b38fd978df2c"))} <b>${cap}</b></span></div><div class="rowmeta">${e(allocationParts.join(" · "))}</div><div class="choiceRowMeta">${e(s.description)}</div></div><div class="stepper"><button data-stepper="free-skill:${s.id}" data-delta="-1" ${canDown ? "" : "disabled"}>−</button><div class="n">${total}</div><button data-stepper="free-skill:${s.id}" data-delta="1" ${canUp ? "" : "disabled"}>+</button></div></div>`;
   }
   function renderFocuses() {
     ensureFocusSlots();
@@ -1634,40 +1664,43 @@
       filled = relevant.reduce(
         (n, s) =>
           n +
-          (state.focuses[s.id] || []).filter((v) => String(v).trim()).length,
+          (state.focuses[s.id] || []).filter(focusEntryFilled).length,
         0,
       ),
       left = Math.max(0, req - filled);
-    return `<section class="step active"><h1>Step 7 · Focuses</h1><div class="lead">A Skill gains Focus slots at ratings 1, 3, and 5. Every Focus is selected by the player. Concrete parenthetical Focuses printed in Lifepaths are recommendations, never fixed values.</div><div class="allocationStatus ${left === 0 ? "complete" : ""}"><div><span>Focus choices remaining</span><strong>${left}</strong><small>${filled} of ${req} selected</small></div><button class="btn resetStepBtn" data-action="reset-focuses">Reset Focuses</button></div><div class="notice">Concrete Lifepath suggestions appear first when available. Instructions such as “choose an art form” are not treated as Focus names. RAW Skill examples remain available as quick choices, and you can always type another relevant Focus.</div><div class="sectionTitle">Skills from selected Lifepaths</div>${fromLp.length ? `<div class="optionList">${fromLp.map(renderFocusRow).join("")}</div>` : '<div class="notice">No current Focus-bearing Skill is listed by a selected Lifepath.</div>'}<div class="sectionTitle">Other Skills</div>${freeOnly.length ? `<div class="optionList">${freeOnly.map(renderFocusRow).join("")}</div>` : '<div class="notice">No other Skill currently has a Focus slot.</div>'}${issuesHtml(6)}</section>`;
+    return `<section class="step active"><h1>[[s_af3504b785ff]]</h1><div class="lead">[[s_81fe9de42544]]</div><div class="allocationStatus ${left === 0 ? "complete" : ""}"><div><span>[[s_a99d31e819de]]</span><strong>${left}</strong><small>${e(M("selectedOf", { used: filled, total: req }))}</small></div><button class="btn resetStepBtn" data-action="reset-focuses">[[s_ae0cf17bafa8]]</button></div><div class="notice">[[s_d69f520a0925]]</div><div class="sectionTitle">[[s_70c343b19cd7]]</div>${fromLp.length ? `<div class="optionList">${fromLp.map(renderFocusRow).join("")}</div>` : '<div class="notice">[[s_68119e6a931d]]</div>'}<div class="sectionTitle">[[s_946254b0a26e]]</div>${freeOnly.length ? `<div class="optionList">${freeOnly.map(renderFocusRow).join("")}</div>` : '<div class="notice">[[s_463e4257d41a]]</div>'}${issuesHtml(6)}</section>`;
   }
   function renderFocusRow(s) {
     const slots = focusSlotDefs(s.id),
       arr = state.focuses[s.id] || [],
       capSources = lifepathCapSources(s.id),
       recs = lifepathFocusRecommendations(s.id);
-    return `<div class="focusCard"><div class="focusHead"><div><button class="skillNameBtn" data-info-skill="${s.id}">${e(s.name)}</button><div class="rowmeta">Current ${finalSkill(s.id)} · Cap ${skillCap(s.id)}${capSources.length ? ` · Lifepaths: ${capSources.map(e).join(" · ")}` : ""} · ${slots.length} Focus slot${slots.length === 1 ? "" : "s"}</div></div></div>${recs.length ? `<div class="focusRecommendationSummary">${recs.map((r) => `<span><b>${e(r.source)}</b>: ${r.values.map(e).join(" / ")}</span>`).join("")}</div>` : ""}<div class="focusInputs">${slots.map((slot, i) => renderFocusSlot(s, slot, i, arr[i] || "")).join("")}</div></div>`;
+    return `<div class="focusCard"><div class="focusHead"><div><button class="skillNameBtn" data-info-skill="${s.id}">${e(s.name)}</button><div class="rowmeta">${e(M("focusRowMeta", { current: finalSkill(s.id), cap: skillCap(s.id), lifepaths: capSources.length ? M("focusRowLifepaths", { names: capSources.join(" · ") }) : "", slots: slots.length, slotsLabel: M(slots.length === 1 ? "focusSlotsOne" : "focusSlotsOther") }))}</div></div></div>${recs.length ? `<div class="focusRecommendationSummary">${recs.map((r) => `<span><b>${e(r.source)}</b>: ${r.values.map((v) => e(v.label)).join(" / ")}</span>`).join("")}</div>` : ""}<div class="focusInputs">${slots.map((slot, i) => renderFocusSlot(s, slot, i, arr[i] || null)).join("")}</div></div>`;
   }
   function renderFocusSlot(s, slot, i, value) {
     const recs = lifepathFocusRecommendations(s.id),
       lpValues = [];
     recs.forEach((r) =>
       r.values.forEach((v) => {
-        if (!lpValues.includes(v)) lpValues.push(v);
+        if (!lpValues.some((x) => x.ref === v.ref)) lpValues.push(v);
       }),
     );
-    const raw = rawFocusSuggestions(s.id).filter((v) => !lpValues.includes(v)),
-      all = [...lpValues, ...raw];
-    return `<div class="focusSlot"><div class="focusSlotHead"><b>Focus at rating ${slot.threshold}</b><span class="tag">Player choice</span></div><div class="field" style="margin:0"><input list="focus-${s.id}-${i}" data-focus="${s.id}:${i}" value="${e(value)}" placeholder="Choose or type a Focus"><datalist id="focus-${s.id}-${i}">${all.map((x) => `<option value="${e(x)}"></option>`).join("")}</datalist></div>${lpValues.length ? `<div class="focusChoiceLabel">Suggested by Lifepath</div><div class="focusSuggestions">${lpValues.map((x) => `<button type="button" class="focusSuggestion recommended" data-focus-pick="${s.id}:${i}" data-focus-value="${e(x)}">${e(x)}</button>`).join("")}</div>` : ""}${
+    const raw = rawFocusSuggestions(s.id).filter(
+        (v) => !lpValues.some((x) => x.ref === v.ref),
+      ),
+      all = [...lpValues, ...raw],
+      displayValue = focusEntryLabel(s.id, value);
+    return `<div class="focusSlot"><div class="focusSlotHead"><b>${e(M("focusAtRating", { rating: slot.threshold }))}</b><span class="tag">[[s_1d5d6e8f1778]]</span></div><div class="field" style="margin:0"><input list="focus-${s.id}-${i}" data-focus="${s.id}:${i}" value="${e(displayValue)}" placeholder="[[s_1c85fd5e02c0]]"><datalist id="focus-${s.id}-${i}">${all.map((x) => `<option value="${e(x.label)}"></option>`).join("")}</datalist></div>${lpValues.length ? `<div class="focusChoiceLabel">[[s_30df11dceb56]]</div><div class="focusSuggestions">${lpValues.map((x) => `<button type="button" class="focusSuggestion recommended" data-focus-pick="${s.id}:${i}" data-focus-ref="${e(x.ref)}">${e(x.label)}</button>`).join("")}</div>` : ""}${
       raw.length
-        ? `<div class="focusChoiceLabel">RAW Skill examples</div><div class="focusSuggestions">${raw
+        ? `<div class="focusChoiceLabel">[[s_b527157990fb]]</div><div class="focusSuggestions">${raw
             .slice(0, 10)
             .map(
               (x) =>
-                `<button type="button" class="focusSuggestion" data-focus-pick="${s.id}:${i}" data-focus-value="${e(x)}">${e(x)}</button>`,
+                `<button type="button" class="focusSuggestion" data-focus-pick="${s.id}:${i}" data-focus-ref="${e(x.ref)}">${e(x.label)}</button>`,
             )
             .join("")}</div>`
         : ""
-    }<div class="rowmeta">Suggestions are optional. Enter another relevant Focus if it better fits the character.</div></div>`;
+    }<div class="rowmeta">[[s_a7e985288ef7]]</div></div>`;
   }
 
   function renderPowers() {
@@ -1680,7 +1713,7 @@
           ? state.sire.bonusDiscipline
           : null,
       caps = tierDisciplineCaps();
-    return `<section class="step active"><h1>Step 8 · Disciplines, Clan Traits & Merits</h1><div class="lead">Spend ${c.disciplineDots} dots only among the three Clan Disciplines. The sire-granted dot is already present and cannot be removed. Then choose ${c.disciplinePowers} powers, ${c.clanTraits} Clan Traits, and ${c.merits} Merits.</div>${needsChoice ? `<div class="notice warn"><b>${e(cl.name)}’s variable Clan Discipline has not been resolved.</b> Make that choice once on the Clan page before allocating Discipline dots. <button class="btn ghost" type="button" data-action="go-clan" style="margin-left:8px;min-height:32px">Open Clan step</button></div>` : ""}<div class="sectionTitle">Discipline dots</div><div class="budgetBar"><span class="pill ${totalClanDisciplineDots() === c.disciplineDots ? "good" : "warn"}">Clan dots ${totalClanDisciplineDots()} / ${c.disciplineDots}</span><span class="pill">Sire bonus: ${state.sire.bonusDiscipline ? e(discById(state.sire.bonusDiscipline)?.name) + " 1" : "not selected"}</span><span class="pill">Chargen max ${c.maxDisciplineDots}</span></div><div class="notice">RAW says to distribute the listed dots among the three Clan Disciplines; it does not state a mandatory 3/2/1-style spread. Tier caps after character creation are Clan ${caps.clan} / Non-Clan ${caps.nonClan}.</div><div class="grid3 equalTiles">${cds.map((id) => renderDiscDotCard(id)).join("") || '<div class="notice warn">Complete the Clan Discipline choice first.</div>'}${sireOnly ? renderSireOnlyDiscCard(sireOnly) : ""}</div><div class="sectionTitle">Discipline powers</div><div class="budgetBar"><span class="pill ${state.disciplines.powers.length === c.disciplinePowers ? "good" : "warn"}">Powers ${state.disciplines.powers.length} / ${c.disciplinePowers}</span></div>${renderPowerGroups()}<div class="sectionTitle">Clan Traits</div><div class="budgetBar"><span class="pill ${state.traits.length === c.clanTraits ? "good" : "warn"}">Traits ${state.traits.length} / ${c.clanTraits}</span></div>${cl?.complete ? `<div class="gridAuto">${cl.traits.map(renderTraitCard).join("")}</div>` : `<div class="notice warn">The supplied Alpha packet does not provide a full Clan Trait set for ${e(cl?.name || "this clan")}.</div>`}<div class="sectionTitle">Merits</div><div class="budgetBar"><span class="pill ${state.merits.length === c.merits ? "good" : "warn"}">Merits ${state.merits.length} / ${c.merits}</span></div><div class="gridAuto">${D.merits.map(renderMeritCard).join("")}</div>${issuesHtml(7)}</section>`;
+    return `<section class="step active"><h1>[[s_5f7f7ffccf35]]</h1><div class="lead">${e(M("powersLead", { dots: c.disciplineDots, powers: c.disciplinePowers, traits: c.clanTraits, merits: c.merits }))}</div>${needsChoice ? `<div class="notice warn"><b>${e(M("variableClanUnresolved", { clan: cl.name }))}</b> ${e(M("resolveClanChoiceNote"))} <button class="btn ghost" type="button" data-action="go-clan" style="margin-left:8px;min-height:32px">[[s_f7acc2ce067e]]</button></div>` : ""}<div class="sectionTitle">[[s_039300206d12]]</div><div class="budgetBar"><span class="pill ${totalClanDisciplineDots() === c.disciplineDots ? "good" : "warn"}">${e(M("clanDotsBudget", { used: totalClanDisciplineDots(), total: c.disciplineDots }))}</span><span class="pill">${e(M("sireBonus", { value: state.sire.bonusDiscipline ? `${discById(state.sire.bonusDiscipline)?.name} 1` : S("s_d0a5cd87735f") }))}</span><span class="pill">${e(M("chargenMax", { max: c.maxDisciplineDots }))}</span></div><div class="notice">${e(M("disciplineSpreadNote", { clan: caps.clan, nonClan: caps.nonClan }))}</div><div class="grid3 equalTiles">${cds.map((id) => renderDiscDotCard(id)).join("") || '<div class="notice warn">[[s_03cba82e6be6]]</div>'}${sireOnly ? renderSireOnlyDiscCard(sireOnly) : ""}</div><div class="sectionTitle">[[s_1a11e3511dc4]]</div><div class="budgetBar"><span class="pill ${state.disciplines.powers.length === c.disciplinePowers ? "good" : "warn"}">${e(M("powersBudget", { used: state.disciplines.powers.length, total: c.disciplinePowers }))}</span></div>${renderPowerGroups()}<div class="sectionTitle">[[s_f2d358efc8f6]]</div><div class="budgetBar"><span class="pill ${state.traits.length === c.clanTraits ? "good" : "warn"}">${e(M("traitsBudget", { used: state.traits.length, total: c.clanTraits }))}</span></div>${cl?.complete ? `<div class="gridAuto">${cl.traits.map(renderTraitCard).join("")}</div>` : `<div class="notice warn">${e(M("missingClanTraitSet", { clan: cl?.name || S("s_ff48b4ba7b3f") }))}</div>`}<div class="sectionTitle">[[s_12473ae7fbd7]]</div><div class="budgetBar"><span class="pill ${state.merits.length === c.merits ? "good" : "warn"}">${e(M("meritsBudget", { used: state.merits.length, total: c.merits }))}</span></div><div class="gridAuto">${D.merits.map(renderMeritCard).join("")}</div>${issuesHtml(7)}</section>`;
   }
   function renderDiscDotCard(id) {
     const d = discById(id),
@@ -1691,18 +1724,18 @@
       canUp =
         totalClanDisciplineDots() < creature().disciplineDots &&
         rating < creature().maxDisciplineDots;
-    return `<div class="card infoTile"><button class="tileInfo" data-info-disc="${id}" aria-label="Read ${e(d.name)} rules">?</button><div class="row"><div><div class="rowname">${e(d.name)}</div><div class="rowmeta">Rating ${rating} · Clan allocation ${free}${sire ? " · Sire +1" : ""}${sourceGapDisc(id) ? " · powers in development" : ""}</div></div><div class="stepper"><button data-stepper="disc:${id}" data-delta="-1" ${canDown ? "" : "disabled"}>−</button><div class="n">${rating}</div><button data-stepper="disc:${id}" data-delta="1" ${canUp ? "" : "disabled"}>+</button></div></div></div>`;
+    return `<div class="card infoTile"><button class="tileInfo" data-info-disc="${id}" aria-label="${e(M("readRules", { name: d.name }))}">?</button><div class="row"><div><div class="rowname">${e(d.name)}</div><div class="rowmeta">${e(M("disciplineRatingMeta", { rating, allocation: free, sire: sire ? M("sireMarker") : "", gap: sourceGapDisc(id) ? M("powerGapMarker") : "" }))}</div></div><div class="stepper"><button data-stepper="disc:${id}" data-delta="-1" ${canDown ? "" : "disabled"}>−</button><div class="n">${rating}</div><button data-stepper="disc:${id}" data-delta="1" ${canUp ? "" : "disabled"}>+</button></div></div></div>`;
   }
   function renderSireOnlyDiscCard(id) {
     const d = discById(id);
-    return `<div class="card infoTile"><button class="tileInfo" data-info-disc="${id}" aria-label="Read ${e(d.name)} rules">?</button><div class="row"><div><div class="rowname">${e(d.name)}</div><div class="rowmeta">Rating 1 · granted by Sire · non-Clan at chargen</div></div><div class="stepper"><button disabled>−</button><div class="n">1</div><button disabled>+</button></div></div></div>`;
+    return `<div class="card infoTile"><button class="tileInfo" data-info-disc="${id}" aria-label="${e(M("readRules", { name: d.name }))}">?</button><div class="row"><div><div class="rowname">${e(d.name)}</div><div class="rowmeta">${e(M("sireOnlyDisciplineMeta"))}</div></div><div class="stepper"><button disabled>−</button><div class="n">1</div><button disabled>+</button></div></div></div>`;
   }
   function renderPowerGroups() {
     const ids = D.disciplines
       .filter((d) => disciplineRating(d.id) > 0)
       .map((d) => d.id);
     if (!ids.length)
-      return '<div class="notice warn">No eligible powers yet. Add or receive a Discipline dot first.</div>';
+      return '<div class="notice warn">[[s_04841f39c2eb]]</div>';
     return ids
       .map((id) => {
         const d = discById(id),
@@ -1711,80 +1744,80 @@
           sel = state.disciplines.powers.filter(
             (x) => x.disciplineId === id,
           ).length;
-        return `<div class="powerGroup"><div class="powerGroupHead"><div><b>${e(d.name)}</b><div class="meta">Rating ${r} · ${sel} power${sel === 1 ? "" : "s"} selected</div></div><button class="tileInfo inlineInfo" data-info-disc="${id}" aria-label="Read ${e(d.name)} rules">?</button></div>${powers.length ? `<div class="gridAuto equalTiles">${powers.map((p) => renderPowerCard({ ...p, disciplineId: id, disciplineName: d.name })).join("")}</div>` : `<div class="notice warn">No full power definitions for this Discipline are supplied in the Alpha packet.</div>`}</div>`;
+        return `<div class="powerGroup"><div class="powerGroupHead"><div><b>${e(d.name)}</b><div class="meta">${e(M("disciplineSelectedPowers", { rating: r, count: sel, powerWord: M(sel === 1 ? "powerSingular" : "powerPlural") }))}</div></div><button class="tileInfo inlineInfo" data-info-disc="${id}" aria-label="${e(M("readRules", { name: d.name }))}">?</button></div>${powers.length ? `<div class="gridAuto equalTiles">${powers.map((p) => renderPowerCard({ ...p, disciplineId: id, disciplineName: d.name })).join("")}</div>` : `<div class="notice warn">[[s_bdc1c11f48f2]]</div>`}</div>`;
       })
       .join("");
   }
   function renderPowerCard(p) {
     const sel = powerSelected(p.disciplineId, p.id);
-    return `<div class="powerCard infoTile selectable ${sel ? "selected" : ""}" data-power="${p.disciplineId}:${p.id}"><button class="tileInfo" data-info-power="${p.disciplineId}:${p.id}" aria-label="Read ${e(p.name)} rules">?</button><div class="checkline"><input type="checkbox" ${sel ? "checked" : ""} tabindex="-1"><div><b>${e(p.name)}</b><div class="meta">${e(p.disciplineName)} · ${p.rank}-dot ${e(p.category)}</div></div></div><div class="powerMeta"><span class="tag">${e(p.cost || "Cost —")}</span><span class="tag">${e(p.activate || "Action —")}</span>${p.detailsMissing ? '<span class="tag warn">full entry missing</span>' : ""}</div></div>`;
+    return `<div class="powerCard infoTile selectable ${sel ? "selected" : ""}" data-power="${p.disciplineId}:${p.id}"><button class="tileInfo" data-info-power="${p.disciplineId}:${p.id}" aria-label="${e(M("readRules", { name: p.name }))}">?</button><div class="checkline"><input type="checkbox" ${sel ? "checked" : ""} tabindex="-1"><div><b>${e(p.name)}</b><div class="meta">${e(M("disciplinePowerKicker", { discipline: p.disciplineName, rank: p.rank, category: p.category }))}</div></div></div><div class="powerMeta"><span class="tag">${e(p.cost || S("s_ce0e9e10727e"))}</span><span class="tag">${e(p.activate || S("s_b4395abff639"))}</span>${p.detailsMissing ? '<span class="tag warn">[[s_89edce0fa0d8]]</span>' : ""}</div></div>`;
   }
   function renderTraitCard(t) {
     const ok = traitEligible(t),
       sel = state.traits.includes(t.id);
-    return `<div class="traitCard infoTile selectable ${sel ? "selected" : ""} ${!ok ? "disabled" : ""}" data-trait="${t.id}"><button class="tileInfo" data-info-trait="${t.id}" aria-label="Read ${e(t.name)} rules">?</button><div class="checkline"><input type="checkbox" ${sel ? "checked" : ""} ${!ok ? "disabled" : ""} tabindex="-1"><div><b>${e(t.name)}</b><div class="meta">${e(t.prerequisites)}</div></div></div></div>`;
+    return `<div class="traitCard infoTile selectable ${sel ? "selected" : ""} ${!ok ? "disabled" : ""}" data-trait="${t.id}"><button class="tileInfo" data-info-trait="${t.id}" aria-label="${e(M("readRules", { name: t.name }))}">?</button><div class="checkline"><input type="checkbox" ${sel ? "checked" : ""} ${!ok ? "disabled" : ""} tabindex="-1"><div><b>${e(t.name)}</b><div class="meta">${e(t.prerequisites)}</div></div></div></div>`;
   }
   function renderMeritCard(m) {
-    const ok = prereqEligible(m.prerequisites),
+    const ok = requirementsEligible(m.requirements),
       sel = state.merits.includes(m.id);
-    return `<div class="meritCard infoTile selectable ${sel ? "selected" : ""} ${!ok ? "disabled" : ""}" data-merit="${m.id}"><button class="tileInfo" data-info-merit="${m.id}" aria-label="Read ${e(m.name)} rules">?</button><div class="checkline"><input type="checkbox" ${sel ? "checked" : ""} ${!ok ? "disabled" : ""} tabindex="-1"><div><b>${e(m.name)}</b><div class="meta">${e(m.summary)}</div></div></div></div>`;
+    return `<div class="meritCard infoTile selectable ${sel ? "selected" : ""} ${!ok ? "disabled" : ""}" data-merit="${m.id}"><button class="tileInfo" data-info-merit="${m.id}" aria-label="${e(M("readRules", { name: m.name }))}">?</button><div class="checkline"><input type="checkbox" ${sel ? "checked" : ""} ${!ok ? "disabled" : ""} tabindex="-1"><div><b>${e(m.name)}</b><div class="meta">${e(m.summary)}</div></div></div></div>`;
   }
 
   function humanityPositions() {
     const t = tierOf();
     if (t === "ancilla")
       return [
-        { v: -1, l: "Monstrous 1" },
-        { v: 0, l: "Neutral" },
-        { v: 1, l: "Mortal 1" },
+        { v: -1, l: S("s_b3427402aa5f") },
+        { v: 0, l: S("s_4bd291394543") },
+        { v: 1, l: S("s_fb9b57f130a6") },
       ];
     if (t === "elder")
       return [
-        { v: -2, l: "Monstrous 2" },
-        { v: 0, l: "Neutral" },
-        { v: 2, l: "Mortal 2" },
+        { v: -2, l: S("s_9ccb23bcec26") },
+        { v: 0, l: S("s_4bd291394543") },
+        { v: 2, l: S("s_2e9317893258") },
       ];
-    return [{ v: 0, l: "Neutral" }];
+    return [{ v: 0, l: S("s_4bd291394543") }];
   }
   function renderHumanity() {
-    return `<section class="step active"><h1>Step 9 · Humanity Scale & Nature</h1><div class="lead">Choose the permitted starting Humanity position and the Nature that represents the character’s mortal axis.</div><div class="sectionTitle">Starting Humanity</div><div class="grid3">${humanityPositions()
+    return `<section class="step active"><h1>[[s_4a03a519b095]]</h1><div class="lead">[[s_bab17e0d5f3a]]</div><div class="sectionTitle">[[s_dc3a695ed2b8]]</div><div class="grid3">${humanityPositions()
       .map(
         (x) =>
-          `<button class="choiceCard ${state.humanity.position === x.v ? "selected" : ""}" data-humanity="${x.v}"><h3>${e(x.l)}</h3><div class="meta">${x.v === 0 ? "Middle dot of the 7-dot Humanity Scale." : "Optional unbalanced beginning if the Storyteller uses that rule."}</div></button>`,
+          `<button class="choiceCard ${state.humanity.position === x.v ? "selected" : ""}" data-humanity="${x.v}"><h3>${e(x.l)}</h3><div class="meta">${e(S(x.v === 0 ? "s_230e2e006d44" : "s_483424abfa31"))}</div></button>`,
       )
       .join(
         "",
-      )}</div><div class="sectionTitle">Nature</div><div class="gridAuto">${D.natures.map((n) => `<div class="natureCard infoTile selectable ${state.humanity.nature === n.id ? "selected" : ""}" data-nature="${n.id}"><button class="tileInfo" data-info-nature="${n.id}" aria-label="Read ${e(n.name)} Nature rules">?</button><b>${e(n.name)}</b><div class="meta">${e(n.summary)}</div></div>`).join("")}</div>${issuesHtml(8)}</section>`;
+      )}</div><div class="sectionTitle">[[s_bddc7adb1204]]</div><div class="gridAuto">${D.natures.map((n) => `<div class="natureCard infoTile selectable ${state.humanity.nature === n.id ? "selected" : ""}" data-nature="${n.id}"><button class="tileInfo" data-info-nature="${n.id}" aria-label="${e(M("readNatureRules", { name: n.name }))}">?</button><b>${e(n.name)}</b><div class="meta">${e(n.summary)}</div></div>`).join("")}</div>${issuesHtml(8)}</section>`;
   }
 
   function renderResources() {
     const c = creature(),
       agg = aggregatedLifepathResources(),
       left = Math.max(0, c.freeResourceDots - freeResourceSpent());
-    return `<section class="step active"><h1>Step 10 · Your Resources</h1><div class="lead">Matching Resources from multiple Lifepaths are combined into one rating. Define what each Physical or Social Asset actually is for this character.</div><div class="notice resourceRules"><b>How Resource dots work:</b> dots represent usable economic, physical, or social capital. A Resource test uses Resource dots + an Attribute chosen by the Storyteller. Each dot improves the Resource’s quality or potential uses. You can temporarily spend a dot to strain the Resource for a greater effect, then recover spent dots through downtime. Use <b>?</b> on a Resource for its specific dot meaning.</div><div class="sectionTitle">From Lifepaths</div><div class="grid2">${
+    return `<section class="step active"><h1>[[s_b729875dd3e3]]</h1><div class="lead">[[s_8143e9593c80]]</div><div class="notice resourceRules"><b>[[s_d2c94d04a851]]</b> [[s_eec5303b9536]] <b>?</b> [[s_a74a5c796c05]]</div><div class="sectionTitle">[[s_829318c8d255]]</div><div class="grid2">${
       agg
         .map((r) => {
           const rt = resourceType(r.type),
             detail = resourceDetail(r.key);
-          return `<div class="card infoTile resourceCard"><button class="tileInfo" data-info-resource="${r.type}" aria-label="Read ${e(rt?.name || r.type)} rules">?</button><div class="resourceTitle"><b>${e(rt?.name || r.type)}</b><span class="resourceDots">${dots(r.dots)} <small>${r.dots}</small></span></div>${r.label ? `<div class="meta">${e(r.label)}</div>` : ""}<div class="choiceRowMeta">${e(rt?.description || "")}</div><div class="tagrow">${r.sources.map((x) => `<span class="tag">${e(x.source)} +${x.dots}</span>`).join("")}</div><div class="field resourceDetailField"><label>${r.label ? "Character details (optional)" : "Make this asset specific"}</label><textarea data-resource-detail="${e(r.key)}" placeholder="${r.type === "haven" ? "e.g. basement flat in Neustadt, concealed entrance, reinforced shutters" : "Describe the actual asset, person, collection, or identity"}">${e(detail)}</textarea></div></div>`;
+          return `<div class="card infoTile resourceCard"><button class="tileInfo" data-info-resource="${r.type}" aria-label="${e(M("readRules", { name: rt?.name || r.type }))}">?</button><div class="resourceTitle"><b>${e(rt?.name || r.type)}</b><span class="resourceDots">${dots(r.dots)} <small>${r.dots}</small></span></div>${r.label ? `<div class="meta">${e(r.label)}</div>` : ""}<div class="choiceRowMeta">${e(rt?.description || "")}</div><div class="tagrow">${r.sources.map((x) => `<span class="tag">${e(M("resourceSourceTag", { source: x.source, dots: x.dots }))}</span>`).join("")}</div><div class="field resourceDetailField"><label>${e(S(r.label ? "s_68f2dea03f3e" : "s_1c3a28365f55"))}</label><textarea data-resource-detail="${e(r.key)}" placeholder="${e(S(r.type === "haven" ? "s_24b751fc219f" : "s_783776510dd9"))}">${e(detail)}</textarea></div></div>`;
         })
         .join("") ||
-      '<div class="notice warn">No Lifepath Resource dots allocated yet.</div>'
-    }</div><div class="sectionTitle">Free Resources</div><div class="allocationStatus compact ${left === 0 ? "complete" : ""}"><div><span>Free Resource dots remaining</span><strong>${left}</strong><small>${freeResourceSpent()} of ${c.freeResourceDots} distributed</small></div><button class="btn" data-action="add-resource" ${freeResourceSpent() >= c.freeResourceDots ? "disabled" : ""}>Add Resource</button></div>${state.resources.free.map((r, i) => renderFreeResource(r, i)).join("")}${issuesHtml(9)}</section>`;
+      '<div class="notice warn">[[s_a2a85f7653c6]]</div>'
+    }</div><div class="sectionTitle">[[s_d3fc0a9dc167]]</div><div class="allocationStatus compact ${left === 0 ? "complete" : ""}"><div><span>[[s_7020f74451f5]]</span><strong>${left}</strong><small>${e(M("resourceFreeProgress", { used: freeResourceSpent(), total: c.freeResourceDots }))}</small></div><button class="btn" data-action="add-resource" ${freeResourceSpent() >= c.freeResourceDots ? "disabled" : ""}>[[s_99f57cd5f741]]</button></div>${state.resources.free.map((r, i) => renderFreeResource(r, i)).join("")}${issuesHtml(9)}</section>`;
   }
   function renderFreeResource(r, i) {
     const rt = resourceType(r.type);
-    return `<div class="resourceEntry infoTile">${r.type ? `<button class="tileInfo" data-info-resource="${r.type}" aria-label="Read ${e(rt?.name || r.type)} rules">?</button>` : ""}<div class="field"><label>Type</label><select data-free-res-type="${i}"><option value="">Choose…</option>${D.resourceTypes.map((x) => `<option value="${x.id}" ${r.type === x.id ? "selected" : ""}>${e(x.name)}</option>`).join("")}</select></div><div class="field"><label>Specific label</label><input data-free-res-label="${i}" value="${e(r.label || "")}" placeholder="e.g. Armory, Dresden court, BMW 5 Series"></div><div class="field"><label>Dots</label><input data-free-res-dots="${i}" type="number" min="1" max="${attrMax()}" value="${Number(r.dots || 1)}"></div><button class="btn danger" data-remove-resource="${i}">Remove</button><div class="field resourceFreeDescription"><label>Character details (optional)</label><textarea data-free-res-description="${i}" placeholder="What exactly is this Resource for the character?">${e(r.description || "")}</textarea></div></div>`;
+    return `<div class="resourceEntry infoTile">${r.type ? `<button class="tileInfo" data-info-resource="${r.type}" aria-label="${e(M("readRules", { name: rt?.name || r.type }))}">?</button>` : ""}<div class="field"><label>[[s_3deb74565196]]</label><select data-free-res-type="${i}"><option value="">[[s_c3b69e661eec]]</option>${D.resourceTypes.map((x) => `<option value="${x.id}" ${r.type === x.id ? "selected" : ""}>${e(x.name)}</option>`).join("")}</select></div><div class="field"><label>[[s_d15a04bf03ea]]</label><input data-free-res-label="${i}" value="${e(r.label || "")}" placeholder="[[s_ed5af1424bf8]]"></div><div class="field"><label>[[s_4b4475f26b43]]</label><input data-free-res-dots="${i}" type="number" min="1" max="${attrMax()}" value="${Number(r.dots || 1)}"></div><button class="btn danger" data-remove-resource="${i}">[[s_e963907dac5c]]</button><div class="field resourceFreeDescription"><label>[[s_68f2dea03f3e]]</label><textarea data-free-res-description="${i}" placeholder="[[s_033072d2ce30]]">${e(r.description || "")}</textarea></div></div>`;
   }
 
   function renderFinish() {
     const issues = allIssues(),
       lpNames = state.lifepaths.map((_, i) => lpDef(i)?.name).filter(Boolean);
-    return `<section class="step active"><h1>Step 11 · Finishing Touches</h1><div class="lead">Complete identity details, Important Items, weapons if relevant, and optional Flaws. The review below follows a character-sheet hierarchy instead of equal-weight dashboard cards.</div><div class="grid2"><div class="field"><label>Name</label><input id="charName" value="${e(state.identity.name)}"></div><div class="field"><label>Alias</label><input id="charAlias" value="${e(state.identity.alias)}"></div><div class="field"><div class="fieldLabelRow"><label>Apparent Age</label><button class="fieldInfoBtn" data-info-apparent-age aria-label="Explain Apparent Age">?</button></div><input id="apparentAge" value="${e(state.identity.apparentAge)}"><div class="fieldHint">How old the character looks, not a second chronological age field.</div></div><div class="field"><label>Actual Age</label><input id="actualAge" value="${e(state.identity.actualAge)}"><div class="fieldHint">Chronological age; the Alpha also asks how old they were at the Embrace and how long ago it was.</div></div><div class="field"><label>Nostalgic Decade</label><input id="nostalgicDecade" value="${e(state.identity.nostalgicDecade)}"></div></div><div class="sectionTitle sectionTitleWithInfo"><span>Important Items</span><button class="fieldInfoBtn" data-info-important-items aria-label="Explain Important Items">?</button></div><div class="notice">RAW allowance: ${lpCount()} additional Important Item${lpCount() === 1 ? "" : "s"} because the character has ${lpCount()} Lifepath${lpCount() === 1 ? "" : "s"}. Each item should fit the character’s Lifepath background; slots are not permanently assigned one-to-one. Selected Lifepaths: ${e(lpNames.join(" · ") || "—")}.</div><div class="grid2">${state.identity.items.map((x, i) => `<div class="field"><label>Important Item ${i + 1}</label><input data-important-item="${i}" value="${e(x)}" placeholder="Key object carried during the night"></div>`).join("")}</div><div class="field"><div class="fieldLabelRow"><label>Weapons / combat gear (optional, Storyteller-adjudicated)</label><button class="fieldInfoBtn" data-info-weapons aria-label="Explain weapon categories">?</button></div><textarea id="weapons" placeholder="The Alpha gives no fixed chargen weapon count; list agreed weapons or combat gear here.">${e(state.identity.weapons || "")}</textarea></div><div class="field"><label>Flaws (optional, free text)</label><textarea id="flaws">${e(state.identity.flaws)}</textarea></div><div class="sectionTitle">Character Review</div>${reviewHtml()}<div class="sectionTitle">Validation</div>${issues.length ? `<div class="issues">${issues.map((x) => `<div class="issue ${x.severity}">Step ${x.step + 1}: ${e(x.msg)}</div>`).join("")}</div>` : '<div class="notice good">Character is complete under the implemented Alpha rules.</div>'}${issuesHtml(10)}</section>`;
+    return `<section class="step active"><h1>[[s_c543e29e315c]]</h1><div class="lead">[[s_32dccedb01e3]]</div><div class="grid2"><div class="field"><label>[[s_709a23220f2c]]</label><input id="charName" value="${e(state.identity.name)}"></div><div class="field"><label>[[s_04259816ace1]]</label><input id="charAlias" value="${e(state.identity.alias)}"></div><div class="field"><div class="fieldLabelRow"><label>[[s_ca051f59e015]]</label><button class="fieldInfoBtn" data-info-apparent-age aria-label="[[s_eb4ac84dcf2a]]">?</button></div><input id="apparentAge" value="${e(state.identity.apparentAge)}"><div class="fieldHint">[[s_d9fb4dbdff9a]]</div></div><div class="field"><label>[[s_6272cf988e1c]]</label><input id="actualAge" value="${e(state.identity.actualAge)}"><div class="fieldHint">[[s_9713d6f12099]]</div></div><div class="field"><label>[[s_a16df9616267]]</label><input id="nostalgicDecade" value="${e(state.identity.nostalgicDecade)}"></div></div><div class="sectionTitle sectionTitleWithInfo"><span>[[s_f836fce0ec05]]</span><button class="fieldInfoBtn" data-info-important-items aria-label="[[s_8fa9796dcc94]]">?</button></div><div class="notice">${e(M("importantItemsAllowance", { items: lpCount(), itemWord: M(lpCount() === 1 ? "importantItemSingular" : "importantItemPlural"), paths: lpCount(), pathWord: M(lpCount() === 1 ? "lifepathSingular" : "lifepathPlural"), names: lpNames.join(" · ") || "—" }))}</div><div class="grid2">${state.identity.items.map((x, i) => `<div class="field"><label>${e(M("importantItemNumber", { n: i + 1 }))}</label><input data-important-item="${i}" value="${e(x)}" placeholder="[[s_00c7620ae215]]"></div>`).join("")}</div><div class="field"><div class="fieldLabelRow"><label>[[s_c16d9124ca48]]</label><button class="fieldInfoBtn" data-info-weapons aria-label="[[s_7d246cc0ac3a]]">?</button></div><textarea id="weapons" placeholder="[[s_6cbda4b51ec4]]">${e(state.identity.weapons || "")}</textarea></div><div class="field"><label>[[s_05ab2829f589]]</label><textarea id="flaws">${e(state.identity.flaws)}</textarea></div><div class="sectionTitle">[[s_16910c218ae6]]</div>${reviewHtml()}<div class="sectionTitle">[[s_dd74d182c641]]</div>${issues.length ? `<div class="issues">${issues.map((x) => `<div class="issue ${x.severity}">${e(M("stepNumberedIssue", { step: x.step + 1, message: x.msg }))}</div>`).join("")}</div>` : '<div class="notice good">[[s_87a16d48cf00]]</div>'}${issuesHtml(10)}</section>`;
   }
   function sheetDots(n) {
     return n > 0
-      ? `<span class="sheetDots" aria-label="${n} dots">${dots(n)}</span>`
+      ? `<span class="sheetDots" aria-label="${e(M("sheetDotsAria", { count: n }))}">${dots(n)}</span>`
       : '<span class="sheetDots empty">—</span>';
   }
   function sheetInfoButton(attr, value, label) {
@@ -1792,8 +1825,10 @@
   }
   function reviewSkillRow(s) {
     const r = finalSkill(s.id),
-      fs = (state.focuses[s.id] || []).filter((x) => String(x).trim());
-    return `<div class="sheetSkillRow"><span class="sheetSkillName">${e(s.name)}</span>${sheetDots(r)}<span class="sheetFocuses">${fs.length ? e(fs.join(" · ")) : "—"}</span>${sheetInfoButton("data-info-skill", s.id, `Read ${s.name} rules`)}</div>`;
+      fs = (state.focuses[s.id] || [])
+        .filter(focusEntryFilled)
+        .map((entry) => focusEntryLabel(s.id, entry));
+    return `<div class="sheetSkillRow"><span class="sheetSkillName">${e(s.name)}</span>${sheetDots(r)}<span class="sheetFocuses">${fs.length ? e(fs.join(" · ")) : "—"}</span>${sheetInfoButton("data-info-skill", s.id, M("readRules", { name: s.name }))}</div>`;
   }
   function reviewDiscGroup(d) {
     const r = disciplineRating(d.id),
@@ -1805,17 +1840,17 @@
         )
         .filter(Boolean)
         .sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name));
-    return `<div class="sheetDiscGroup"><div class="sheetDiscTitle"><b>${e(d.name)}</b><span class="sheetDiscTitleRight">${sheetDots(r)}${sheetInfoButton("data-info-disc", d.id, `Read ${d.name} rules`)}</span></div>${powers.length ? powers.map((p) => `<div class="sheetPowerRow"><span>${e(p.name)}</span><span class="sheetPowerActions"><small class="sheetPowerRank">${p.rank}-dot</small>${sheetInfoButton("data-info-power", `${d.id}:${p.id}`, `Read ${p.name} rules`)}</span></div>`).join("") : '<div class="sheetMuted">No selected powers</div>'}</div>`;
+    return `<div class="sheetDiscGroup"><div class="sheetDiscTitle"><b>${e(d.name)}</b><span class="sheetDiscTitleRight">${sheetDots(r)}${sheetInfoButton("data-info-disc", d.id, M("readRules", { name: d.name }))}</span></div>${powers.length ? powers.map((p) => `<div class="sheetPowerRow"><span>${e(p.name)}</span><span class="sheetPowerActions"><small class="sheetPowerRank">${e(M("rankDot", { rank: p.rank }))}</small>${sheetInfoButton("data-info-power", `${d.id}:${p.id}`, M("readRules", { name: p.name }))}</span></div>`).join("") : '<div class="sheetMuted">[[s_7b5b5aba3395]]</div>'}</div>`;
   }
   function reviewTraitCard(t) {
-    return `<div class="sheetDiscGroup sheetRuleCard"><div class="sheetDiscTitle"><b>${e(t.name)}</b>${sheetInfoButton("data-info-trait", t.id, `Read ${t.name} rules`)}</div><div class="sheetMuted">${e(t.prerequisites || "Clan Trait")}</div></div>`;
+    return `<div class="sheetDiscGroup sheetRuleCard"><div class="sheetDiscTitle"><b>${e(t.name)}</b>${sheetInfoButton("data-info-trait", t.id, M("readRules", { name: t.name }))}</div><div class="sheetMuted">${e(t.prerequisites || S("s_94f47410b37b"))}</div></div>`;
   }
   function reviewMeritCard(m) {
-    return `<div class="sheetDiscGroup sheetRuleCard"><div class="sheetDiscTitle"><b>${e(m.name)}</b>${sheetInfoButton("data-info-merit", m.id, `Read ${m.name} rules`)}</div><div class="sheetMuted">${e(m.summary || m.prerequisites || "Merit")}</div></div>`;
+    return `<div class="sheetDiscGroup sheetRuleCard"><div class="sheetDiscTitle"><b>${e(m.name)}</b>${sheetInfoButton("data-info-merit", m.id, M("readRules", { name: m.name }))}</div><div class="sheetMuted">${e(m.summary || m.prerequisites || S("s_56005f735049"))}</div></div>`;
   }
   function reviewResourceRow(r, detail = "") {
     const rt = resourceType(r.type);
-    return `<div class="sheetResourceRow"><div class="sheetResourceHead"><b>${e(rt?.name || r.type)}${r.label ? `: ${e(r.label)}` : ""}</b><span class="sheetResourceActions">${sheetDots(Number(r.dots || 0))}${sheetInfoButton("data-info-resource", r.type, `Read ${rt?.name || r.type} rules`)}</span></div>${detail ? `<div class="sheetResourceDetail">${e(detail)}</div>` : ""}</div>`;
+    return `<div class="sheetResourceRow"><div class="sheetResourceHead"><b>${e(rt?.name || r.type)}${r.label ? `: ${e(r.label)}` : ""}</b><span class="sheetResourceActions">${sheetDots(Number(r.dots || 0))}${sheetInfoButton("data-info-resource", r.type, M("readRules", { name: rt?.name || r.type }))}</span></div>${detail ? `<div class="sheetResourceDetail">${e(detail)}</div>` : ""}</div>`;
   }
   function reviewHtml() {
     const c = clanById(state.clan.id),
@@ -1830,37 +1865,33 @@
         "—",
       lpResources = aggregatedLifepathResources(),
       freeResources = state.resources.free.filter((r) => r.type);
-    return `<div class="sheetReview"><section class="sheetBlock sheetIdentity"><h3>Identity</h3><div class="sheetIdentityGrid">${sheetKV("Name", state.identity.name || "—")}${sheetKV("Alias", state.identity.alias || "—")}${sheetKV("Clan", c?.name || "—", `data-info-clan="${e(c?.id || "")}"`)}${sheetKV("Tier", creature().name, "data-info-review-tier")}${sheetKV("Generation", `${state.generation} · modifier ${generationModifier()}`, "data-info-review-generation")}${sheetKV("Sire", sire?.name || "—", "data-info-review-sire")}${sheetKV("Apparent Age", state.identity.apparentAge || "—", "data-info-apparent-age")}${sheetKV("Actual Age", state.identity.actualAge || "—")}${sheetKV("Nostalgic Decade", state.identity.nostalgicDecade || "—")}${sheetKV("Lifepaths", state.lifepaths.map((_, i) => lpDef(i)?.name || "—").join(" · "), "data-info-review-lifepaths", "wide")}</div></section><section class="sheetBlock sheetHumanity"><h3>Humanity ${sheetInfoButton("data-info-review-humanity", "1", "Explain Humanity Scale")}</h3><div class="sheetHumanityLine"><strong>${e(humanity)}</strong><span>Nature: <b>${e(nature?.name || "—")}</b> ${nature ? sheetInfoButton("data-info-nature", nature.id, `Read ${nature.name} Nature`) : ""}</span></div></section><div class="sheetVitals"><section class="sheetBlock vital"><span>Vitae Maximum</span><strong>${vitaeMax()}</strong><small>10 + Stamina</small></section><section class="sheetBlock vital"><span>Willpower Maximum</span><strong>${willpowerMax()}</strong><small>5 + Composure + Resolve</small></section></div><section class="sheetBlock"><h3>Attributes</h3><div class="sheetAttrGrid">${[
-      "Physical",
-      "Social",
-      "Mental",
-    ]
+    return `<div class="sheetReview"><section class="sheetBlock sheetIdentity"><h3>[[s_7e5a975b6add]]</h3><div class="sheetIdentityGrid">${sheetKV(S("s_709a23220f2c"), state.identity.name || "—")}${sheetKV(S("s_04259816ace1"), state.identity.alias || "—")}${sheetKV(S("s_37894f731729"), c?.name || "—", `data-info-clan="${e(c?.id || "")}"`)}${sheetKV(S("s_5bd44ebe63cd"), creature().name, "data-info-review-tier")}${sheetKV(S("s_8d441fb5f62f"), M("generationWithModifier", { generation: state.generation, modifier: generationModifier() }), "data-info-review-generation")}${sheetKV(S("s_0a2795b612ad"), sire?.name || "—", "data-info-review-sire")}${sheetKV(S("s_ca051f59e015"), state.identity.apparentAge || "—", "data-info-apparent-age")}${sheetKV(S("s_6272cf988e1c"), state.identity.actualAge || "—")}${sheetKV(S("s_a16df9616267"), state.identity.nostalgicDecade || "—")}${sheetKV(S("s_35136d138aa4"), state.lifepaths.map((_, i) => lpDef(i)?.name || "—").join(" · "), "data-info-review-lifepaths", "wide")}</div></section><section class="sheetBlock sheetHumanity"><h3>${e(S("s_7869e66e6173"))} ${sheetInfoButton("data-info-review-humanity", "1", S("s_2b4c564c2f46"))}</h3><div class="sheetHumanityLine"><strong>${e(humanity)}</strong><span>${e(S("s_bddc7adb1204"))}: <b>${e(nature?.name || "—")}</b> ${nature ? sheetInfoButton("data-info-nature", nature.id, M("readNature", { name: nature.name })) : ""}</span></div></section><div class="sheetVitals"><section class="sheetBlock vital"><span>[[s_a522e333addb]]</span><strong>${vitaeMax()}</strong><small>[[s_55471d5f3de4]]</small></section><section class="sheetBlock vital"><span>[[s_815d46237b83]]</span><strong>${willpowerMax()}</strong><small>[[s_d3355d77c43a]]</small></section></div><section class="sheetBlock"><h3>[[s_a6652617f2c7]]</h3><div class="sheetAttrGrid">${ATTR_CATEGORIES
       .map(
         (cat) =>
-          `<div class="sheetAttrCol"><h4>${cat}</h4>${D.attributes
+          `<div class="sheetAttrCol"><h4>${e(attrCategoryLabel(cat))}</h4>${D.attributes
             .filter((a) => a.category === cat)
             .map(
               (a) =>
-                `<div class="sheetAttrRow"><span>${e(a.name)}</span><span class="sheetAttrActions">${sheetDots(Number(state.attributes.ratings[a.id] || 0))}${sheetInfoButton("data-info-attr", a.id, `Read ${a.name} rules`)}</span></div>`,
+                `<div class="sheetAttrRow"><span>${e(a.name)}</span><span class="sheetAttrActions">${sheetDots(Number(state.attributes.ratings[a.id] || 0))}${sheetInfoButton("data-info-attr", a.id, M("readRules", { name: a.name }))}</span></div>`,
             )
             .join("")}</div>`,
       )
       .join(
         "",
-      )}</div></section><section class="sheetBlock"><h3>Skills</h3><div class="sheetSkillGrid">${D.skills.map(reviewSkillRow).join("")}</div></section><section class="sheetBlock"><h3>Disciplines & Powers</h3><div class="sheetDiscGrid">${
+      )}</div></section><section class="sheetBlock"><h3>[[s_e09212c7d3ea]]</h3><div class="sheetSkillGrid">${D.skills.map(reviewSkillRow).join("")}</div></section><section class="sheetBlock"><h3>[[s_2b3505197fe7]]</h3><div class="sheetDiscGrid">${
       D.disciplines
         .filter((d) => disciplineRating(d.id) > 0)
         .map(reviewDiscGroup)
         .join("") || '<span class="sheetMuted">—</span>'
-    }</div></section><section class="sheetBlock"><h3>Clan Traits</h3><div class="sheetDiscGrid">${traits.length ? traits.map(reviewTraitCard).join("") : '<span class="sheetMuted">—</span>'}</div></section><section class="sheetBlock"><h3>Merits</h3><div class="sheetDiscGrid">${merits.length ? merits.map(reviewMeritCard).join("") : '<span class="sheetMuted">—</span>'}</div></section><section class="sheetBlock"><h3>Resources</h3><div class="sheetResourceGrid">${lpResources.map((r) => reviewResourceRow(r, resourceDetail(r.key))).join("")}${freeResources.map((r) => reviewResourceRow(r, r.description || "")).join("") || '<span class="sheetMuted">—</span>'}</div></section><div class="sheetTwoCol"><section class="sheetBlock"><h3>Important Items ${sheetInfoButton("data-info-important-items", "1", "Explain Important Items")}</h3><div class="sheetSimpleList">${
+    }</div></section><section class="sheetBlock"><h3>[[s_f2d358efc8f6]]</h3><div class="sheetDiscGrid">${traits.length ? traits.map(reviewTraitCard).join("") : '<span class="sheetMuted">—</span>'}</div></section><section class="sheetBlock"><h3>[[s_12473ae7fbd7]]</h3><div class="sheetDiscGrid">${merits.length ? merits.map(reviewMeritCard).join("") : '<span class="sheetMuted">—</span>'}</div></section><section class="sheetBlock"><h3>[[s_87df60de337f]]</h3><div class="sheetResourceGrid">${lpResources.map((r) => reviewResourceRow(r, resourceDetail(r.key))).join("")}${freeResources.map((r) => reviewResourceRow(r, r.description || "")).join("") || '<span class="sheetMuted">—</span>'}</div></section><div class="sheetTwoCol"><section class="sheetBlock"><h3>${e(S("s_f836fce0ec05"))} ${sheetInfoButton("data-info-important-items", "1", S("s_8fa9796dcc94"))}</h3><div class="sheetSimpleList">${
       state.identity.items
         .filter((x) => String(x).trim())
         .map((x) => `<div>${e(x)}</div>`)
         .join("") || '<span class="sheetMuted">—</span>'
-    }</div></section><section class="sheetBlock"><h3>Weapons / Combat Gear ${sheetInfoButton("data-info-weapons", "1", "Explain weapons")}</h3><div class="sheetText">${e(state.identity.weapons || "—")}</div></section></div>${state.identity.flaws.trim() ? `<section class="sheetBlock"><h3>Flaws</h3><div class="sheetText">${e(state.identity.flaws)}</div></section>` : ""}</div>`;
+    }</div></section><section class="sheetBlock"><h3>${e(S("s_24bcb3f0be1e"))} ${sheetInfoButton("data-info-weapons", "1", S("s_885aa6e5e0c8"))}</h3><div class="sheetText">${e(state.identity.weapons || "—")}</div></section></div>${state.identity.flaws.trim() ? `<section class="sheetBlock"><h3>[[s_73bd6bc4841a]]</h3><div class="sheetText">${e(state.identity.flaws)}</div></section>` : ""}</div>`;
   }
   function sheetKV(k, v, infoAttr = "", extraClass = "") {
-    return `<div class="sheetKV ${extraClass}"><span>${e(k)}</span><span class="sheetKVValue"><b>${e(v)}</b>${infoAttr ? `<button class="sheetInfoBtn" ${infoAttr} aria-label="Read ${e(k)} information">?</button>` : ""}</span></div>`;
+    return `<div class="sheetKV ${extraClass}"><span>${e(k)}</span><span class="sheetKVValue"><b>${e(v)}</b>${infoAttr ? `<button class="sheetInfoBtn" ${infoAttr} aria-label="${e(M("readInformation", { name: k }))}">?</button>` : ""}</span></div>`;
   }
   function kv(k, v) {
     return `<div class="kv"><span>${e(k)}</span><b>${e(v)}</b></div>`;
@@ -1876,7 +1907,7 @@
       .forEach(
         (b) =>
           (b.onclick = () =>
-            goStep(Math.min(state.step + 1, STEPS.length - 1))),
+            goStep(Math.min(state.step + 1, STEP_IDS.length - 1))),
       );
     root
       .querySelectorAll('[data-action="go-clan"]')
@@ -1885,7 +1916,7 @@
     if (ra)
       ra.onclick = () => {
         if (
-          confirm(T("Reset all Attribute ratings to their 1-dot baseline?"))
+          confirm(S("s_b59155107bd0"))
         ) {
           D.attributes.forEach((a) => (state.attributes.ratings[a.id] = 1));
           render();
@@ -1896,7 +1927,7 @@
       rs.onclick = () => {
         if (
           confirm(
-            T("Reset all free Skill dots? Lifepath Skill dots will stay."),
+            S("s_89f31ccd8547"),
           )
         ) {
           state.freeSkills = {};
@@ -1907,7 +1938,7 @@
     const rf = root.querySelector('[data-action="reset-focuses"]');
     if (rf)
       rf.onclick = () => {
-        if (confirm(T("Clear all selected Focuses?"))) {
+        if (confirm(S("s_96bedcc0a719"))) {
           state.focuses = {};
           ensureFocusSlots();
           render();
@@ -2211,7 +2242,7 @@
       (x) =>
         (x.oninput = () => {
           const [sid, i] = x.dataset.focus.split(":");
-          state.focuses[sid][Number(i)] = x.value;
+          state.focuses[sid][Number(i)] = normalizeFocusEntry(sid, x.value);
           save();
         }),
     );
@@ -2219,7 +2250,7 @@
       (b) =>
         (b.onclick = () => {
           const [sid, i] = b.dataset.focusPick.split(":");
-          state.focuses[sid][Number(i)] = b.dataset.focusValue;
+          state.focuses[sid][Number(i)] = { ref: b.dataset.focusRef };
           render();
         }),
     );
@@ -2271,7 +2302,7 @@
         (card.onclick = (ev) => {
           if (ev.target.closest("[data-info-merit]")) return;
           const m = byId(D.merits, card.dataset.merit);
-          if (!m || !prereqEligible(m.prerequisites)) return;
+          if (!m || !requirementsEligible(m.requirements)) return;
           toggleLimited(state.merits, m.id, creature().merits);
           render();
         }),
@@ -2463,7 +2494,7 @@
       });
       state.merits = state.merits.filter((mid) => {
         const m = byId(D.merits, mid);
-        return m && prereqEligible(m.prerequisites);
+        return m && requirementsEligible(m.requirements);
       });
       render();
       return;
@@ -2503,12 +2534,12 @@
     r.onload = () => {
       try {
         const x = JSON.parse(r.result);
-        if (x.schemaVersion !== 1) throw new Error("Unsupported schema");
+        if (![1, 2].includes(Number(x.schemaVersion))) throw new Error(S("s_7804e1e535fb"));
         state = x;
         normalizeState();
         render();
       } catch (err) {
-        alert(T("Could not import this character JSON: ") + err.message);
+        alert(S("s_4f33b57d5257") + err.message);
       }
     };
     r.readAsText(file);
@@ -2516,7 +2547,7 @@
 
   function bindGlobal() {
     const reset = () => {
-      if (confirm(T("Reset the current character?"))) {
+      if (confirm(S("s_5375c6d91d74"))) {
         state = blankState();
         render();
       }
