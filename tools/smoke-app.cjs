@@ -77,8 +77,9 @@ assert.ok(clanHtml.includes('data-clan="brujah"'), 'Alpha-ready Brujah is not se
 assert.ok(!clanHtml.includes('data-clan="banu_haqim"'), 'incomplete Banu Haqim is still selectable');
 assert.ok(clanHtml.includes('data-info-clan="banu_haqim"'), 'incomplete Clan lost read-only info access');
 assert.ok(clanHtml.includes('clanRow selected') && clanHtml.includes('data-clan="brujah"'), 'selected Clan is not marked on its list row');
-assert.ok(clanHtml.includes('Celerity, Potence, Presence'), 'Clan tile does not use canonical English Discipline names');
-assert.ok(!clanHtml.includes('Стрімкість, Могутність, Присутність'), 'Clan tile still uses translated Discipline names');
+assert.ok(clanHtml.includes('clanDisciplineLine') && clanHtml.includes('Celerity') && clanHtml.includes('Potence') && clanHtml.includes('Presence'), 'Clan tile does not use structured canonical English Discipline rows');
+assert.ok(!clanHtml.includes('Стрімкість') && !clanHtml.includes('Могутність') && !clanHtml.includes('Присутність'), 'Clan tile still uses translated Discipline names');
+assert.ok(clanHtml.includes('Blood Sorcery') && clanHtml.includes('Obfuscate'), 'Alpha-incomplete Clan does not display its Discipline list');
 assert.ok(!clanHtml.includes('selectedSummary'), 'duplicate selected-Clan summary returned');
 assert.ok(!clanHtml.includes('повний запис Alpha') && !clanHtml.includes('неповний запис Alpha'), 'Alpha completeness badges leaked into the Clan UI');
 assert.ok(x.get('navSteps').children[1].innerHTML.includes('navCount good">1/1'), 'ready fixed Clan does not complete Clan progress');
@@ -93,6 +94,7 @@ lasombraState.clan={id:'lasombra',choice:null,caitiffDisciplines:[]};
 x=run('uk',{'vtm_v6_alpha_chargen_v0_9_0':JSON.stringify(lasombraState)});
 assert.ok(x.get('navSteps').children[1].innerHTML.includes('navCount good">1/1'), 'Lasombra Clan choice should complete the Clan step without resolving its variable Discipline');
 assert.ok(!x.get('mainCard').innerHTML.includes('data-clan-choice='), 'variable Clan Discipline selector is still rendered on the Clan step');
+assert.ok(x.get('mainCard').innerHTML.includes('Corruption<span class="disciplineOr">/</span>Oblivion'), 'Lasombra variable Disciplines are not grouped on one Clan-list row');
 
 const lasombraPowersState=JSON.parse(JSON.stringify(lasombraState));
 lasombraPowersState.step=7;

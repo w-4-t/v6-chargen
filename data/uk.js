@@ -3017,6 +3017,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.uk = {
       "readDescriptionScale": "Прочитати опис і шкалу рейтингів: {name}",
       "readRules": "Прочитати правила: {name}",
       "readClanRules": "Прочитати правила Клану {name}",
+      "clanDisciplinesLabel": "Кланові Дисципліни — {clan}",
       "availableClans": "Доступні Клани",
       "unavailableClans": "Недоступні в поточній Alpha",
       "unavailableClansLead": "Ці Клани залишено для майбутніх оновлень V6. Їхні наративні описи доступні для довідки, але обрати їх поки що не можна.",

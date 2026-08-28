@@ -3017,6 +3017,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
       "readDescriptionScale": "Read {name} description and rating scale",
       "readRules": "Read {name} rules",
       "readClanRules": "Read {name} clan rules",
+      "clanDisciplinesLabel": "Clan Disciplines — {clan}",
       "availableClans": "Available Clans",
       "unavailableClans": "Not available in the current Alpha",
       "unavailableClansLead": "These clans are retained for future V6 updates. Their narrative descriptions remain available for reference, but they cannot be selected yet.",

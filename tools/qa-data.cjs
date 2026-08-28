@@ -171,11 +171,14 @@ for (const forbidden of ['Character Generator','V6 Alpha · project house rules 
   assert.ok(!html.includes(forbidden), `index.html embeds localized EN UI copy: ${forbidden}`);
 assert.ok(!html.includes('adaptive PWA'), 'desktop header still exposes adaptive PWA label');
 assert.ok(!html.includes('rawBadge'), 'removed project-house-rules badge still exists in desktop markup/CSS');
-assert.ok(html.includes('<div class="versionLabel">v0.10.4</div>'), 'version is not placed beneath desktop Export/Import controls');
+assert.ok(html.includes('<div class="versionLabel">v0.10.6</div>'), 'version is not placed beneath desktop Export/Import controls');
 assert.ok(html.includes('class="brandTitle"') && html.includes('white-space: nowrap'), 'desktop generator title is not constrained to one line');
 assert.ok(app.includes('data-info-creature=') && app.includes('data-info-young'), 'Creature choices are missing dedicated info controls');
 assert.ok(html.includes('.creatureGrid') && html.includes('grid-auto-rows: 1fr'), 'Creature tiles are not normalized to equal-height grid rows');
 assert.ok(app.includes('variableDisciplineBlock') && app.includes('data-clan-choice='), 'variable Clan Discipline choice is not rendered in Powers');
+assert.ok(app.includes('renderClanDisciplineList') && app.includes('clanDisciplineLine'), 'Clan rows do not use the structured Discipline list');
+assert.ok(app.includes('${renderClanDisciplineList(c)}'), 'unavailable Clan rows do not receive the same Discipline list');
+assert.ok(html.includes('grid-template-columns: minmax(0, 66fr) minmax(0, 34fr)'), 'desktop Clan Discipline column is not proportionally constrained');
 
 // Runtime lookup is key-based only: no reverse English-value matching.
 {

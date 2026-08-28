@@ -1,4 +1,4 @@
-# VTM V6 Alpha Character Generator — v0.10.4
+# VTM V6 Alpha Character Generator — v0.10.6
 
 Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 
@@ -7,6 +7,19 @@ Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 - `vtmv6_for_machine.docx` supplied with the project.
 - Character-creation rules follow the V6 Alpha Player Packet unless a project interpretation or house rule is explicitly labelled.
 - No V5 / V5.5 hybrid rules are intentionally imported.
+
+## v0.10.6 — Clan info wrapping fix
+
+- Clan Discipline values in the information panel render one Discipline per line.
+- Information-panel metadata uses bounded proportional columns and safe wrapping for long localized text.
+- Ukrainian Discipline translations can no longer overlap the metadata label at narrow widths or browser zoom.
+
+## v0.10.5 — Clan Discipline list layout
+
+- Clan rows now reserve a proportional right-hand column for Clan Disciplines instead of rendering them as one comma-separated tag.
+- Fixed Disciplines are shown one per row; variable alternatives share a single row separated by `/`.
+- The same Discipline presentation is shown for Alpha-incomplete, read-only Clans.
+- The proportional column and row-based list are designed to remain legible under desktop browser zoom; narrow/mobile layouts allow individual Discipline rows to wrap rather than collapse into a dense comma string.
 
 ## v0.10.4 — Creature mobile info + variable Clan Discipline flow
 
@@ -136,4 +149,4 @@ The number of known Powers is a separate chargen budget from Discipline dots. A 
 
 ## Deployment
 
-Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.4`.
+Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.6`.

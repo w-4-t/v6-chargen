@@ -349,7 +349,7 @@
         max-width: 330px;
       }
       .choiceRow.clanRow {
-        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 66fr) minmax(0, 34fr);
         gap: 8px;
         padding: 0;
         align-items: stretch;
@@ -373,12 +373,42 @@
         outline: none;
       }
       .clanRowAside {
-        display: flex;
+        min-width: 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
         align-items: center;
-        justify-content: flex-end;
         gap: 7px;
         padding: 7px 9px 7px 0;
-        max-width: 360px;
+      }
+      .clanDisciplineList {
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: rgba(255, 255, 255, 0.018);
+        overflow: hidden;
+      }
+      .clanDisciplineLine {
+        min-width: 0;
+        padding: 4px 7px;
+        font-size: 11px;
+        line-height: 1.25;
+        font-weight: 700;
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .clanDisciplineLine + .clanDisciplineLine {
+        border-top: 1px solid var(--line);
+      }
+      .clanDisciplineLine.variable {
+        color: var(--accent);
+      }
+      .disciplineOr {
+        display: inline-block;
+        margin: 0 5px;
+        color: var(--muted);
+        font-weight: 600;
       }
       .choiceRow.clanRow.selected {
         border-color: var(--good);
@@ -924,7 +954,20 @@
         margin: 12px 0;
       }
       .infoMeta .kv {
+        grid-template-columns: minmax(88px, 0.36fr) minmax(0, 0.64fr);
+        align-items: start;
         font-size: 11px;
+      }
+      .infoMeta .kv > span,
+      .infoMeta .kv > b {
+        min-width: 0;
+        overflow-wrap: anywhere;
+        word-break: normal;
+      }
+      .infoMeta .kv > b {
+        white-space: pre-line;
+        text-align: right;
+        line-height: 1.4;
       }
       .infoBody {
         font-size: 12px;
@@ -1142,10 +1185,16 @@
           max-width: none;
         }
         .choiceRow.clanRow {
-          grid-template-columns: minmax(0, 1fr) auto;
+          grid-template-columns: minmax(0, 62fr) minmax(0, 38fr);
         }
         .clanRowAside {
-          max-width: min(42vw, 250px);
+          min-width: 0;
+        }
+        .clanDisciplineLine {
+          white-space: normal;
+          overflow: visible;
+          text-overflow: clip;
+          overflow-wrap: anywhere;
         }
         .choiceChip {
           min-width: calc(50% - 4px);
@@ -2063,7 +2112,7 @@
                 hidden
             /></label>
           </div>
-          <div class="versionLabel">v0.10.4</div>
+          <div class="versionLabel">v0.10.6</div>
         </div>
       </aside>
       <main class="main">

@@ -66,12 +66,12 @@
     const localized = discById(id)?.name;
     return localized && localized !== canonical ? `${canonical} (${localized})` : canonical;
   };
-  const clanDisciplineNames = (clan, includeTranslation = false) => {
+  const clanDisciplineNames = (clan, includeTranslation = false, separator = ", ") => {
     const r = clan?.disciplineRule || {};
     if (r.random) return M("randomDisciplines", { count: Number(r.random || 0) });
     const fixed = (r.fixed || []).map((id) => disciplineName(id, includeTranslation));
     const choice = (r.choice || []).map((id) => disciplineName(id, includeTranslation));
-    return [...fixed, ...(choice.length ? [choice.join(" / ")] : [])].join(", ");
+    return [...fixed, ...(choice.length ? [choice.join(" / ")] : [])].join(separator);
   };
   const sireDisciplineSummary = (sire, includeTranslation = false) => {
     const ids = sire?.allowedDisciplines || [];
@@ -777,7 +777,7 @@
       title: c.name,
       summary: c.description,
       meta: [
-        [S("s_3ed4ae577398"), clanDisciplineNames(c, true)],
+        [S("s_3ed4ae577398"), clanDisciplineNames(c, true, "\n")],
         [S("s_0b3d98d5a8a2"), c.curseName],
         [S("s_c095734e905e"), c.frenzyName],
       ],
@@ -1532,13 +1532,23 @@
     const unavailable = D.clans.filter((c) => !c.complete);
     return `<section class="step active"><h1>[[s_17afcda150ef]]</h1><div class="lead">[[s_2da1d5349de3]]</div><div class="sectionTitle">${e(M("availableClans"))}</div><div class="optionList clanList">${available.map((c) => renderClanRow(c, true)).join("")}</div><div class="sectionTitle clanUnavailableTitle">${e(M("unavailableClans"))}</div><div class="meta clanUnavailableLead">${e(M("unavailableClansLead"))}</div><div class="optionList clanList unavailableClanList">${unavailable.map((c) => renderClanRow(c, false)).join("")}</div>${issuesHtml(1)}</section>`;
   }
+  function renderClanDisciplineList(c) {
+    const r = c?.disciplineRule || {};
+    const rows = [];
+    for (const id of r.fixed || []) rows.push([disciplineName(id)]);
+    if (r.choice?.length) rows.push(r.choice.map((id) => disciplineName(id)));
+    if (r.random) rows.push([M("randomDisciplines", { count: Number(r.random || 0) })]);
+    return `<div class="clanDisciplineList" aria-label="${e(M("clanDisciplinesLabel", { clan: c.name }))}">${rows
+      .map((names, i) => `<div class="clanDisciplineLine ${names.length > 1 ? "variable" : ""}" data-discipline-row="${i}">${names.map(e).join('<span class="disciplineOr">/</span>')}</div>`)
+      .join("")}</div>`;
+  }
+
   function renderClanRow(c, selectable) {
     const selected = selectable && state.clan.id === c.id;
-    const disciplines = selectable ? clanDisciplineNames(c) : "";
     const main = selectable
       ? `<button type="button" class="clanChoiceMain" data-clan="${c.id}" aria-pressed="${selected ? "true" : "false"}"><div class="choiceRowMain"><div class="choiceRowTitle">${e(c.name)}</div><div class="choiceRowMeta">${e(c.description)}</div></div></button>`
       : `<div class="clanChoiceMain clanChoiceDisabled"><div class="choiceRowMain"><div class="choiceRowTitle">${e(c.name)}</div><div class="choiceRowMeta">${e(c.description)}</div></div></div>`;
-    return `<div class="choiceRow clanRow ${selected ? "selected" : ""} ${selectable ? "" : "unavailable"}">${main}<div class="clanRowAside">${disciplines ? `<span class="tag">${e(disciplines)}</span>` : ""}<button type="button" class="tileInfo inlineInfo" data-info-clan="${c.id}" aria-label="${e(M("readClanRules", { name: c.name }))}">?</button></div></div>`;
+    return `<div class="choiceRow clanRow ${selected ? "selected" : ""} ${selectable ? "" : "unavailable"}">${main}<div class="clanRowAside">${renderClanDisciplineList(c)}<button type="button" class="tileInfo inlineInfo" data-info-clan="${c.id}" aria-label="${e(M("readClanRules", { name: c.name }))}">?</button></div></div>`;
   }
   function renderClanDisciplineChoice() {
     const c = clanById(state.clan.id);
