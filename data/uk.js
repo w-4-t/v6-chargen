@@ -3097,13 +3097,12 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.uk = {
       "s_0173e8962fec": "VTM V6 Alpha — Генератор Персонажа",
       "s_8f7d030265a6": "Генератор Персонажа",
       "s_268e54a290da": "VTM V6 Alpha — Генератор",
-      "s_edca59466b78": "V6 Alpha · правила проєкту позначено окремо",
-      "s_bc399052d420": "Експорт JSON",
-      "s_1a5894339f89": "Імпорт JSON",
+      "s_bc399052d420": "Експорт",
+      "s_1a5894339f89": "Імпорт",
       "s_f3e4fadb9e37": "Експорт",
       "s_d6fbc9d2bdd5": "Імпорт",
       "s_44c57abd888a": "Скинути",
-      "s_37f710d1e891": "Скинути персонажа",
+      "s_37f710d1e891": "Скинути",
       "s_4b631f698425": "Довідка",
       "s_b52b36b7269f": "Назад",
       "s_bc981983e7f5": "Далі",
@@ -3527,12 +3526,12 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.uk = {
       "title": "Перемкнути англійською"
     },
     "import": {
-      "full": "Імпорт JSON",
+      "full": "Імпорт",
       "short": "Імпорт"
     },
     "steps": {
       "creature": {
-        "nav": "Тип істоти",
+        "nav": "Істота",
         "title": "Хто ви?"
       },
       "clan": {
@@ -3540,7 +3539,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.uk = {
         "title": "Ваш Клан"
       },
       "sire": {
-        "nav": "Sire",
+        "nav": "Сір",
         "title": "Sire і Покоління"
       },
       "lifepaths": {
@@ -3556,11 +3555,11 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.uk = {
         "title": "Навички"
       },
       "focuses": {
-        "nav": "Спеціалізації",
+        "nav": "Фокус",
         "title": "Спеціалізації"
       },
       "powers": {
-        "nav": "Здібності",
+        "nav": "Сили",
         "title": "Дисципліни, Риси та Переваги"
       },
       "humanity": {

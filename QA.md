@@ -1,4 +1,4 @@
-# QA — v0.10.0
+# QA — v0.10.1
 
 ## Data / logic separation
 
@@ -55,12 +55,24 @@
 - [x] Humanity position labels and Custom Lifepath fallback text are localized through keyed data rather than hard-coded in application logic.
 - [x] Existing terminology choices from v0.8.1 are preserved in `data/uk.js`.
 
+## Desktop global UI regression
+
+- [x] Desktop Reset / Export / Import labels are short in EN and UA.
+- [x] `adaptive PWA` and the project-house-rules badge are absent from the desktop sidebar.
+- [x] Version `v0.10.1` is displayed beneath Export / Import.
+- [x] Desktop Character Generator / Генератор Персонажа title is forced to one line.
+- [x] UA desktop navigation uses Істота / Сір / Фокус / Сили.
+- [x] Desktop navigation uses one aggregate `N/M` counter per step.
+- [x] Empty / partial / complete counters use danger / warning / success states.
+- [x] The old green completion checkmark is removed.
+- [x] Lifepath aggregate totals include each path selection plus all Lifepath Skill and Resource dots.
+
 ## Automated checks
 
 - [x] `node --check` passes for `data/core.js`, `data/en.js`, `data/uk.js`, `src/data.js`, `src/i18n.js`, and `src/app.js`.
 - [x] `node tools/qa-data.cjs` passes.
 - [x] `node tools/smoke-app.cjs` passes.
-- [x] Service worker cache is `vtm-v6-alpha-chargen-v0.10.0` and includes all runtime data files.
+- [x] Service worker cache is `vtm-v6-alpha-chargen-v0.10.1` and includes all runtime data files.
 
 ## Manual browser checks still required
 

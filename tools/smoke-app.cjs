@@ -31,6 +31,11 @@ assert.ok(x.get('mainCard').innerHTML.includes('Step 1 · What Are You?'), 'EN s
 assert.ok(!x.get('mainCard').innerHTML.includes('[[s_'), 'unresolved static text token remained in EN main render');
 assert.ok(!x.get('infoContent').innerHTML.includes('[[s_'), 'unresolved static text token remained in EN info render');
 assert.strictEqual(x.get('navSteps').children.length, 11);
+assert.ok(x.get('navSteps').children[0].innerHTML.includes('navCount good\">1/1'), 'completed desktop nav counter is not green 1/1');
+assert.ok(x.get('navSteps').children[1].innerHTML.includes('navCount danger\">0/1'), 'empty desktop nav counter is not red 0/1');
+assert.ok(x.get('navSteps').children[2].innerHTML.includes('navCount warn\">1/3'), 'partial desktop nav counter is not yellow 1/3');
+assert.ok(x.get('navSteps').children[3].innerHTML.includes('navCount danger\">0/18'), 'Lifepath aggregate counter is not 0/18 for a standard neonate');
+assert.ok(x.get('navSteps').children[7].innerHTML.includes('navCount danger\">0/10'), 'Powers aggregate counter is not 0/10 for a standard neonate');
 let saved=JSON.parse(x.store.get('vtm_v6_alpha_chargen_v0_9_0'));
 assert.strictEqual(saved.schemaVersion,2);
 
@@ -41,6 +46,13 @@ assert.ok(x.get('mainCard').innerHTML.includes('Макс. точок 5'), 'UK ke
 assert.ok(!x.get('mainCard').innerHTML.includes('[[s_'), 'unresolved static text token remained in UK main render');
 assert.ok(!x.get('infoContent').innerHTML.includes('[[s_'), 'unresolved static text token remained in UK info render');
 assert.strictEqual(x.ctx.V6I18N.text('s_44c57abd888a'), 'Скинути');
+assert.strictEqual(x.ctx.V6I18N.text('s_37f710d1e891'), 'Скинути');
+assert.strictEqual(x.ctx.V6I18N.text('s_bc399052d420'), 'Експорт');
+assert.strictEqual(x.ctx.V6I18N.text('s_1a5894339f89'), 'Імпорт');
+assert.ok(x.get('navSteps').children[0].innerHTML.includes('1. Істота'), 'UK desktop nav label Creature was not updated');
+assert.ok(x.get('navSteps').children[2].innerHTML.includes('3. Сір'), 'UK desktop nav label Sire was not updated');
+assert.ok(x.get('navSteps').children[6].innerHTML.includes('7. Фокус'), 'UK desktop nav label Focus was not updated');
+assert.ok(x.get('navSteps').children[7].innerHTML.includes('8. Сили'), 'UK desktop nav label Powers was not updated');
 
 // Switching locale rerenders the same machine state rather than translating/storing display text.
 x=run('en');

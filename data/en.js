@@ -3097,13 +3097,12 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
       "s_0173e8962fec": "VTM V6 Alpha Character Generator",
       "s_8f7d030265a6": "Character Generator",
       "s_268e54a290da": "VTM V6 Alpha Chargen",
-      "s_edca59466b78": "V6 Alpha · project house rules labelled",
-      "s_bc399052d420": "Export JSON",
-      "s_1a5894339f89": "Import JSON",
+      "s_bc399052d420": "Export",
+      "s_1a5894339f89": "Import",
       "s_f3e4fadb9e37": "Export",
       "s_d6fbc9d2bdd5": "Import",
       "s_44c57abd888a": "Reset",
-      "s_37f710d1e891": "Reset character",
+      "s_37f710d1e891": "Reset",
       "s_4b631f698425": "Info",
       "s_b52b36b7269f": "Back",
       "s_bc981983e7f5": "Next",
@@ -3527,7 +3526,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
       "title": "Перемкнути українською"
     },
     "import": {
-      "full": "Import JSON",
+      "full": "Import",
       "short": "Import"
     },
     "steps": {

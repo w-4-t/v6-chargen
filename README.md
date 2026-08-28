@@ -1,4 +1,4 @@
-# VTM V6 Alpha Character Generator — v0.10.0
+# VTM V6 Alpha Character Generator — v0.10.1
 
 Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 
@@ -7,6 +7,15 @@ Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 - `vtmv6_for_machine.docx` supplied with the project.
 - Character-creation rules follow the V6 Alpha Player Packet unless a project interpretation or house rule is explicitly labelled.
 - No V5 / V5.5 hybrid rules are intentionally imported.
+
+## v0.10.1 — desktop navigation/UI pass
+
+- Desktop utility buttons now use short labels: Reset / Export / Import and Скинути / Експорт / Імпорт.
+- The adaptive-PWA subtitle and project-house-rules badge were removed from the desktop sidebar.
+- The version label now sits beneath Export / Import.
+- The generator title is constrained to one line in both EN and UA.
+- Ukrainian desktop navigation terminology is now Істота / Сір / Фокус / Сили.
+- Desktop step progress is a single aggregate `N/M` badge. Empty, partial, and complete counts use danger, warning, and success states respectively; the old completion checkmark is removed. Lifepath progress aggregates selected Lifepaths plus their Skill and Resource dot budgets (for example, Elder `0/36`).
 
 ## v0.10.0 — full data / locale separation
 
@@ -101,4 +110,4 @@ The number of known Powers is a separate chargen budget from Discipline dots. A 
 
 ## Deployment
 
-Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.0`.
+Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.1`.

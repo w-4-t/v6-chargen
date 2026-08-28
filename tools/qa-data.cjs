@@ -169,6 +169,10 @@ for (const [id, value] of Object.entries(ctx.V6Data.locales.en.strings.text)) {
 }
 for (const forbidden of ['Character Generator','V6 Alpha · project house rules labelled','Reset character','Export JSON','Import JSON','>Info<','>Export<','>Import<','>Reset<'])
   assert.ok(!html.includes(forbidden), `index.html embeds localized EN UI copy: ${forbidden}`);
+assert.ok(!html.includes('adaptive PWA'), 'desktop header still exposes adaptive PWA label');
+assert.ok(!html.includes('rawBadge'), 'removed project-house-rules badge still exists in desktop markup/CSS');
+assert.ok(html.includes('<div class="versionLabel">v0.10.1</div>'), 'version is not placed beneath desktop Export/Import controls');
+assert.ok(html.includes('class="brandTitle"') && html.includes('white-space: nowrap'), 'desktop generator title is not constrained to one line');
 
 // Runtime lookup is key-based only: no reverse English-value matching.
 {
@@ -180,6 +184,13 @@ for (const forbidden of ['Character Generator','V6 Alpha · project house rules 
   c.window = c; vm.createContext(c);
   for (const f of ['data/core.js','data/en.js','data/uk.js','src/data.js','src/i18n.js']) vm.runInContext(fs.readFileSync(f,'utf8'), c, {filename:f});
   assert.strictEqual(c.V6I18N.text('s_44c57abd888a'), 'Скинути');
+  assert.strictEqual(c.V6I18N.text('s_37f710d1e891'), 'Скинути');
+  assert.strictEqual(c.V6I18N.text('s_bc399052d420'), 'Експорт');
+  assert.strictEqual(c.V6I18N.text('s_1a5894339f89'), 'Імпорт');
+  assert.strictEqual(c.V6Data.locales.uk.interface.steps.creature.nav, 'Істота');
+  assert.strictEqual(c.V6Data.locales.uk.interface.steps.sire.nav, 'Сір');
+  assert.strictEqual(c.V6Data.locales.uk.interface.steps.focuses.nav, 'Фокус');
+  assert.strictEqual(c.V6Data.locales.uk.interface.steps.powers.nav, 'Сили');
   assert.strictEqual(c.V6I18N.msg('validationFreeSkillDots', {count: 8}), 'Розподіліть рівно 8 вільних точок Навичок.');
   assert.strictEqual(c.V6I18N.msg('attributeKicker', {category: 'Фізичний'}), 'Фізичний Атрибут');
   assert.strictEqual(typeof c.V6I18N.tr, 'undefined', 'legacy value-based translator is still exposed');

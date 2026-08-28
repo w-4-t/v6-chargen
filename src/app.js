@@ -1336,12 +1336,6 @@
       validateStep(i).map((x) => ({ ...x, step: i })),
     );
   }
-  function isStepDone(i) {
-    return !validateStep(i).some((x) =>
-      ["error", "incomplete"].includes(x.severity),
-    );
-  }
-
   function render() {
     ensureGeneration();
     ensureLpSlots();
@@ -1353,84 +1347,81 @@
     save();
     window.V6I18N?.apply(document);
   }
-  function stepProgress(i) {
+  function stepProgressCounts(i) {
     const c = creature();
-    if (i === 0) return M("progressSelected", { done: state.creature ? 1 : 0 });
+    if (i === 0) return { done: state.creature ? 1 : 0, total: 1 };
     if (i === 1) {
-      const cl = clanById(state.clan.id),
-        base = cl ? 1 : 0,
-        extra = cl?.disciplineRule?.choice
-          ? ` · ${state.clan.choice ? 1 : 0}/1 ${S("s_14877e80cbce")}`
-          : cl?.disciplineRule?.random
-            ? M("progressDisciplinesExtra", { done: (state.clan.caitiffDisciplines || []).length })
-            : "";
-      return M("progressClan", { done: base, extra });
+      const cl = clanById(state.clan.id);
+      const base = cl ? 1 : 0;
+      if (cl?.disciplineRule?.choice)
+        return { done: base + (state.clan.choice ? 1 : 0), total: 2 };
+      if (cl?.disciplineRule?.random) {
+        const required = Number(cl.disciplineRule.random || 0);
+        return {
+          done: base + (state.clan.caitiffDisciplines || []).length,
+          total: 1 + required,
+        };
+      }
+      return { done: base, total: 1 };
     }
     if (i === 2) {
-      const related = ["adoptive_sire", "brood_child"].includes(
-          state.sire.type,
-        ),
-        done =
-          (state.sire.type ? 1 : 0) +
-          (state.generation ? 1 : 0) +
-          (state.sire.bonusDiscipline ? 1 : 0) +
-          (related && state.sire.relatedClan ? 1 : 0),
-        total = 3 + (related ? 1 : 0);
-      return M("progressChoices", { done, total, left: Math.max(0, total - done) });
+      const related = ["adoptive_sire", "brood_child"].includes(state.sire.type);
+      const done =
+        (state.sire.type ? 1 : 0) +
+        (state.generation ? 1 : 0) +
+        (state.sire.bonusDiscipline ? 1 : 0) +
+        (related && state.sire.relatedClan ? 1 : 0);
+      return { done, total: 3 + (related ? 1 : 0) };
     }
     if (i === 3) {
-      const chosen = state.lifepaths.filter((_, j) => !!lpDef(j)).length,
-        skillLeft = state.lifepaths.reduce(
-          (n, lp) => n + Math.max(0, lpSkillBudget() - sum(lp.skillDots)),
-          0,
-        ),
-        resLeft = state.lifepaths.reduce(
-          (n, lp, j) =>
-            n +
-            (lpDef(j)
-              ? Math.max(0, lpResourceBudget() - lpResourceSpent(j))
-              : lpResourceBudget()),
-          0,
-        );
-      return M("progressPaths", { done: chosen, total: lpCount(), left: skillLeft + resLeft });
+      const pathTotal = lpCount();
+      const pathDone = state.lifepaths.filter((_, j) => !!lpDef(j)).length;
+      const skillDone = state.lifepaths.reduce((n, lp) => n + sum(lp.skillDots), 0);
+      const resourceDone = state.lifepaths.reduce((n, _lp, j) => n + lpResourceSpent(j), 0);
+      return {
+        done: pathDone + skillDone + resourceDone,
+        total: pathTotal * (1 + lpSkillBudget() + lpResourceBudget()),
+      };
     }
-    if (i === 4) {
-      const total = c.attributeBudgets.reduce((a, b) => a + b, 0),
-        used = totalAttributeSpent(),
-        left = Math.max(0, total - used);
-      return M("progressDistributed", { used, total, left });
-    }
-    if (i === 5) {
-      const used = sum(state.freeSkills),
-        left = Math.max(0, c.freeSkillDots - used);
-      return M("progressFreeDots", { used, total: c.freeSkillDots, left });
-    }
+    if (i === 4)
+      return {
+        done: totalAttributeSpent(),
+        total: c.attributeBudgets.reduce((a, b) => a + b, 0),
+      };
+    if (i === 5) return { done: sum(state.freeSkills), total: c.freeSkillDots };
     if (i === 6) {
-      const req = D.skills.reduce((n, x) => n + requiredFocuses(x.id), 0),
-        filled = D.skills.reduce(
-          (n, x) =>
-            n +
-            (state.focuses[x.id] || []).filter(focusEntryFilled).length,
-          0,
-        );
-      return M("progressFocuses", { used: filled, total: req, left: Math.max(0, req - filled) });
+      const total = D.skills.reduce((n, x) => n + requiredFocuses(x.id), 0);
+      const done = D.skills.reduce(
+        (n, x) => n + (state.focuses[x.id] || []).filter(focusEntryFilled).length,
+        0,
+      );
+      return { done, total };
     }
-    if (i === 7) {
-      return M("progressPowers", { dotsUsed: totalClanDisciplineDots(), dotsTotal: c.disciplineDots, powersUsed: state.disciplines.powers.length, powersTotal: c.disciplinePowers, traitsUsed: state.traits.length, traitsTotal: c.clanTraits, meritsUsed: state.merits.length, meritsTotal: c.merits });
-    }
-    if (i === 8) return M("progressNature", { done: state.humanity.nature ? 1 : 0 });
-    if (i === 9) {
-      const used = freeResourceSpent();
-      return M("progressFreeDots", { used, total: c.freeResourceDots, left: Math.max(0, c.freeResourceDots - used) });
-    }
+    if (i === 7)
+      return {
+        done:
+          totalClanDisciplineDots() +
+          state.disciplines.powers.length +
+          state.traits.length +
+          state.merits.length,
+        total: c.disciplineDots + c.disciplinePowers + c.clanTraits + c.merits,
+      };
+    if (i === 8) return { done: state.humanity.nature ? 1 : 0, total: 1 };
+    if (i === 9) return { done: freeResourceSpent(), total: c.freeResourceDots };
     if (i === 10) {
-      const req = 1 + lpCount(),
-        done =
-          (state.identity.name.trim() ? 1 : 0) +
-          state.identity.items.filter((x) => String(x).trim()).length;
-      return M("progressRequiredFields", { done, total: req, left: Math.max(0, req - done) });
+      const total = 1 + lpCount();
+      const done =
+        (state.identity.name.trim() ? 1 : 0) +
+        state.identity.items.filter((x) => String(x).trim()).length;
+      return { done, total };
     }
-    return "";
+    return { done: 0, total: 0 };
+  }
+  function progressTone(done, total) {
+    if (done === 0) return "danger";
+    if (total > 0 && done === total) return "good";
+    if (done > total) return "danger";
+    return "warn";
   }
   function renderNav() {
     const nav = document.getElementById("navSteps"),
@@ -1441,10 +1432,11 @@
       const s = stepText(i);
       const issues = validateStep(i);
       const blocked = issues.some((x) => x.severity === "error");
-      const done = isStepDone(i);
+      const progress = stepProgressCounts(i);
+      const tone = progressTone(progress.done, progress.total);
       const b = document.createElement("button");
-      b.className = `navStep ${i === state.step ? "active" : ""} ${done ? "done" : ""} ${blocked ? "blocked" : ""}`;
-      b.innerHTML = `<span class="navStepLabel">${i + 1}. ${e(s.nav)}</span><span class="navProgress">${e(stepProgress(i))}</span>`;
+      b.className = `navStep ${i === state.step ? "active" : ""} ${blocked ? "blocked" : ""}`;
+      b.innerHTML = `<span class="navStepLabel">${i + 1}. ${e(s.nav)}</span><span class="navCount ${tone}">${progress.done}/${progress.total}</span>`;
       b.onclick = () => goStep(i);
       nav.appendChild(b);
       const m = document.createElement("button");
