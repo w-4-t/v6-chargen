@@ -1,4 +1,4 @@
-# QA — v0.10.6
+# QA — v0.10.7
 
 ## Data / logic separation
 
@@ -59,7 +59,7 @@
 
 - [x] Desktop Reset / Export / Import labels are short in EN and UA.
 - [x] `adaptive PWA` and the project-house-rules badge are absent from the desktop sidebar.
-- [x] Version `v0.10.6` is displayed beneath Export / Import.
+- [x] Version `v0.10.7` is displayed beneath Export / Import.
 - [x] Desktop Character Generator / Генератор Персонажа title is forced to one line.
 - [x] UA desktop navigation uses Істота / Сір / Фокус / Сили.
 - [x] Desktop navigation uses one aggregate `N/M` counter per step.
@@ -94,7 +94,7 @@
 - [x] `node --check` passes for `data/core.js`, `data/en.js`, `data/uk.js`, `src/data.js`, `src/i18n.js`, and `src/app.js`.
 - [x] `node tools/qa-data.cjs` passes.
 - [x] `node tools/smoke-app.cjs` passes.
-- [x] Service worker cache is `vtm-v6-alpha-chargen-v0.10.6` and includes all runtime data files.
+- [x] Service worker cache is `vtm-v6-alpha-chargen-v0.10.7` and includes all runtime data files.
 
 ## Manual browser checks still required
 
@@ -130,10 +130,14 @@ Current Ukrainian wording remains a working localization pass. Terminology chang
 - [x] One-Lifepath has its own `?` info target and does not share a combined Creature info entry.
 - [x] Creature selection tiles use equal-height grid rows.
 
-## v0.10.6 focused checks
+## v0.10.7 focused checks
 
-- [x] Clan Disciplines use a dedicated proportional column rather than a comma-separated tag.
-- [x] Each fixed Clan Discipline renders on its own row.
-- [x] Variable Discipline alternatives render together on one row.
-- [x] Alpha-incomplete/read-only Clans display the same Discipline list.
-- [x] Narrow/mobile layouts wrap individual Discipline rows instead of collapsing the list.
+- [x] Ukrainian Sire terminology is rendered as `Сір` rather than `Sire`.
+- [x] The Sire step lead contains player-facing rules guidance rather than an implementation note.
+- [x] Every Alpha Sire type has a dedicated `?` info target backed by the expanded Player Packet description.
+- [x] Sire Discipline options use a fixed proportional right-hand list with canonical English Discipline names on separate rows.
+- [x] `Adoptive Sire` and `Brood Child` show a compact Clan-Discipline placeholder in the Sire list until the related Clan is chosen.
+- [x] Generation heading includes the active tier and has a direct info control.
+- [x] Bonus Discipline cards are equal height.
+- [x] Adoptive/Brood related-Clan tiles use an equal-sized responsive grid.
+- [x] Existing core/locale split and stable machine IDs remain intact.

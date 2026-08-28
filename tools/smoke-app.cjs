@@ -103,6 +103,31 @@ assert.ok(x.get('navSteps').children[7].innerHTML.includes('navCount danger">0/1
 assert.ok(x.get('mainCard').innerHTML.includes('data-clan-choice="corruption"') && x.get('mainCard').innerHTML.includes('data-clan-choice="oblivion"'), 'variable Clan Discipline choices were not moved to Powers');
 assert.ok(x.get('mainCard').innerHTML.includes('Corruption') && x.get('mainCard').innerHTML.includes('Oblivion'), 'variable Clan Discipline choices do not use canonical English names');
 
+// Sire step: localized terminology, structured Discipline rows, Alpha info access, tier-labelled Generation, and equal grids.
+const sireState=JSON.parse(run('uk').store.get('vtm_v6_alpha_chargen_v0_9_0'));
+sireState.step=2;
+sireState.creature='vampire_ancilla';
+sireState.sire={type:'caring_sire',relatedClan:null,bonusDiscipline:null};
+sireState.generation=10;
+x=run('uk',{'vtm_v6_alpha_chargen_v0_9_0':JSON.stringify(sireState)});
+const sireHtml=x.get('mainCard').innerHTML;
+assert.ok(sireHtml.includes('Крок 3 · Сір і Покоління'), 'UK Sire step title did not use Сір');
+assert.ok(!sireHtml.includes('Виберіть кожну складову напряму'), 'implementation-note lead remains on Sire step');
+assert.ok(sireHtml.includes('Покоління — Анцилла'), 'Generation heading does not identify the active Ancilla tier');
+assert.ok(sireHtml.includes('data-info-generation'), 'Generation section has no direct info control');
+assert.strictEqual((sireHtml.match(/data-info-sire=/g)||[]).length, 8, 'not every Alpha Sire type exposes a direct info control');
+assert.ok(sireHtml.includes('sireDisciplineLine') && sireHtml.includes('Fortitude') && sireHtml.includes('Potence') && sireHtml.includes('Presence'), 'Sire rows do not use structured canonical Discipline lines');
+assert.ok(sireHtml.includes('sireBonusGrid') && sireHtml.includes('equalTiles'), 'bonus Discipline cards are not using equal-height layout');
+assert.ok(!sireHtml.includes('Стійкість') && !sireHtml.includes('Могутність') && !sireHtml.includes('Присутність'), 'Sire list or bonus cards use translated Discipline names instead of canonical English');
+assert.ok(fs.readFileSync('src/app.js','utf8').includes('function infoSire(id)'), 'dedicated Sire info function is missing');
+assert.ok(x.ctx.V6Data.forLocale('uk').sires.every(s=>s.details), 'one or more Sire types lack expanded Alpha details');
+
+const adoptiveState=JSON.parse(JSON.stringify(sireState));
+adoptiveState.sire={type:'adoptive_sire',relatedClan:'brujah',bonusDiscipline:null};
+x=run('uk',{'vtm_v6_alpha_chargen_v0_9_0':JSON.stringify(adoptiveState)});
+assert.ok(x.get('mainCard').innerHTML.includes('relatedClanGrid'), 'Adoptive Sire related Clans do not use the equal-sized grid');
+assert.ok(x.get('mainCard').innerHTML.includes('1 Кланова Дисципліна'), 'Adoptive Sire list does not use the compact Clan-Discipline placeholder');
+
 // The one-Lifepath option keeps narrative copy in the choice and moves its numeric rule detail to the info panel.
 const youngState=JSON.parse(run('uk').store.get('vtm_v6_alpha_chargen_v0_9_0'));
 youngState.step=0; youngState.creature='vampire_neonate'; youngState.young=true;

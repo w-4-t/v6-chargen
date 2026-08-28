@@ -348,6 +348,57 @@
         justify-content: flex-end;
         max-width: 330px;
       }
+      .choiceRow.sireRow {
+        grid-template-columns: minmax(0, 66fr) minmax(0, 34fr);
+        gap: 8px;
+        padding: 0;
+        align-items: stretch;
+        overflow: hidden;
+      }
+      .sireChoiceMain {
+        width: 100%;
+        min-width: 0;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        text-align: left;
+        padding: 11px 12px;
+        cursor: pointer;
+      }
+      .sireChoiceMain:hover,
+      .sireChoiceMain:focus-visible {
+        background: rgba(255, 255, 255, 0.025);
+        outline: none;
+      }
+      .sireRowAside {
+        min-width: 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 7px;
+        padding: 7px 9px 7px 0;
+      }
+      .sireDisciplineList {
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: rgba(255, 255, 255, 0.018);
+        overflow: hidden;
+      }
+      .sireDisciplineLine {
+        min-width: 0;
+        padding: 4px 7px;
+        font-size: 11px;
+        line-height: 1.25;
+        font-weight: 700;
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .sireDisciplineLine + .sireDisciplineLine {
+        border-top: 1px solid var(--line);
+      }
       .choiceRow.clanRow {
         grid-template-columns: minmax(0, 66fr) minmax(0, 34fr);
         gap: 8px;
@@ -495,6 +546,30 @@
         display: flex;
         gap: 8px;
         flex-wrap: wrap;
+      }
+      .relatedClanGrid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        align-items: stretch;
+      }
+      .relatedClanGrid .choiceChip {
+        width: 100%;
+        min-width: 0;
+        min-height: 52px;
+        height: 100%;
+        align-content: center;
+      }
+      .relatedClanGrid .choiceChip b {
+        overflow-wrap: anywhere;
+      }
+      .sireBonusGrid {
+        align-items: stretch;
+        grid-auto-rows: 1fr;
+      }
+      .sireBonusGrid .choiceCompact {
+        height: 100%;
+        min-height: 92px;
       }
       .choiceChip {
         display: grid;
@@ -1028,6 +1103,9 @@
         .lpResGrid {
           grid-template-columns: 1fr;
         }
+        .relatedClanGrid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
       }
       @media (max-width: 900px) {
         .desktopShell {
@@ -1184,8 +1262,18 @@
           justify-content: flex-start;
           max-width: none;
         }
-        .choiceRow.clanRow {
+        .choiceRow.clanRow,
+        .choiceRow.sireRow {
           grid-template-columns: minmax(0, 62fr) minmax(0, 38fr);
+        }
+        .sireDisciplineLine {
+          white-space: normal;
+          overflow: visible;
+          text-overflow: clip;
+          overflow-wrap: anywhere;
+        }
+        .relatedClanGrid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
         .clanRowAside {
           min-width: 0;
@@ -2112,7 +2200,7 @@
                 hidden
             /></label>
           </div>
-          <div class="versionLabel">v0.10.6</div>
+          <div class="versionLabel">v0.10.7</div>
         </div>
       </aside>
       <main class="main">

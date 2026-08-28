@@ -49,6 +49,12 @@
   const sum = (o) =>
     Object.values(o || {}).reduce((a, b) => a + (Number(b) || 0), 0);
   const tierOf = () => creature()?.tier || "neonate";
+  const tierDisplayName = (tier = tierOf()) =>
+    ({
+      neonate: S("s_c994f9e6adb6"),
+      ancilla: S("s_6ca3aa935891"),
+      elder: S("s_f429030cf5c0"),
+    })[tier] || String(tier || "");
   const tierRank = (t) => D.tierRank[t] || 0;
   const creature = () =>
     byId(D.creatures, state.creature) || byId(D.creatures, R.config.defaultCreature);
@@ -897,27 +903,33 @@
       source: S("s_a7cedb33ba16"),
     };
   }
-  function infoReviewSire() {
-    const sire = byId(D.sires, state.sire.type);
+  function infoSire(id) {
+    const sire = byId(D.sires, id);
+    if (!sire) {
+      return {
+        kicker: S("s_927b41aad7da"),
+        title: S("s_0a2795b612ad"),
+        summary: S("s_d9feb2156cb1"),
+        body: S("s_3db4351ea582"),
+        source: S("s_a682be9fd0ef"),
+      };
+    }
+    const selected = state.sire.type === sire.id;
+    const bonus =
+      selected && state.sire.bonusDiscipline
+        ? disciplineName(state.sire.bonusDiscipline, true)
+        : sireDisciplineSummary(sire, true);
     return {
       kicker: S("s_927b41aad7da"),
-      title: sire?.name || S("s_0a2795b612ad"),
-      summary:
-        sire?.description ||
-        S("s_d9feb2156cb1"),
-      meta: [
-        [
-          S("s_923461b005c9"),
-          state.sire.bonusDiscipline
-            ? disciplineName(state.sire.bonusDiscipline, true) || "—"
-            : "—",
-        ],
-      ],
-      body: sire
-        ? M("sireGrantInfo", { discipline: sireDisciplineSummary(sire, true) })
-        : S("s_3db4351ea582"),
+      title: sire.name,
+      summary: sire.description,
+      meta: [[S("s_923461b005c9"), bonus || "—"]],
+      body: `${sire.details || ""}\n\n${M("sireGrantInfo", { discipline: bonus || "—" })}`.trim(),
       source: S("s_a682be9fd0ef"),
     };
+  }
+  function infoReviewSire() {
+    return infoSire(state.sire.type);
   }
   function infoReviewLifepaths() {
     const names = state.lifepaths.map((_, i) => lpDef(i)?.name).filter(Boolean);
@@ -1558,20 +1570,31 @@
       return `<div class="requiredChoice"><div class="sectionTitle" style="margin-top:0">[[s_f8c192193934]]</div><div class="notice warn">[[s_263a34e33825]]</div><button class="btn" data-action="random-caitiff">[[s_7322c289ed12]]</button><div class="optionList caitiffList" style="margin-top:9px">${D.disciplines.map((d) => `<label class="caitiffChoice ${(state.clan.caitiffDisciplines || []).includes(d.id) ? "selected" : ""}"><input type="checkbox" data-caitiff-disc="${d.id}" ${(state.clan.caitiffDisciplines || []).includes(d.id) ? "checked" : ""}><div class="choiceRowMain"><div class="choiceRowTitle">${e(disciplineName(d.id))}</div><div class="choiceRowMeta">${e(d.description)}</div></div></label>`).join("")}</div></div>`;
     return "";
   }
+  function renderSireDisciplineList(sire) {
+    const ids = sire?.allowedDisciplines || [];
+    const rows = sire?.relation === "clan"
+      ? [[M("sireClanDisciplinePlaceholder")]]
+      : ids.map((id) => [disciplineName(id)]);
+    return `<div class="sireDisciplineList">${rows
+      .map((names, i) => `<div class="sireDisciplineLine" data-sire-discipline-row="${i}">${names.map(e).join("")}</div>`)
+      .join("")}</div>`;
+  }
+  function renderSireRow(sire) {
+    const selected = state.sire.type === sire.id;
+    return `<div class="choiceRow sireRow ${selected ? "selected" : ""}"><button type="button" class="sireChoiceMain" data-sire-type="${sire.id}" aria-pressed="${selected ? "true" : "false"}"><div class="choiceRowMain"><div class="choiceRowTitle">${e(sire.name)}</div><div class="choiceRowMeta">${e(sire.description)}</div></div></button><div class="sireRowAside">${renderSireDisciplineList(sire)}<button type="button" class="tileInfo inlineInfo" data-info-sire="${sire.id}" aria-label="${e(M("readSireRules", { name: sire.name }))}">?</button></div></div>`;
+  }
   function renderSire() {
-    const s = byId(D.sires, state.sire.type),
-      relatedNeeded = ["adoptive_sire", "brood_child"].includes(
-        state.sire.type,
-      ),
-      allowed = sireAllowedDisciplines();
-    return `<section class="step active"><h1>[[s_1b63ea19f8e9]]</h1><div class="lead">[[s_3915eebd224f]]</div><div class="sectionTitle">[[s_fae0d8a2bb23]]</div><div class="optionList">${D.sires.map((x) => `<button class="choiceRow ${state.sire.type === x.id ? "selected" : ""}" data-sire-type="${x.id}"><div class="choiceRowMain"><div class="choiceRowTitle">${e(x.name)}</div><div class="choiceRowMeta">${e(x.description)}</div></div><div class="choiceRowAside"><span class="tag">${e(M("bonus", { value: sireDisciplineSummary(x) }))}</span></div></button>`).join("")}</div><div class="sectionTitle">[[s_8d441fb5f62f]]</div><div class="choiceChipGrid">${tierGenerations()
+    const relatedNeeded = ["adoptive_sire", "brood_child"].includes(state.sire.type),
+      allowed = sireAllowedDisciplines(),
+      generationTitle = M("generationForTier", { tier: tierDisplayName() });
+    return `<section class="step active"><h1>[[s_1b63ea19f8e9]]</h1><div class="lead">[[s_3915eebd224f]]</div><div class="sectionTitle">[[s_fae0d8a2bb23]]</div><div class="optionList sireList">${D.sires.map(renderSireRow).join("")}</div><div class="sectionTitle sectionTitleWithInfo"><span>${e(generationTitle)}</span><button type="button" class="fieldInfoBtn" data-info-generation aria-label="${e(M("readInformation", { name: generationTitle }))}">?</button></div><div class="choiceChipGrid generationGrid">${tierGenerations()
       .map(
         (g) =>
           `<button class="choiceChip ${Number(state.generation) === g ? "selected" : ""}" data-generation="${g}"><b>${e(M("generationOrdinal", { generation: g }))}</b><span>${e(M("modifier", { value: D.generationModifiers[String(g)] }))}</span></button>`,
       )
       .join(
         "",
-      )}</div>${relatedNeeded ? `<div class="sectionTitle">${e(S(state.sire.type === "adoptive_sire" ? "s_89c526bf651d" : "s_f6bcb7d6144e"))}</div><div class="choiceChipGrid">${D.clans.map((c) => `<button class="choiceChip ${state.sire.relatedClan === c.id ? "selected" : ""}" data-related-clan="${c.id}"><b>${e(c.name)}</b></button>`).join("")}</div>` : ""}<div class="sectionTitle">[[s_923461b005c9]]</div>${allowed.length ? `<div class="grid3">${allowed.map((id) => `<button class="choiceCompact ${state.sire.bonusDiscipline === id ? "selected" : ""}" data-sire-bonus="${id}"><b>${e(disciplineName(id))}</b><span>${e(discById(id)?.description)}</span></button>`).join("")}</div>` : `<div class="notice warn">${e(M(relatedNeeded ? "chooseSireAndClanFirst" : "chooseSireFirst"))}</div>`}${s ? `<div class="notice"><b>${e(s.name)}</b> · ${e(sireDisciplineSummary(s))}</div>` : ""}${issuesHtml(2)}</section>`;
+      )}</div>${relatedNeeded ? `<div class="sectionTitle">${e(S(state.sire.type === "adoptive_sire" ? "s_89c526bf651d" : "s_f6bcb7d6144e"))}</div><div class="relatedClanGrid">${D.clans.map((c) => `<button class="choiceChip relatedClanChip ${state.sire.relatedClan === c.id ? "selected" : ""}" data-related-clan="${c.id}"><b>${e(c.name)}</b></button>`).join("")}</div>` : ""}<div class="sectionTitle">[[s_923461b005c9]]</div>${allowed.length ? `<div class="grid3 equalTiles sireBonusGrid">${allowed.map((id) => `<button class="choiceCompact ${state.sire.bonusDiscipline === id ? "selected" : ""}" data-sire-bonus="${id}"><b>${e(disciplineName(id))}</b><span>${e(discById(id)?.description)}</span></button>`).join("")}</div>` : `<div class="notice warn">${e(M(relatedNeeded ? "chooseSireAndClanFirst" : "chooseSireFirst"))}</div>`}${issuesHtml(2)}</section>`;
   }
   function renderLifepaths() {
     ensureLpSlots();
@@ -2017,6 +2040,18 @@
     root
       .querySelectorAll("[data-info-review-sire]")
       .forEach((b) => (b.onclick = () => setInfo(infoReviewSire(), true)));
+    root
+      .querySelectorAll("[data-info-sire]")
+      .forEach(
+        (b) =>
+          (b.onclick = (ev) => {
+            ev.stopPropagation();
+            setInfo(infoSire(b.dataset.infoSire), true);
+          }),
+      );
+    root
+      .querySelectorAll("[data-info-generation]")
+      .forEach((b) => (b.onclick = () => setInfo(infoReviewGeneration(), true)));
     root
       .querySelectorAll("[data-info-review-lifepaths]")
       .forEach((b) => (b.onclick = () => setInfo(infoReviewLifepaths(), true)));

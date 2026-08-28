@@ -559,49 +559,57 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
         "id": "adoptive_sire",
         "name": "Adoptive Sire",
         "discipline": "One Discipline from your adoptive sire’s clan",
-        "description": "Another vampire took you under their wing."
+        "description": "Another vampire took you under their wing.",
+        "details": "You were taught by another vampire who took you under their wing. Your sire may have abandoned you or may still be in your life and resent your bond with your adoptive sire. Whatever the case, you learned what you know about vampires and vampire society from a member of another clan."
       },
       {
         "id": "brood_child",
         "name": "Brood Child",
         "discipline": "One Discipline from a broodmate’s clan",
-        "description": "You were one among a brood of other “newborn” vampires."
+        "description": "You were one among a brood of other “newborn” vampires.",
+        "details": "You were raised in a brood of vampires, either created by the same sire or different ones. From your first awakening, you learned how to work as a team and how to fight for resources. Most of your broodmates didn’t survive, but you proved to be strong."
       },
       {
         "id": "caring_sire",
         "name": "Caring Sire",
         "discipline": "Fortitude, Potence, or Presence",
-        "description": "Your sire took care of and tutored you in the ways of vampires."
+        "description": "Your sire took care of and tutored you in the ways of vampires.",
+        "details": "You had the luck to have a caring sire. They taught you the ins and outs of vampire society, guided your first explorations in the powers of the blood, and showed you who was who and what was whose. You owe them a great deal to this day."
       },
       {
         "id": "cruel_sire",
         "name": "Cruel Sire",
         "discipline": "Dominate, Fortitude, or Obfuscate",
-        "description": "Your sire was cruel and abusive."
+        "description": "Your sire was cruel and abusive.",
+        "details": "Your sire was cruel and abusive. You learned what you could to survive and grew stronger for it. You couldn’t wait to escape, and to this day you dread the thought of facing them again."
       },
       {
         "id": "manipulative_sire",
         "name": "Manipulative Sire",
         "discipline": "Dominate, Potence, or Presence",
-        "description": "Your sire was a master of manipulation, and you were often a pawn in their schemes."
+        "description": "Your sire was a master of manipulation, and you were often a pawn in their schemes.",
+        "details": "Your sire was a master of manipulation, playing people and vampires like pawns on a chessboard. You were often a piece in your sire’s schemes, and though it took you a while to realize it, you learned how people’s emotions and beliefs can be used to sway them in the direction you want."
       },
       {
         "id": "secretive_sire",
         "name": "Secretive Sire",
         "discipline": "Auspex, Celerity, or Obfuscate",
-        "description": "Your sire was mysterious and secretive."
+        "description": "Your sire was mysterious and secretive.",
+        "details": "Your sire was mysterious and secretive, always skulking in the shadows and giving you cryptic advice. You spent most of your time hiding from others of your kind, since your sire warned you that most of them would want you dead. You learned how to remain unseen just as your sire."
       },
       {
         "id": "unknown_sire",
         "name": "Unknown Sire",
         "discipline": "Celerity, Fortitude, or Potence",
-        "description": "You never knew your sire."
+        "description": "You never knew your sire.",
+        "details": "You never knew your sire. When you awoke from your Embrace, they were already gone. You learned what you could as you prowled those early nights alone, surviving on your wits and maybe more than a little luck."
       },
       {
         "id": "vigilant_sire",
         "name": "Vigilant Sire",
         "discipline": "Auspex, Dominate, or Fortitude",
-        "description": "Your sire was demanding and vigilant to your every move."
+        "description": "Your sire was demanding and vigilant to your every move.",
+        "details": "Your sire was very demanding and watchful of your every move. You couldn’t afford mistakes; each one brought reprisals at best and severe punishment at worst. You became very good at what you do, even if it might have cost your soul."
       }
     ],
     "creatures": [
@@ -3017,6 +3025,9 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
       "readDescriptionScale": "Read {name} description and rating scale",
       "readRules": "Read {name} rules",
       "readClanRules": "Read {name} clan rules",
+      "readSireRules": "Read Sire rules: {name}",
+      "sireClanDisciplinePlaceholder": "1 Clan Discipline",
+      "generationForTier": "Generation — {tier}",
       "clanDisciplinesLabel": "Clan Disciplines — {clan}",
       "availableClans": "Available Clans",
       "unavailableClans": "Not available in the current Alpha",
@@ -3038,7 +3049,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
       "clanTraitKicker": "Clan Trait · {tier}",
       "prerequisites": "Prerequisites: {value}",
       "disciplineLevel": "{discipline} {level}",
-      "sireGrantInfo": "This Sire type grants: {discipline}. The selected bonus dot is already included in the Discipline rating and cannot be removed during chargen.",
+      "sireGrantInfo": "This Sire type grants 1 additional dot in: {discipline}. The bonus Discipline can be outside your character’s Clan. The selected bonus dot is already included in the Discipline rating and cannot be removed during chargen.",
       "lifepathSkillsBody": "Skills: {skills}",
       "lifepathResourcesBody": "Resources: {resources}",
       "lifepathSuggestedFocus": "{skill} (suggested Focus: {focus})",
@@ -3183,7 +3194,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
       "s_c543e29e315c": "Step 11 · Finishing Touches",
       "s_f59ac5cba69f": "Choose the vampire tier used for this character. It controls the RAW creation budgets and maximum ratings.",
       "s_2da1d5349de3": "Choose a Clan from those currently available in the Alpha. Use ? to open the full Clan information without selecting it.",
-      "s_3915eebd224f": "Choose each part directly. This page no longer uses dropdowns for the primary chargen choices.",
+      "s_3915eebd224f": "Choose the Sire relationship that shaped your early nights. It grants 1 bonus Discipline dot; then choose the character’s generation within the current Alpha tier.",
       "s_ab9fee6941a5": "Choose a Lifepath.",
       "s_d1f8e5ea93b2": "Selection",
       "s_c3b69e661eec": "Choose…",

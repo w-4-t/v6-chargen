@@ -1,4 +1,4 @@
-# VTM V6 Alpha Character Generator — v0.10.6
+# VTM V6 Alpha Character Generator — v0.10.7
 
 Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 
@@ -8,11 +8,16 @@ Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 - Character-creation rules follow the V6 Alpha Player Packet unless a project interpretation or house rule is explicitly labelled.
 - No V5 / V5.5 hybrid rules are intentionally imported.
 
-## v0.10.6 — Clan info wrapping fix
+## v0.10.7 — Sire / Сір presentation pass
 
-- Clan Discipline values in the information panel render one Discipline per line.
-- Information-panel metadata uses bounded proportional columns and safe wrapping for long localized text.
-- Ukrainian Discipline translations can no longer overlap the metadata label at narrow widths or browser zoom.
+- Ukrainian user-facing terminology now consistently uses `Сір` with grammatical case forms where required.
+- Replaced the implementation-note lead with a concise rules-facing explanation of Sire type, bonus Discipline, and Generation.
+- Sire rows now use a fixed proportional Discipline column with one canonical English Discipline per row and a dedicated `?` control.
+- All eight Alpha Sire types expose their full supplied narrative explanation in the information panel.
+- Generation headings show the current tier, e.g. `Generation — Ancilla` / `Покоління — Анцилла`, with direct Generation help.
+- Bonus Discipline cards use equal-height rows.
+- Adoptive Sire / Brood Child Clan choices use an equal-sized responsive grid.
+- Generation remains constrained by the current Alpha tier through the centralized `generationByTier` data mapping; this keeps a later tier/generation decoupling localized to one rule boundary.
 
 ## v0.10.5 — Clan Discipline list layout
 
@@ -149,4 +154,4 @@ The number of known Powers is a separate chargen budget from Discipline dots. A 
 
 ## Deployment
 
-Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.6`.
+Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.7`.
