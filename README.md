@@ -1,4 +1,4 @@
-# VTM V6 Alpha Character Generator — v0.10.2
+# VTM V6 Alpha Character Generator — v0.10.4
 
 Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 
@@ -7,6 +7,23 @@ Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 - `vtmv6_for_machine.docx` supplied with the project.
 - Character-creation rules follow the V6 Alpha Player Packet unless a project interpretation or house rule is explicitly labelled.
 - No V5 / V5.5 hybrid rules are intentionally imported.
+
+## v0.10.4 — Creature mobile info + variable Clan Discipline flow
+
+- Variable Clan Discipline choices (currently Lasombra: Corruption / Oblivion) are selected in the Powers step rather than the Clan step.
+- The Clan step now completes when an Alpha-ready Clan itself is chosen.
+- Creature tiles and the one-Lifepath option have dedicated `?` controls; on mobile they open the drawer directly to the selected subject.
+- One-Lifepath rules use a dedicated info entry instead of being appended to the selected Creature entry.
+- Creature tiles use equal-height grid rows across desktop and mobile layouts.
+
+## v0.10.3 — Clan / Клан presentation pass
+
+- Removed the duplicate selected-Clan summary card. A selected playable Clan is now indicated only by a green border on its existing list row.
+- Every Clan row has an independent `?` control, so the right information panel can be opened without selecting the Clan.
+- Alpha-ready Clans are listed first and remain selectable. Clans whose Alpha entries are not ready are moved to a separate read-only section below; their narrative summaries and information-panel entries remain available for reference.
+- Removed the “Alpha entry complete/incomplete” badges from the Clan UI.
+- Canonical English Discipline names are used on generator selection/status surfaces in both locales. In Ukrainian, the right information panel can additionally show the Ukrainian Discipline name in parentheses.
+- Clan progress counts only currently selectable Alpha-ready Clans; an old saved state containing an unavailable Clan no longer counts as a completed Clan choice.
 
 ## v0.10.2 — Creature / Істота presentation pass
 
@@ -119,4 +136,4 @@ The number of known Powers is a separate chargen budget from Discipline dots. A 
 
 ## Deployment
 
-Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.2`.
+Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.4`.

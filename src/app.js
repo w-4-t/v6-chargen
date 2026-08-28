@@ -57,6 +57,28 @@
     discById = (id) => byId(D.disciplines, id),
     clanById = (id) => byId(D.clans, id),
     lpById = (id) => byId(D.lifepaths, id);
+  const canonicalData = () => window.V6Data.forLocale(window.V6Data.defaultLocale);
+  const canonicalDiscById = (id) => byId(canonicalData().disciplines || [], id);
+  const disciplineName = (id, includeTranslation = false) => {
+    const canonical = canonicalDiscById(id)?.name || discById(id)?.name || String(id || "");
+    if (!includeTranslation || window.V6Data.getLocale() === window.V6Data.defaultLocale)
+      return canonical;
+    const localized = discById(id)?.name;
+    return localized && localized !== canonical ? `${canonical} (${localized})` : canonical;
+  };
+  const clanDisciplineNames = (clan, includeTranslation = false) => {
+    const r = clan?.disciplineRule || {};
+    if (r.random) return M("randomDisciplines", { count: Number(r.random || 0) });
+    const fixed = (r.fixed || []).map((id) => disciplineName(id, includeTranslation));
+    const choice = (r.choice || []).map((id) => disciplineName(id, includeTranslation));
+    return [...fixed, ...(choice.length ? [choice.join(" / ")] : [])].join(", ");
+  };
+  const sireDisciplineSummary = (sire, includeTranslation = false) => {
+    const ids = sire?.allowedDisciplines || [];
+    return ids.length
+      ? ids.map((id) => disciplineName(id, includeTranslation)).join(", ")
+      : sire?.discipline || "";
+  };
   const sourceGapDisc = (id) => discById(id)?.powers?.length === 0;
 
   function blankState() {
@@ -423,7 +445,7 @@
       if (r < 1) return;
       (d.powers || []).forEach((p) => {
         if (p.rank <= r)
-          out.push({ ...p, disciplineId: d.id, disciplineName: d.name });
+          out.push({ ...p, disciplineId: d.id, disciplineName: disciplineName(d.id) });
       });
     });
     return out;
@@ -577,7 +599,7 @@
 
   function setInfo(obj, openMobile = false) {
     state.info = obj;
-    renderInfo();
+    renderInfo(obj);
     if (openMobile && innerWidth <= 900) openDrawer();
   }
   function infoCreature(c) {
@@ -589,39 +611,42 @@
     const genValue = gens.length
       ? M(gens.length === 1 ? "creatureGenerationBand" : "creatureGenerationBandPlural", { generations: genBand })
       : "—";
-    const meta = [
-      [S("s_c01d0a100001"), genValue],
-      [S("s_c01d0a100002"), String(c.generationModifier)],
-      [S("s_c01d0a100003"), String(c.maxDots)],
-      [S("s_c01d0a100004"), String(c.maxDisciplineDots)],
-      [S("s_c01d0a100005"), String(c.lifepaths)],
-      [S("s_c01d0a100006"), M("creatureAttributeBudgetValue", { budgets: c.attributeBudgets.join(" / ") })],
-      [S("s_c01d0a100007"), String(c.disciplineDots)],
-      [S("s_c01d0a100008"), M("creatureSireBonusValue", { bonus: c.sireBonus })],
-      [S("s_c01d0a100009"), String(c.disciplinePowers)],
-      [S("s_c01d0a10000a"), String(c.merits)],
-      [S("s_c01d0a10000b"), String(c.clanTraits)],
-      [S("s_c01d0a10000c"), String(c.freeSkillDots)],
-      [S("s_c01d0a10000d"), String(c.freeResourceDots)],
-    ];
-    let body = c.details || S("s_6be9c5fe6ad8");
-    if (youngRuleApplies()) {
-      meta.push(
-        [S("s_c01d0a10000e"), M("creatureYoungStatus")],
-        [S("s_c01d0a10000f"), String(R.config.youngCharacter.lifepaths)],
-        [S("s_c01d0a100010"), M("creatureYoungSkillDots", { dots: R.config.youngCharacter.skillDots })],
-        [S("s_c01d0a100011"), M("creatureYoungResourceDots", { dots: R.config.youngCharacter.resourceDots })],
-        [S("s_c01d0a100012"), M("creatureYoungSkillCap", { cap: R.config.skillBaseChargenCap + 1 })],
-      );
-      body += `\n\n${D.youngCharacter.details}`;
-    }
     return {
       kicker: S("s_6b74730c1fa8"),
       title: c.name,
       summary: c.description || S("s_7a86e32b667f"),
-      meta,
-      body,
+      meta: [
+        [S("s_c01d0a100001"), genValue],
+        [S("s_c01d0a100002"), String(c.generationModifier)],
+        [S("s_c01d0a100003"), String(c.maxDots)],
+        [S("s_c01d0a100004"), String(c.maxDisciplineDots)],
+        [S("s_c01d0a100005"), String(c.lifepaths)],
+        [S("s_c01d0a100006"), M("creatureAttributeBudgetValue", { budgets: c.attributeBudgets.join(" / ") })],
+        [S("s_c01d0a100007"), String(c.disciplineDots)],
+        [S("s_c01d0a100008"), M("creatureSireBonusValue", { bonus: c.sireBonus })],
+        [S("s_c01d0a100009"), String(c.disciplinePowers)],
+        [S("s_c01d0a10000a"), String(c.merits)],
+        [S("s_c01d0a10000b"), String(c.clanTraits)],
+        [S("s_c01d0a10000c"), String(c.freeSkillDots)],
+        [S("s_c01d0a10000d"), String(c.freeResourceDots)],
+      ],
+      body: c.details || S("s_6be9c5fe6ad8"),
       source: S("s_b16d86448469"),
+    };
+  }
+  function infoYoungCharacter() {
+    return {
+      kicker: S("s_c01d0a100014"),
+      title: S("s_160d9b4c3d17"),
+      summary: D.youngCharacter.description || "",
+      meta: [
+        [S("s_c01d0a10000f"), String(R.config.youngCharacter.lifepaths)],
+        [S("s_c01d0a100010"), M("creatureYoungSkillDots", { dots: R.config.youngCharacter.skillDots })],
+        [S("s_c01d0a100011"), M("creatureYoungResourceDots", { dots: R.config.youngCharacter.resourceDots })],
+        [S("s_c01d0a100012"), M("creatureYoungSkillCap", { cap: R.config.skillBaseChargenCap + 1 })],
+      ],
+      body: D.youngCharacter.details || "",
+      source: S("s_c01d0a100013"),
     };
   }
   function infoForStep(i) {
@@ -746,14 +771,13 @@
   }
   function infoClan(id) {
     const c = clanById(id);
+    if (!c) return infoForStep(1);
     return {
-      kicker: c.complete
-        ? S("s_50c5a0f29d19")
-        : S("s_310f416783ae"),
+      kicker: S("s_37894f731729"),
       title: c.name,
       summary: c.description,
       meta: [
-        [S("s_3ed4ae577398"), c.disciplineText],
+        [S("s_3ed4ae577398"), clanDisciplineNames(c, true)],
         [S("s_0b3d98d5a8a2"), c.curseName],
         [S("s_c095734e905e"), c.frenzyName],
       ],
@@ -786,11 +810,11 @@
       p = d?.powers.find((x) => x.id === pid);
     if (!p) return infoForStep(7);
     return {
-      kicker: M("disciplinePowerKicker", { discipline: d.name, rank: p.rank, category: p.category }),
+      kicker: M("disciplinePowerKicker", { discipline: disciplineName(d.id, true), rank: p.rank, category: p.category }),
       title: p.name,
       summary: S("s_baec6cbbd048"),
       meta: [
-        [S("s_14877e80cbce"), d.name],
+        [S("s_14877e80cbce"), disciplineName(d.id, true)],
         [S("s_92ef08325a48"), p.activate || "—"],
         [S("s_a086d942884a"), p.attribute || "—"],
         [S("s_64ae43e8fe76"), p.cost || "—"],
@@ -799,14 +823,14 @@
         [S("s_1370004da76f"), p.duration || "—"],
       ],
       body: p.text,
-      source: M("chapter5Source", { discipline: d.name }),
+      source: M("chapter5Source", { discipline: disciplineName(d.id) }),
     };
   }
   function infoDiscipline(id) {
     const d = discById(id);
     return {
       kicker: S("s_14877e80cbce"),
-      title: d.name,
+      title: disciplineName(d.id, true),
       summary: d.description,
       meta: [
         [S("s_d917a6a13dfc"), String(disciplineRating(d.id))],
@@ -885,12 +909,12 @@
         [
           S("s_923461b005c9"),
           state.sire.bonusDiscipline
-            ? discById(state.sire.bonusDiscipline)?.name || "—"
+            ? disciplineName(state.sire.bonusDiscipline, true) || "—"
             : "—",
         ],
       ],
-      body: sire?.discipline
-        ? M("sireGrantInfo", { discipline: sire.discipline })
+      body: sire
+        ? M("sireGrantInfo", { discipline: sireDisciplineSummary(sire, true) })
         : S("s_3db4351ea582"),
       source: S("s_a682be9fd0ef"),
     };
@@ -1004,8 +1028,8 @@
       source: S("s_bd473fe2d257"),
     };
   }
-  function renderInfo() {
-    const I = state.step === 0 ? infoForStep(0) : (state.info || infoForStep(state.step));
+  function renderInfo(forcedInfo = null) {
+    const I = forcedInfo || (state.step === 0 ? infoForStep(0) : (state.info || infoForStep(state.step)));
     const meta = (I.meta || [])
       .map(
         ([k, v]) => `<div class="kv"><span>${e(k)}</span><b>${e(v)}</b></div>`,
@@ -1061,30 +1085,8 @@
     if (i === 1) {
       const cl = clanById(state.clan.id);
       if (!cl) out.push(issue("incomplete", S("s_fa84ba249563")));
-      else {
-        const r = cl.disciplineRule || {};
-        if (r.choice && !state.clan.choice)
-          out.push(
-            issue(
-              "incomplete",
-              M("validationChooseVariableDiscipline", { clan: cl.name }),
-            ),
-          );
-        if (r.random && (state.clan.caitiffDisciplines || []).length !== 3)
-          out.push(
-            issue(
-              "incomplete",
-              S("s_ea3371b4af5e"),
-            ),
-          );
-        if (!cl.complete)
-          out.push(
-            issue(
-              "warning",
-              S("s_0db58fcd9f64"),
-            ),
-          );
-      }
+      else if (!cl.complete)
+        out.push(issue("incomplete", S("s_0db58fcd9f64")));
     }
     if (i === 2) {
       if (!state.sire.type)
@@ -1228,6 +1230,15 @@
       });
     }
     if (i === 7) {
+      const cl = clanById(state.clan.id);
+      const variableRule = cl?.disciplineRule?.choice;
+      if (variableRule && !state.clan.choice)
+        out.push(
+          issue(
+            "incomplete",
+            M("validationChooseVariableDiscipline", { clan: cl.name }),
+          ),
+        );
       const cds = clanDisciplineIds();
       if (cds.length !== 3)
         out.push(
@@ -1245,7 +1256,7 @@
           out.push(
             issue(
               "error",
-              M("validationDisciplineMax", { discipline: d.name, max: c.maxDisciplineDots }),
+              M("validationDisciplineMax", { discipline: disciplineName(d.id), max: c.maxDisciplineDots }),
             ),
           );
       });
@@ -1281,7 +1292,6 @@
         );
       if (state.merits.length !== c.merits)
         out.push(issue("incomplete", M("chooseExactMerits", { count: c.merits })));
-      const cl = clanById(state.clan.id);
       if (cl && !cl.complete)
         out.push(
           issue(
@@ -1296,7 +1306,7 @@
         out.push(
           issue(
             "warning",
-            M("validationNoPowerDefinitions", { disciplines: usedIncomplete.map((d) => d.name).join(", ") }),
+            M("validationNoPowerDefinitions", { disciplines: usedIncomplete.map((d) => disciplineName(d.id)).join(", ") }),
           ),
         );
     }
@@ -1390,17 +1400,7 @@
     if (i === 0) return { done: state.creature ? 1 : 0, total: 1 };
     if (i === 1) {
       const cl = clanById(state.clan.id);
-      const base = cl ? 1 : 0;
-      if (cl?.disciplineRule?.choice)
-        return { done: base + (state.clan.choice ? 1 : 0), total: 2 };
-      if (cl?.disciplineRule?.random) {
-        const required = Number(cl.disciplineRule.random || 0);
-        return {
-          done: base + (state.clan.caitiffDisciplines || []).length,
-          total: 1 + required,
-        };
-      }
-      return { done: base, total: 1 };
+      return { done: cl?.complete ? 1 : 0, total: 1 };
     }
     if (i === 2) {
       const related = ["adoptive_sire", "brood_child"].includes(state.sire.type);
@@ -1435,15 +1435,20 @@
       );
       return { done, total };
     }
-    if (i === 7)
+    if (i === 7) {
+      const variableChoice = !!clanById(state.clan.id)?.disciplineRule?.choice;
       return {
         done:
+          (variableChoice && state.clan.choice ? 1 : 0) +
           totalClanDisciplineDots() +
           state.disciplines.powers.length +
           state.traits.length +
           state.merits.length,
-        total: c.disciplineDots + c.disciplinePowers + c.clanTraits + c.merits,
+        total:
+          (variableChoice ? 1 : 0) +
+          c.disciplineDots + c.disciplinePowers + c.clanTraits + c.merits,
       };
+    }
     if (i === 8) return { done: state.humanity.nature ? 1 : 0, total: 1 };
     if (i === 9) return { done: freeResourceSpent(), total: c.freeResourceDots };
     if (i === 10) {
@@ -1520,20 +1525,27 @@
 
   function renderCreature() {
     const options = D.creatures.filter((c) => c.id.startsWith("vampire_"));
-    return `<section class="step active"><h1>[[s_ff7f77cc88bd]]</h1><div class="lead">[[s_f59ac5cba69f]]</div><div class="grid3">${options.map((c) => `<button class="choiceCard ${state.creature === c.id ? "selected" : ""}" data-creature="${c.id}"><h3>${e(c.name)}</h3><div class="meta">${e(c.description || "")}</div></button>`).join("")}</div>${tierOf() === "neonate" ? `<div class="sectionTitle">[[s_43397f29829c]]</div><label class="card checkline"><input type="checkbox" id="youngToggle" ${state.young ? "checked" : ""}><div><b>[[s_160d9b4c3d17]]</b><div class="meta">${e(D.youngCharacter.description || "")}</div></div></label>` : ""}${issuesHtml(0)}</section>`;
+    return `<section class="step active"><h1>[[s_ff7f77cc88bd]]</h1><div class="lead">[[s_f59ac5cba69f]]</div><div class="grid3 creatureGrid">${options.map((c) => `<div class="choiceCard infoTile creatureChoiceCard ${state.creature === c.id ? "selected" : ""}"><button type="button" class="creatureChoiceMain" data-creature="${c.id}" aria-pressed="${state.creature === c.id ? "true" : "false"}"><h3>${e(c.name)}</h3><div class="meta">${e(c.description || "")}</div></button><button type="button" class="tileInfo" data-info-creature="${c.id}" aria-label="${e(M("readRules", { name: c.name }))}">?</button></div>`).join("")}</div>${tierOf() === "neonate" ? `<div class="sectionTitle">[[s_43397f29829c]]</div><div class="card infoTile youngChoiceCard"><label class="checkline youngChoiceMain"><input type="checkbox" id="youngToggle" ${state.young ? "checked" : ""}><div><b>[[s_160d9b4c3d17]]</b><div class="meta">${e(D.youngCharacter.description || "")}</div></div></label><button type="button" class="tileInfo" data-info-young aria-label="${e(M("readRules", { name: S("s_160d9b4c3d17") }))}">?</button></div>` : ""}${issuesHtml(0)}</section>`;
   }
   function renderClan() {
-    const selected = clanById(state.clan.id);
-    return `<section class="step active"><h1>[[s_17afcda150ef]]</h1><div class="lead">[[s_2da1d5349de3]]</div>${selected ? `<div class="selectedSummary"><div><div class="meta">[[s_cfad8f685677]]</div><b>${e(selected.name)}</b><div class="tagrow"><span class="tag">${e(selected.disciplineText)}</span>${selected.complete ? '<span class="tag good">[[s_a6700df73fa9]]</span>' : '<span class="tag warn">[[s_f6146d719b7b]]</span>'}</div></div><button class="tileInfo inlineInfo" data-info-clan="${selected.id}" aria-label="${e(M("readClanRules", { name: selected.name }))}">?</button></div>${renderClanDisciplineChoice()}` : ""}<div class="sectionTitle">[[s_a55c248714f4]]</div><div class="optionList">${D.clans.map((c) => `<button class="choiceRow ${state.clan.id === c.id ? "selected" : ""} ${!c.complete ? "incomplete" : ""}" data-clan="${c.id}"><div class="choiceRowMain"><div class="choiceRowTitle">${e(c.name)}</div><div class="choiceRowMeta">${e(c.description)}</div></div><div class="choiceRowAside"><span class="tag">${e(c.disciplineText)}</span>${c.complete ? '<span class="tag good">[[s_cd8e66e3508a]]</span>' : '<span class="tag warn">[[s_f6146d719b7b]]</span>'}</div></button>`).join("")}</div>${issuesHtml(1)}</section>`;
+    const available = D.clans.filter((c) => c.complete);
+    const unavailable = D.clans.filter((c) => !c.complete);
+    return `<section class="step active"><h1>[[s_17afcda150ef]]</h1><div class="lead">[[s_2da1d5349de3]]</div><div class="sectionTitle">${e(M("availableClans"))}</div><div class="optionList clanList">${available.map((c) => renderClanRow(c, true)).join("")}</div><div class="sectionTitle clanUnavailableTitle">${e(M("unavailableClans"))}</div><div class="meta clanUnavailableLead">${e(M("unavailableClansLead"))}</div><div class="optionList clanList unavailableClanList">${unavailable.map((c) => renderClanRow(c, false)).join("")}</div>${issuesHtml(1)}</section>`;
+  }
+  function renderClanRow(c, selectable) {
+    const selected = selectable && state.clan.id === c.id;
+    const disciplines = selectable ? clanDisciplineNames(c) : "";
+    const main = selectable
+      ? `<button type="button" class="clanChoiceMain" data-clan="${c.id}" aria-pressed="${selected ? "true" : "false"}"><div class="choiceRowMain"><div class="choiceRowTitle">${e(c.name)}</div><div class="choiceRowMeta">${e(c.description)}</div></div></button>`
+      : `<div class="clanChoiceMain clanChoiceDisabled"><div class="choiceRowMain"><div class="choiceRowTitle">${e(c.name)}</div><div class="choiceRowMeta">${e(c.description)}</div></div></div>`;
+    return `<div class="choiceRow clanRow ${selected ? "selected" : ""} ${selectable ? "" : "unavailable"}">${main}<div class="clanRowAside">${disciplines ? `<span class="tag">${e(disciplines)}</span>` : ""}<button type="button" class="tileInfo inlineInfo" data-info-clan="${c.id}" aria-label="${e(M("readClanRules", { name: c.name }))}">?</button></div></div>`;
   }
   function renderClanDisciplineChoice() {
     const c = clanById(state.clan.id);
     if (!c) return "";
     const r = c.disciplineRule || {};
-    if (r.choice)
-      return `<div class="requiredChoice"><div class="sectionTitle" style="margin-top:0">${e(M("requiredThirdDiscipline", { clan: c.name }))}</div><div class="grid2 equalTiles">${r.choice.map((id) => `<button class="choiceCompact ${state.clan.choice === id ? "selected" : ""}" data-clan-choice="${id}"><b>${e(discById(id)?.name)}</b><span>${e(discById(id)?.description)}</span></button>`).join("")}</div></div>`;
     if (r.random)
-      return `<div class="requiredChoice"><div class="sectionTitle" style="margin-top:0">[[s_f8c192193934]]</div><div class="notice warn">[[s_263a34e33825]]</div><button class="btn" data-action="random-caitiff">[[s_7322c289ed12]]</button><div class="optionList caitiffList" style="margin-top:9px">${D.disciplines.map((d) => `<label class="caitiffChoice ${(state.clan.caitiffDisciplines || []).includes(d.id) ? "selected" : ""}"><input type="checkbox" data-caitiff-disc="${d.id}" ${(state.clan.caitiffDisciplines || []).includes(d.id) ? "checked" : ""}><div class="choiceRowMain"><div class="choiceRowTitle">${e(d.name)}</div><div class="choiceRowMeta">${e(d.description)}</div></div></label>`).join("")}</div></div>`;
+      return `<div class="requiredChoice"><div class="sectionTitle" style="margin-top:0">[[s_f8c192193934]]</div><div class="notice warn">[[s_263a34e33825]]</div><button class="btn" data-action="random-caitiff">[[s_7322c289ed12]]</button><div class="optionList caitiffList" style="margin-top:9px">${D.disciplines.map((d) => `<label class="caitiffChoice ${(state.clan.caitiffDisciplines || []).includes(d.id) ? "selected" : ""}"><input type="checkbox" data-caitiff-disc="${d.id}" ${(state.clan.caitiffDisciplines || []).includes(d.id) ? "checked" : ""}><div class="choiceRowMain"><div class="choiceRowTitle">${e(disciplineName(d.id))}</div><div class="choiceRowMeta">${e(d.description)}</div></div></label>`).join("")}</div></div>`;
     return "";
   }
   function renderSire() {
@@ -1542,14 +1554,14 @@
         state.sire.type,
       ),
       allowed = sireAllowedDisciplines();
-    return `<section class="step active"><h1>[[s_1b63ea19f8e9]]</h1><div class="lead">[[s_3915eebd224f]]</div><div class="sectionTitle">[[s_fae0d8a2bb23]]</div><div class="optionList">${D.sires.map((x) => `<button class="choiceRow ${state.sire.type === x.id ? "selected" : ""}" data-sire-type="${x.id}"><div class="choiceRowMain"><div class="choiceRowTitle">${e(x.name)}</div><div class="choiceRowMeta">${e(x.description)}</div></div><div class="choiceRowAside"><span class="tag">${e(M("bonus", { value: x.discipline }))}</span></div></button>`).join("")}</div><div class="sectionTitle">[[s_8d441fb5f62f]]</div><div class="choiceChipGrid">${tierGenerations()
+    return `<section class="step active"><h1>[[s_1b63ea19f8e9]]</h1><div class="lead">[[s_3915eebd224f]]</div><div class="sectionTitle">[[s_fae0d8a2bb23]]</div><div class="optionList">${D.sires.map((x) => `<button class="choiceRow ${state.sire.type === x.id ? "selected" : ""}" data-sire-type="${x.id}"><div class="choiceRowMain"><div class="choiceRowTitle">${e(x.name)}</div><div class="choiceRowMeta">${e(x.description)}</div></div><div class="choiceRowAside"><span class="tag">${e(M("bonus", { value: sireDisciplineSummary(x) }))}</span></div></button>`).join("")}</div><div class="sectionTitle">[[s_8d441fb5f62f]]</div><div class="choiceChipGrid">${tierGenerations()
       .map(
         (g) =>
           `<button class="choiceChip ${Number(state.generation) === g ? "selected" : ""}" data-generation="${g}"><b>${e(M("generationOrdinal", { generation: g }))}</b><span>${e(M("modifier", { value: D.generationModifiers[String(g)] }))}</span></button>`,
       )
       .join(
         "",
-      )}</div>${relatedNeeded ? `<div class="sectionTitle">${e(S(state.sire.type === "adoptive_sire" ? "s_89c526bf651d" : "s_f6bcb7d6144e"))}</div><div class="choiceChipGrid">${D.clans.map((c) => `<button class="choiceChip ${state.sire.relatedClan === c.id ? "selected" : ""}" data-related-clan="${c.id}"><b>${e(c.name)}</b></button>`).join("")}</div>` : ""}<div class="sectionTitle">[[s_923461b005c9]]</div>${allowed.length ? `<div class="grid3">${allowed.map((id) => `<button class="choiceCompact ${state.sire.bonusDiscipline === id ? "selected" : ""}" data-sire-bonus="${id}"><b>${e(discById(id)?.name)}</b><span>${e(discById(id)?.description)}</span></button>`).join("")}</div>` : `<div class="notice warn">${e(M(relatedNeeded ? "chooseSireAndClanFirst" : "chooseSireFirst"))}</div>`}${s ? `<div class="notice"><b>${e(s.name)}</b> · ${e(s.discipline)}</div>` : ""}${issuesHtml(2)}</section>`;
+      )}</div>${relatedNeeded ? `<div class="sectionTitle">${e(S(state.sire.type === "adoptive_sire" ? "s_89c526bf651d" : "s_f6bcb7d6144e"))}</div><div class="choiceChipGrid">${D.clans.map((c) => `<button class="choiceChip ${state.sire.relatedClan === c.id ? "selected" : ""}" data-related-clan="${c.id}"><b>${e(c.name)}</b></button>`).join("")}</div>` : ""}<div class="sectionTitle">[[s_923461b005c9]]</div>${allowed.length ? `<div class="grid3">${allowed.map((id) => `<button class="choiceCompact ${state.sire.bonusDiscipline === id ? "selected" : ""}" data-sire-bonus="${id}"><b>${e(disciplineName(id))}</b><span>${e(discById(id)?.description)}</span></button>`).join("")}</div>` : `<div class="notice warn">${e(M(relatedNeeded ? "chooseSireAndClanFirst" : "chooseSireFirst"))}</div>`}${s ? `<div class="notice"><b>${e(s.name)}</b> · ${e(sireDisciplineSummary(s))}</div>` : ""}${issuesHtml(2)}</section>`;
   }
   function renderLifepaths() {
     ensureLpSlots();
@@ -1737,13 +1749,16 @@
     const c = creature(),
       cl = clanById(state.clan.id),
       cds = clanDisciplineIds(),
-      needsChoice = !!(cl?.disciplineRule?.choice && !state.clan.choice),
+      variableChoices = cl?.disciplineRule?.choice || [],
       sireOnly =
         state.sire.bonusDiscipline && !cds.includes(state.sire.bonusDiscipline)
           ? state.sire.bonusDiscipline
           : null,
       caps = tierDisciplineCaps();
-    return `<section class="step active"><h1>[[s_5f7f7ffccf35]]</h1><div class="lead">${e(M("powersLead", { dots: c.disciplineDots, powers: c.disciplinePowers, traits: c.clanTraits, merits: c.merits }))}</div>${needsChoice ? `<div class="notice warn"><b>${e(M("variableClanUnresolved", { clan: cl.name }))}</b> ${e(M("resolveClanChoiceNote"))} <button class="btn ghost" type="button" data-action="go-clan" style="margin-left:8px;min-height:32px">[[s_f7acc2ce067e]]</button></div>` : ""}<div class="sectionTitle">[[s_039300206d12]]</div><div class="budgetBar"><span class="pill ${totalClanDisciplineDots() === c.disciplineDots ? "good" : "warn"}">${e(M("clanDotsBudget", { used: totalClanDisciplineDots(), total: c.disciplineDots }))}</span><span class="pill">${e(M("sireBonus", { value: state.sire.bonusDiscipline ? `${discById(state.sire.bonusDiscipline)?.name} 1` : S("s_d0a5cd87735f") }))}</span><span class="pill">${e(M("chargenMax", { max: c.maxDisciplineDots }))}</span></div><div class="notice">${e(M("disciplineSpreadNote", { clan: caps.clan, nonClan: caps.nonClan }))}</div><div class="grid3 equalTiles">${cds.map((id) => renderDiscDotCard(id)).join("") || '<div class="notice warn">[[s_03cba82e6be6]]</div>'}${sireOnly ? renderSireOnlyDiscCard(sireOnly) : ""}</div><div class="sectionTitle">[[s_1a11e3511dc4]]</div><div class="budgetBar"><span class="pill ${state.disciplines.powers.length === c.disciplinePowers ? "good" : "warn"}">${e(M("powersBudget", { used: state.disciplines.powers.length, total: c.disciplinePowers }))}</span></div>${renderPowerGroups()}<div class="sectionTitle">[[s_f2d358efc8f6]]</div><div class="budgetBar"><span class="pill ${state.traits.length === c.clanTraits ? "good" : "warn"}">${e(M("traitsBudget", { used: state.traits.length, total: c.clanTraits }))}</span></div>${cl?.complete ? `<div class="gridAuto">${cl.traits.map(renderTraitCard).join("")}</div>` : `<div class="notice warn">${e(M("missingClanTraitSet", { clan: cl?.name || S("s_ff48b4ba7b3f") }))}</div>`}<div class="sectionTitle">[[s_12473ae7fbd7]]</div><div class="budgetBar"><span class="pill ${state.merits.length === c.merits ? "good" : "warn"}">${e(M("meritsBudget", { used: state.merits.length, total: c.merits }))}</span></div><div class="gridAuto">${D.merits.map(renderMeritCard).join("")}</div>${issuesHtml(7)}</section>`;
+    const variableBlock = variableChoices.length
+      ? `<div class="requiredChoice variableDisciplineBlock"><div class="sectionTitle" style="margin-top:0">${e(M("requiredThirdDiscipline", { clan: cl.name }))}</div><div class="grid2 equalTiles">${variableChoices.map((id) => `<div class="variableDisciplineChoice infoTile ${state.clan.choice === id ? "selected" : ""}"><button type="button" class="variableDisciplineMain" data-clan-choice="${id}" aria-pressed="${state.clan.choice === id ? "true" : "false"}"><b>${e(disciplineName(id))}</b><span>${e(discById(id)?.description || "")}</span></button><button type="button" class="tileInfo" data-info-disc="${id}" aria-label="${e(M("readRules", { name: disciplineName(id) }))}">?</button></div>`).join("")}</div></div>`
+      : "";
+    return `<section class="step active"><h1>[[s_5f7f7ffccf35]]</h1><div class="lead">${e(M("powersLead", { dots: c.disciplineDots, powers: c.disciplinePowers, traits: c.clanTraits, merits: c.merits }))}</div>${variableBlock}<div class="sectionTitle">[[s_039300206d12]]</div><div class="budgetBar"><span class="pill ${totalClanDisciplineDots() === c.disciplineDots ? "good" : "warn"}">${e(M("clanDotsBudget", { used: totalClanDisciplineDots(), total: c.disciplineDots }))}</span><span class="pill">${e(M("sireBonus", { value: state.sire.bonusDiscipline ? `${disciplineName(state.sire.bonusDiscipline)} 1` : S("s_d0a5cd87735f") }))}</span><span class="pill">${e(M("chargenMax", { max: c.maxDisciplineDots }))}</span></div><div class="notice">${e(M("disciplineSpreadNote", { clan: caps.clan, nonClan: caps.nonClan }))}</div><div class="grid3 equalTiles">${cds.map((id) => renderDiscDotCard(id)).join("") || '<div class="notice warn">[[s_03cba82e6be6]]</div>'}${sireOnly ? renderSireOnlyDiscCard(sireOnly) : ""}</div><div class="sectionTitle">[[s_1a11e3511dc4]]</div><div class="budgetBar"><span class="pill ${state.disciplines.powers.length === c.disciplinePowers ? "good" : "warn"}">${e(M("powersBudget", { used: state.disciplines.powers.length, total: c.disciplinePowers }))}</span></div>${renderPowerGroups()}<div class="sectionTitle">[[s_f2d358efc8f6]]</div><div class="budgetBar"><span class="pill ${state.traits.length === c.clanTraits ? "good" : "warn"}">${e(M("traitsBudget", { used: state.traits.length, total: c.clanTraits }))}</span></div>${cl?.complete ? `<div class="gridAuto">${cl.traits.map(renderTraitCard).join("")}</div>` : `<div class="notice warn">${e(M("missingClanTraitSet", { clan: cl?.name || S("s_ff48b4ba7b3f") }))}</div>`}<div class="sectionTitle">[[s_12473ae7fbd7]]</div><div class="budgetBar"><span class="pill ${state.merits.length === c.merits ? "good" : "warn"}">${e(M("meritsBudget", { used: state.merits.length, total: c.merits }))}</span></div><div class="gridAuto">${D.merits.map(renderMeritCard).join("")}</div>${issuesHtml(7)}</section>`;
   }
   function renderDiscDotCard(id) {
     const d = discById(id),
@@ -1754,11 +1769,11 @@
       canUp =
         totalClanDisciplineDots() < creature().disciplineDots &&
         rating < creature().maxDisciplineDots;
-    return `<div class="card infoTile"><button class="tileInfo" data-info-disc="${id}" aria-label="${e(M("readRules", { name: d.name }))}">?</button><div class="row"><div><div class="rowname">${e(d.name)}</div><div class="rowmeta">${e(M("disciplineRatingMeta", { rating, allocation: free, sire: sire ? M("sireMarker") : "", gap: sourceGapDisc(id) ? M("powerGapMarker") : "" }))}</div></div><div class="stepper"><button data-stepper="disc:${id}" data-delta="-1" ${canDown ? "" : "disabled"}>−</button><div class="n">${rating}</div><button data-stepper="disc:${id}" data-delta="1" ${canUp ? "" : "disabled"}>+</button></div></div></div>`;
+    return `<div class="card infoTile"><button class="tileInfo" data-info-disc="${id}" aria-label="${e(M("readRules", { name: disciplineName(d.id) }))}">?</button><div class="row"><div><div class="rowname">${e(disciplineName(d.id))}</div><div class="rowmeta">${e(M("disciplineRatingMeta", { rating, allocation: free, sire: sire ? M("sireMarker") : "", gap: sourceGapDisc(id) ? M("powerGapMarker") : "" }))}</div></div><div class="stepper"><button data-stepper="disc:${id}" data-delta="-1" ${canDown ? "" : "disabled"}>−</button><div class="n">${rating}</div><button data-stepper="disc:${id}" data-delta="1" ${canUp ? "" : "disabled"}>+</button></div></div></div>`;
   }
   function renderSireOnlyDiscCard(id) {
     const d = discById(id);
-    return `<div class="card infoTile"><button class="tileInfo" data-info-disc="${id}" aria-label="${e(M("readRules", { name: d.name }))}">?</button><div class="row"><div><div class="rowname">${e(d.name)}</div><div class="rowmeta">${e(M("sireOnlyDisciplineMeta"))}</div></div><div class="stepper"><button disabled>−</button><div class="n">1</div><button disabled>+</button></div></div></div>`;
+    return `<div class="card infoTile"><button class="tileInfo" data-info-disc="${id}" aria-label="${e(M("readRules", { name: disciplineName(d.id) }))}">?</button><div class="row"><div><div class="rowname">${e(disciplineName(d.id))}</div><div class="rowmeta">${e(M("sireOnlyDisciplineMeta"))}</div></div><div class="stepper"><button disabled>−</button><div class="n">1</div><button disabled>+</button></div></div></div>`;
   }
   function renderPowerGroups() {
     const ids = D.disciplines
@@ -1774,7 +1789,7 @@
           sel = state.disciplines.powers.filter(
             (x) => x.disciplineId === id,
           ).length;
-        return `<div class="powerGroup"><div class="powerGroupHead"><div><b>${e(d.name)}</b><div class="meta">${e(M("disciplineSelectedPowers", { rating: r, count: sel, powerWord: M(sel === 1 ? "powerSingular" : "powerPlural") }))}</div></div><button class="tileInfo inlineInfo" data-info-disc="${id}" aria-label="${e(M("readRules", { name: d.name }))}">?</button></div>${powers.length ? `<div class="gridAuto equalTiles">${powers.map((p) => renderPowerCard({ ...p, disciplineId: id, disciplineName: d.name })).join("")}</div>` : `<div class="notice warn">[[s_bdc1c11f48f2]]</div>`}</div>`;
+        return `<div class="powerGroup"><div class="powerGroupHead"><div><b>${e(disciplineName(d.id))}</b><div class="meta">${e(M("disciplineSelectedPowers", { rating: r, count: sel, powerWord: M(sel === 1 ? "powerSingular" : "powerPlural") }))}</div></div><button class="tileInfo inlineInfo" data-info-disc="${id}" aria-label="${e(M("readRules", { name: disciplineName(d.id) }))}">?</button></div>${powers.length ? `<div class="gridAuto equalTiles">${powers.map((p) => renderPowerCard({ ...p, disciplineId: id, disciplineName: disciplineName(d.id) })).join("")}</div>` : `<div class="notice warn">[[s_bdc1c11f48f2]]</div>`}</div>`;
       })
       .join("");
   }
@@ -1870,7 +1885,7 @@
         )
         .filter(Boolean)
         .sort((a, b) => a.rank - b.rank || a.name.localeCompare(b.name));
-    return `<div class="sheetDiscGroup"><div class="sheetDiscTitle"><b>${e(d.name)}</b><span class="sheetDiscTitleRight">${sheetDots(r)}${sheetInfoButton("data-info-disc", d.id, M("readRules", { name: d.name }))}</span></div>${powers.length ? powers.map((p) => `<div class="sheetPowerRow"><span>${e(p.name)}</span><span class="sheetPowerActions"><small class="sheetPowerRank">${e(M("rankDot", { rank: p.rank }))}</small>${sheetInfoButton("data-info-power", `${d.id}:${p.id}`, M("readRules", { name: p.name }))}</span></div>`).join("") : '<div class="sheetMuted">[[s_7b5b5aba3395]]</div>'}</div>`;
+    return `<div class="sheetDiscGroup"><div class="sheetDiscTitle"><b>${e(disciplineName(d.id))}</b><span class="sheetDiscTitleRight">${sheetDots(r)}${sheetInfoButton("data-info-disc", d.id, M("readRules", { name: disciplineName(d.id) }))}</span></div>${powers.length ? powers.map((p) => `<div class="sheetPowerRow"><span>${e(p.name)}</span><span class="sheetPowerActions"><small class="sheetPowerRank">${e(M("rankDot", { rank: p.rank }))}</small>${sheetInfoButton("data-info-power", `${d.id}:${p.id}`, M("readRules", { name: p.name }))}</span></div>`).join("") : '<div class="sheetMuted">[[s_7b5b5aba3395]]</div>'}</div>`;
   }
   function reviewTraitCard(t) {
     return `<div class="sheetDiscGroup sheetRuleCard"><div class="sheetDiscTitle"><b>${e(t.name)}</b>${sheetInfoButton("data-info-trait", t.id, M("readRules", { name: t.name }))}</div><div class="sheetMuted">${e(t.prerequisites || S("s_94f47410b37b"))}</div></div>`;
@@ -2027,6 +2042,20 @@
           render();
         }),
     );
+    root.querySelectorAll("[data-info-creature]").forEach(
+      (b) =>
+        (b.onclick = (ev) => {
+          ev.stopPropagation();
+          setInfo(infoCreature(byId(D.creatures, b.dataset.infoCreature)), true);
+        }),
+    );
+    root.querySelectorAll("[data-info-young]").forEach(
+      (b) =>
+        (b.onclick = (ev) => {
+          ev.stopPropagation();
+          setInfo(infoYoungCharacter(), true);
+        }),
+    );
     const young = root.querySelector("#youngToggle");
     if (young)
       young.onchange = () => {
@@ -2039,6 +2068,7 @@
         ensureFocusSlots();
         ensureItems();
         render();
+        setInfo(young.checked ? infoYoungCharacter() : infoCreature(creature()), false);
       };
     root.querySelectorAll("[data-clan]").forEach(
       (b) =>
@@ -2065,10 +2095,20 @@
     root.querySelectorAll("[data-clan-choice]").forEach(
       (b) =>
         (b.onclick = () => {
-          state.clan.choice = b.dataset.clanChoice;
-          state.disciplines = { clanDots: {}, powers: [] };
-          state.traits = [];
+          const nextChoice = b.dataset.clanChoice;
+          const previousChoice = state.clan.choice;
+          if (previousChoice === nextChoice) return;
+          state.clan.choice = nextChoice;
+          if (previousChoice) {
+            delete state.disciplines.clanDots[previousChoice];
+            state.disciplines.powers = state.disciplines.powers.filter((x) => {
+              const p = discById(x.disciplineId)?.powers.find((power) => power.id === x.powerId);
+              return !!p && p.rank <= disciplineRating(x.disciplineId);
+            });
+            state.traits = state.traits.filter(traitEligible);
+          }
           render();
+          setInfo(infoDiscipline(nextChoice), false);
         }),
     );
     root.querySelectorAll("[data-caitiff-disc]").forEach(

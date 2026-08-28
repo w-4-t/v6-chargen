@@ -28,6 +28,8 @@ function run(locale='en', initialStore={}) {
 let x=run('en');
 assert.ok(x.get('mainCard').innerHTML.includes('Vampire (Neonate)'), 'EN localized rules data did not render');
 assert.ok(x.get('mainCard').innerHTML.includes('A recently Embraced vampire, usually within the first 50 years of unlife.'), 'EN Creature tile narrative did not render');
+assert.ok(x.get('mainCard').innerHTML.includes('data-info-creature="vampire_neonate"'), 'Creature tile info control is missing');
+assert.ok(x.get('mainCard').innerHTML.includes('data-info-young'), 'young-character info control is missing');
 assert.ok(!x.get('mainCard').innerHTML.includes('Max dots 5') && !x.get('mainCard').innerHTML.includes('3+1 Discipline dots'), 'Creature tile still exposes chargen math');
 assert.ok(x.get('infoContent').innerHTML.includes('Maximum dots') && x.get('infoContent').innerHTML.includes('5'), 'EN Creature mechanics were not moved to the info panel');
 assert.ok(x.get('infoContent').innerHTML.includes('Generations 11–13'), 'EN Creature generation band is missing from info panel');
@@ -47,6 +49,8 @@ x=run('uk');
 assert.ok(x.get('mainCard').innerHTML.includes('Вампір (Неонат)'), 'UK localized rules data did not render directly');
 assert.ok(x.get('mainCard').innerHTML.includes('Крок 1 · Хто ви?'), 'UK static text key did not render');
 assert.ok(x.get('mainCard').innerHTML.includes('Нещодавно Обернений вампір, зазвичай у межах перших 50 років нежиття.'), 'UK Creature tile narrative did not render');
+assert.ok(x.get('mainCard').innerHTML.includes('data-info-creature="vampire_neonate"'), 'UK Creature tile info control is missing');
+assert.ok(x.get('mainCard').innerHTML.includes('data-info-young'), 'UK young-character info control is missing');
 assert.ok(!x.get('mainCard').innerHTML.includes('Макс. точок 5') && !x.get('mainCard').innerHTML.includes('3+1 точок Дисциплін'), 'UK Creature tile still exposes chargen math');
 assert.ok(x.get('infoContent').innerHTML.includes('Максимум точок') && x.get('infoContent').innerHTML.includes('5'), 'UK Creature mechanics were not moved to the info panel');
 assert.ok(x.get('infoContent').innerHTML.includes('Покоління 11–13'), 'UK Creature generation band is missing from info panel');
@@ -61,14 +65,51 @@ assert.ok(x.get('navSteps').children[2].innerHTML.includes('3. Сір'), 'UK des
 assert.ok(x.get('navSteps').children[6].innerHTML.includes('7. Фокус'), 'UK desktop nav label Focus was not updated');
 assert.ok(x.get('navSteps').children[7].innerHTML.includes('8. Сили'), 'UK desktop nav label Powers was not updated');
 
+// Clan page separates selectable Alpha-ready clans from future/incomplete entries.
+const clanState=JSON.parse(run('uk').store.get('vtm_v6_alpha_chargen_v0_9_0'));
+clanState.step=1;
+clanState.clan={id:'brujah',choice:null,caitiffDisciplines:[]};
+x=run('uk',{'vtm_v6_alpha_chargen_v0_9_0':JSON.stringify(clanState)});
+const clanHtml=x.get('mainCard').innerHTML;
+assert.ok(clanHtml.includes('Доступні Клани'), 'UK available Clan section is missing');
+assert.ok(clanHtml.includes('Недоступні в поточній Alpha'), 'UK unavailable Clan section is missing');
+assert.ok(clanHtml.includes('data-clan="brujah"'), 'Alpha-ready Brujah is not selectable');
+assert.ok(!clanHtml.includes('data-clan="banu_haqim"'), 'incomplete Banu Haqim is still selectable');
+assert.ok(clanHtml.includes('data-info-clan="banu_haqim"'), 'incomplete Clan lost read-only info access');
+assert.ok(clanHtml.includes('clanRow selected') && clanHtml.includes('data-clan="brujah"'), 'selected Clan is not marked on its list row');
+assert.ok(clanHtml.includes('Celerity, Potence, Presence'), 'Clan tile does not use canonical English Discipline names');
+assert.ok(!clanHtml.includes('Стрімкість, Могутність, Присутність'), 'Clan tile still uses translated Discipline names');
+assert.ok(!clanHtml.includes('selectedSummary'), 'duplicate selected-Clan summary returned');
+assert.ok(!clanHtml.includes('повний запис Alpha') && !clanHtml.includes('неповний запис Alpha'), 'Alpha completeness badges leaked into the Clan UI');
+assert.ok(x.get('navSteps').children[1].innerHTML.includes('navCount good">1/1'), 'ready fixed Clan does not complete Clan progress');
+
+const incompleteClanState=JSON.parse(JSON.stringify(clanState));
+incompleteClanState.clan={id:'banu_haqim',choice:null,caitiffDisciplines:[]};
+x=run('uk',{'vtm_v6_alpha_chargen_v0_9_0':JSON.stringify(incompleteClanState)});
+assert.ok(x.get('navSteps').children[1].innerHTML.includes('navCount danger">0/1'), 'legacy incomplete Clan state incorrectly counts as a valid choice');
+
+const lasombraState=JSON.parse(JSON.stringify(clanState));
+lasombraState.clan={id:'lasombra',choice:null,caitiffDisciplines:[]};
+x=run('uk',{'vtm_v6_alpha_chargen_v0_9_0':JSON.stringify(lasombraState)});
+assert.ok(x.get('navSteps').children[1].innerHTML.includes('navCount good">1/1'), 'Lasombra Clan choice should complete the Clan step without resolving its variable Discipline');
+assert.ok(!x.get('mainCard').innerHTML.includes('data-clan-choice='), 'variable Clan Discipline selector is still rendered on the Clan step');
+
+const lasombraPowersState=JSON.parse(JSON.stringify(lasombraState));
+lasombraPowersState.step=7;
+x=run('uk',{'vtm_v6_alpha_chargen_v0_9_0':JSON.stringify(lasombraPowersState)});
+assert.ok(x.get('navSteps').children[7].innerHTML.includes('navCount danger">0/11'), 'unresolved Lasombra Discipline choice is not counted in Powers progress');
+assert.ok(x.get('mainCard').innerHTML.includes('data-clan-choice="corruption"') && x.get('mainCard').innerHTML.includes('data-clan-choice="oblivion"'), 'variable Clan Discipline choices were not moved to Powers');
+assert.ok(x.get('mainCard').innerHTML.includes('Corruption') && x.get('mainCard').innerHTML.includes('Oblivion'), 'variable Clan Discipline choices do not use canonical English names');
+
 // The one-Lifepath option keeps narrative copy in the choice and moves its numeric rule detail to the info panel.
 const youngState=JSON.parse(run('uk').store.get('vtm_v6_alpha_chargen_v0_9_0'));
 youngState.step=0; youngState.creature='vampire_neonate'; youngState.young=true;
 x=run('uk',{'vtm_v6_alpha_chargen_v0_9_0':JSON.stringify(youngState)});
-assert.ok(x.get('mainCard').innerHTML.includes('Молодий персонаж, чий смертний і вампірський досвід'), 'young-character narrative summary is missing from the choice');
+assert.ok(x.get('mainCard').innerHTML.includes('Молодий і відносно недосвідчений персонаж'), 'young-character narrative summary is missing from the choice');
 assert.ok(!x.get('mainCard').innerHTML.includes('8 точок Навичок') && !x.get('mainCard').innerHTML.includes('5 точок Ресурсів'), 'young-character choice still exposes numeric allocation rules');
-assert.ok(x.get('infoContent').innerHTML.includes('8 точок Навичок') && x.get('infoContent').innerHTML.includes('5 точок Ресурсів'), 'young-character numeric rules are missing from the info panel');
-assert.ok(x.get('infoContent').innerHTML.includes('4 точки для Навичок'), 'young-character project Skill cap is missing from the info panel');
+assert.ok(x.get('mainCard').innerHTML.includes('data-info-young'), 'young-character choice has no direct info control');
+assert.ok(!x.get('infoContent').innerHTML.includes('8 точок Навичок') && !x.get('infoContent').innerHTML.includes('5 точок Ресурсів'), 'Creature default info still mixes in one-Lifepath rules');
+assert.ok(fs.readFileSync('src/app.js','utf8').includes('function infoYoungCharacter()'), 'dedicated young-character info panel is missing');
 
 // Switching locale rerenders the same machine state rather than translating/storing display text.
 x=run('en');

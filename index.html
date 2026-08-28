@@ -267,6 +267,41 @@
         margin: 0 0 5px;
         font-size: 16px;
       }
+
+      .creatureGrid {
+        align-items: stretch;
+        grid-auto-rows: 1fr;
+      }
+      .creatureChoiceCard {
+        align-self: stretch;
+        height: 100%;
+        padding: 0 44px 0 0;
+        overflow: hidden;
+      }
+      .creatureChoiceMain {
+        width: 100%;
+        height: 100%;
+        min-height: 100%;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        text-align: left;
+        padding: 13px;
+        cursor: pointer;
+      }
+      .creatureChoiceMain:hover,
+      .creatureChoiceMain:focus-visible {
+        background: rgba(255, 255, 255, 0.025);
+        outline: none;
+      }
+      .youngChoiceCard {
+        padding: 0 44px 0 0;
+      }
+      .youngChoiceMain {
+        min-height: 70px;
+        padding: 12px;
+        cursor: pointer;
+      }
       .optionList {
         display: grid;
         gap: 8px;
@@ -313,16 +348,54 @@
         justify-content: flex-end;
         max-width: 330px;
       }
-      .selectedSummary {
-        display: grid;
+      .choiceRow.clanRow {
         grid-template-columns: minmax(0, 1fr) auto;
-        gap: 10px;
-        align-items: center;
-        border: 1px solid var(--line2);
-        background: var(--panel2);
-        border-radius: 14px;
+        gap: 8px;
+        padding: 0;
+        align-items: stretch;
+        overflow: hidden;
+      }
+      .clanChoiceMain {
+        width: 100%;
+        min-width: 0;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        text-align: left;
         padding: 11px 12px;
-        margin: 10px 0;
+      }
+      button.clanChoiceMain {
+        cursor: pointer;
+      }
+      button.clanChoiceMain:hover,
+      button.clanChoiceMain:focus-visible {
+        background: rgba(255, 255, 255, 0.025);
+        outline: none;
+      }
+      .clanRowAside {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 7px;
+        padding: 7px 9px 7px 0;
+        max-width: 360px;
+      }
+      .choiceRow.clanRow.selected {
+        border-color: var(--good);
+        box-shadow: inset 0 0 0 1px var(--good);
+      }
+      .choiceRow.clanRow.unavailable {
+        opacity: 0.68;
+      }
+      .clanChoiceDisabled {
+        cursor: default;
+      }
+      .clanUnavailableTitle {
+        margin-top: 24px;
+      }
+      .clanUnavailableLead {
+        margin: -3px 0 9px;
+        max-width: 760px;
       }
       .requiredChoice {
         border: 1px solid #4b432b;
@@ -330,6 +403,44 @@
         border-radius: 14px;
         padding: 11px;
         margin: 10px 0;
+      }
+
+      .variableDisciplineChoice {
+        position: relative;
+        border: 1px solid var(--line);
+        background: var(--panel2);
+        border-radius: 12px;
+        padding: 0 44px 0 0;
+        overflow: hidden;
+      }
+      .variableDisciplineChoice.selected {
+        border-color: var(--accent);
+        box-shadow: inset 0 0 0 1px var(--accent);
+      }
+      .variableDisciplineMain {
+        width: 100%;
+        height: 100%;
+        display: grid;
+        gap: 4px;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        text-align: left;
+        padding: 11px;
+        cursor: pointer;
+      }
+      .variableDisciplineMain:hover,
+      .variableDisciplineMain:focus-visible {
+        background: rgba(255, 255, 255, 0.025);
+        outline: none;
+      }
+      .variableDisciplineMain b {
+        font-size: 14px;
+      }
+      .variableDisciplineMain span {
+        font-size: 10px;
+        line-height: 1.4;
+        color: var(--muted);
       }
       .choiceCompact {
         width: 100%;
@@ -1030,8 +1141,11 @@
           justify-content: flex-start;
           max-width: none;
         }
-        .selectedSummary {
-          grid-template-columns: 1fr;
+        .choiceRow.clanRow {
+          grid-template-columns: minmax(0, 1fr) auto;
+        }
+        .clanRowAside {
+          max-width: min(42vw, 250px);
         }
         .choiceChip {
           min-width: calc(50% - 4px);
@@ -1949,7 +2063,7 @@
                 hidden
             /></label>
           </div>
-          <div class="versionLabel">v0.10.2</div>
+          <div class="versionLabel">v0.10.4</div>
         </div>
       </aside>
       <main class="main">

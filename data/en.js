@@ -2972,8 +2972,8 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
     "focusRuleText": "At each odd number of dots in a Skill (1, 3, and 5), you can acquire a Focus. A relevant Focus gives +1 die to the test. During character creation, Skills cannot exceed 3 dots.",
     "lifepathCompetence": "At the Storyteller’s discretion, when no other Skill applies but a Lifepath suggests competence, add 2 dice to the pool or gain a basic success.",
     "youngCharacter": {
-      "description": "A young character whose mortal and vampiric history has not yet accumulated many distinct roles. Their experience is narrower and more concentrated.",
-      "details": "This option replaces the normal two Neonate Lifepaths with one Lifepath. That Lifepath receives 8 Skill dots and 5 Resource dots. Under the project Lifepath Skill Cap rule, Skills listed by the selected Lifepath can reach 4 dots during character creation; other Skills retain the normal chargen cap."
+      "description": "A young, relatively inexperienced character whose background is concentrated in a single Lifepath rather than spread across several roles.",
+      "details": "Choose this option for a character who has not yet accumulated broad mortal or vampiric experience. It replaces the normal two Neonate Lifepaths with one Lifepath. That Lifepath receives 8 Skill dots and 5 Resource dots. Under the project Lifepath Skill Cap rule, Skills listed by the selected Lifepath can reach 4 dots during character creation; other Skills retain the normal chargen cap."
     }
   },
   "strings": {
@@ -3001,7 +3001,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
       "chooseExactPowers": "Choose exactly {count} Discipline powers.",
       "chooseExactTraits": "Choose exactly {count} Clan Traits.",
       "chooseExactMerits": "Choose exactly {count} Merits.",
-      "requiredThirdDiscipline": "Required · choose {clan}’s third Discipline",
+      "requiredThirdDiscipline": "Required · choose {clan}’s variable Clan Discipline",
       "bonus": "Bonus: {value}",
       "chooseSireFirst": "Choose the sire type first.",
       "chooseSireAndClanFirst": "Choose the sire type and related Clan first.",
@@ -3017,6 +3017,10 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
       "readDescriptionScale": "Read {name} description and rating scale",
       "readRules": "Read {name} rules",
       "readClanRules": "Read {name} clan rules",
+      "availableClans": "Available Clans",
+      "unavailableClans": "Not available in the current Alpha",
+      "unavailableClansLead": "These clans are retained for future V6 updates. Their narrative descriptions remain available for reference, but they cannot be selected yet.",
+      "randomDisciplines": "{count} randomly determined Disciplines",
       "readNatureRules": "Read {name} Nature rules",
       "readNature": "Read {name} Nature",
       "readInformation": "Read {name} information",
@@ -3177,7 +3181,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
       "s_b729875dd3e3": "Step 10 · Your Resources",
       "s_c543e29e315c": "Step 11 · Finishing Touches",
       "s_f59ac5cba69f": "Choose the vampire tier used for this character. It controls the RAW creation budgets and maximum ratings.",
-      "s_2da1d5349de3": "Choose a clan. Long descriptions use list rows on desktop so each entry keeps its natural height.",
+      "s_2da1d5349de3": "Choose a Clan from those currently available in the Alpha. Use ? to open the full Clan information without selecting it.",
       "s_3915eebd224f": "Choose each part directly. This page no longer uses dropdowns for the primary chargen choices.",
       "s_ab9fee6941a5": "Choose a Lifepath.",
       "s_d1f8e5ea93b2": "Selection",
@@ -3186,9 +3190,6 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
       "s_43397f29829c": "Optional young character rule",
       "s_160d9b4c3d17": "Use one Lifepath",
       "s_cfad8f685677": "Selected clan",
-      "s_a6700df73fa9": "Full Alpha entry",
-      "s_cd8e66e3508a": "Full Alpha",
-      "s_f6146d719b7b": "In development",
       "s_a55c248714f4": "Clan list",
       "s_eed6bfb41051": "Required",
       "s_f8c192193934": "Caitiff · 3 randomly determined Disciplines",
@@ -3368,8 +3369,6 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
       "s_d6f6623ba186": "Vitae Maximum = 10 + Stamina. Willpower Maximum = 5 + Composure + Resolve. You receive one additional important item per Lifepath, provided it fits that Lifepath. Flaws have no fixed mechanical bonus or penalty in the Alpha packet.",
       "s_2793aab3b7f2": "Player Packet · Step 1 + Step 5: Maximum Dots and Attributes",
       "s_f0fca5da9b18": "Player Packet · Step 5: Skills & Focuses · cap modified by project house rule",
-      "s_50c5a0f29d19": "Clan · Alpha entry complete",
-      "s_310f416783ae": "Clan · Alpha entry incomplete",
       "s_a9c6ab0505df": "Player Packet · Chapter 3: The Clans",
       "s_a23c10b98141": "Player Packet · Step 4: Lifepaths",
       "s_e1543c54dcfc": "Player Packet · Chapter 5: Powers of the Blood",
@@ -3425,7 +3424,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
       "s_4a21eeed24ce": "Choose a supported Vampire tier.",
       "s_fa84ba249563": "Choose a Clan.",
       "s_ea3371b4af5e": "Caitiff requires 3 randomly determined Disciplines.",
-      "s_0db58fcd9f64": "This clan remains partially in development in the supplied Alpha packet.",
+      "s_0db58fcd9f64": "This Clan is not available for character creation in the current Alpha.",
       "s_943cb1478e3c": "Choose a sire type.",
       "s_da5b43a11f6e": "Choose the adoptive sire / broodmate Clan.",
       "s_9fba51a373e7": "Choose the bonus Discipline granted by the sire type.",
@@ -3550,7 +3549,9 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
       "s_c01d0a10000f": "Lifepaths with this option",
       "s_c01d0a100010": "Lifepath Skill dots",
       "s_c01d0a100011": "Lifepath Resource dots",
-      "s_c01d0a100012": "Lifepath Skill cap"
+      "s_c01d0a100012": "Lifepath Skill cap",
+      "s_c01d0a100013": "Player Packet · Step 4: Your Lifepaths",
+      "s_c01d0a100014": "Young character option"
     }
   },
   "interface": {
