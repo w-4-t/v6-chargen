@@ -122,6 +122,14 @@ const app = fs.readFileSync('src/app.js','utf8');
 for (const bad of ['window.V6_DATA','window.V6_UK_DATA','discIdByName','prereqEligible','.name.toLowerCase()','.category === "Physical"','.category === "Social"','.category === "Mental"','V6I18N.tr','const T ='])
   assert.ok(!app.includes(bad), `app.js still contains locale-coupled logic: ${bad}`);
 
+assert.ok(app.includes('user_content'), 'schema 3 embedded user_content support is missing');
+assert.ok(app.includes('user_lifepath_'), 'human-readable user Lifepath IDs are missing');
+assert.ok(app.includes('content_schema_version'), 'user-created content schema versioning is missing');
+assert.ok(app.includes('infoLifepathSkill(sid)'), 'Lifepath steppers should keep Step 4 Skill help concise');
+const htmlForLifepaths = fs.readFileSync('index.html','utf8');
+assert.ok(htmlForLifepaths.includes('.lpMatrixWrap') && htmlForLifepaths.includes('overflow-x: auto'), 'Lifepath matrices are not horizontally scrollable');
+assert.ok(htmlForLifepaths.includes('.lpMatrixName') && htmlForLifepaths.includes('position: sticky'), 'Lifepath matrix row labels are not sticky');
+
 const i18n = fs.readFileSync('src/i18n.js','utf8');
 for (const bad of ['const UI = {','const LONG = {','const EXTRA = {','pairData','createTreeWalker','NodeFilter','V6LocaleFormatters','function tr(','strings?.exact'])
   assert.ok(!i18n.includes(bad), `i18n.js still contains legacy translation machinery: ${bad}`);
@@ -171,7 +179,7 @@ for (const forbidden of ['Character Generator','V6 Alpha · project house rules 
   assert.ok(!html.includes(forbidden), `index.html embeds localized EN UI copy: ${forbidden}`);
 assert.ok(!html.includes('adaptive PWA'), 'desktop header still exposes adaptive PWA label');
 assert.ok(!html.includes('rawBadge'), 'removed project-house-rules badge still exists in desktop markup/CSS');
-assert.ok(html.includes('<div class="versionLabel">v0.10.7</div>'), 'version is not placed beneath desktop Export/Import controls');
+assert.ok(html.includes('<div class="versionLabel">v0.10.8</div>'), 'version is not placed beneath desktop Export/Import controls');
 assert.ok(html.includes('class="brandTitle"') && html.includes('white-space: nowrap'), 'desktop generator title is not constrained to one line');
 assert.ok(app.includes('data-info-creature=') && app.includes('data-info-young'), 'Creature choices are missing dedicated info controls');
 assert.ok(html.includes('.creatureGrid') && html.includes('grid-auto-rows: 1fr'), 'Creature tiles are not normalized to equal-height grid rows');

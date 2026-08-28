@@ -43,7 +43,7 @@ assert.ok(x.get('navSteps').children[2].innerHTML.includes('navCount warn\">1/3'
 assert.ok(x.get('navSteps').children[3].innerHTML.includes('navCount danger\">0/18'), 'Lifepath aggregate counter is not 0/18 for a standard neonate');
 assert.ok(x.get('navSteps').children[7].innerHTML.includes('navCount danger\">0/10'), 'Powers aggregate counter is not 0/10 for a standard neonate');
 let saved=JSON.parse(x.store.get('vtm_v6_alpha_chargen_v0_9_0'));
-assert.strictEqual(saved.schemaVersion,2);
+assert.strictEqual(saved.schemaVersion,3);
 
 x=run('uk');
 assert.ok(x.get('mainCard').innerHTML.includes('Вампір (Неонат)'), 'UK localized rules data did not render directly');
@@ -138,6 +138,65 @@ assert.ok(x.get('mainCard').innerHTML.includes('data-info-young'), 'young-charac
 assert.ok(!x.get('infoContent').innerHTML.includes('8 точок Навичок') && !x.get('infoContent').innerHTML.includes('5 точок Ресурсів'), 'Creature default info still mixes in one-Lifepath rules');
 assert.ok(fs.readFileSync('src/app.js','utf8').includes('function infoYoungCharacter()'), 'dedicated young-character info panel is missing');
 
+
+// Lifepath step uses a two-stage selection + shared Skill/Resource matrices with no premature cap/Focus noise.
+const lpState=JSON.parse(run('en').store.get('vtm_v6_alpha_chargen_v0_9_0'));
+lpState.step=3;
+lpState.lifepaths=[
+  {id:'hunter',skillDots:{},resourceDots:{}},
+  {id:'hound',skillDots:{},resourceDots:{}}
+];
+x=run('en',{'vtm_v6_alpha_chargen_v0_9_0':JSON.stringify(lpState)});
+const lpHtml=x.get('mainCard').innerHTML;
+assert.ok(lpHtml.includes('Skill dots from Lifepaths') && lpHtml.includes('Resource dots from Lifepaths'), 'Lifepath matrices are not rendered after all paths are selected');
+assert.ok(lpHtml.includes('class="lpMatrix"'), 'Lifepath allocation is not using the shared matrix UI');
+assert.strictEqual((lpHtml.match(/data-info-lp-skill="fighting"/g)||[]).length,1,'shared Fighting Skill is duplicated instead of occupying one matrix row');
+assert.strictEqual((lpHtml.match(/Repository: Armory/g)||[]).length,1,'shared Armory Resource is duplicated instead of occupying one matrix row');
+assert.ok(!lpHtml.includes('Current 0') && !lpHtml.includes('house-rule cap bonus') && !lpHtml.includes('Suggested Focus'), 'Lifepath step still exposes cap or Focus recommendation noise');
+assert.ok(lpHtml.includes('data-info-lp-skill="awareness"'), 'Lifepath Skill rows are missing ? info controls');
+
+// Embedded user-created content is self-contained and visibly typed in the save.
+const userLpState=JSON.parse(JSON.stringify(lpState));
+userLpState.user_content={
+  schema_version:1,
+  meta:{created_by:'v6-chargen',note:'User-created content embedded in this character save.'},
+  lifepaths:{
+    user_lifepath_001:{id:'user_lifepath_001',source:'user_created',content_type:'lifepath',content_schema_version:1,name:'Corporate Security',description:'Security work',skills:['awareness','investigation','fighting','shooting','subterfuge'],resources:['user_resource_001','user_resource_002','user_resource_003'],meta:{created_by:'v6-chargen',note:'User-created Lifepath embedded in this character save.'}}
+  },
+  resources:{
+    user_resource_001:{id:'user_resource_001',source:'user_created',content_type:'resource',content_schema_version:1,type:'wealth',label:'',meta:{}},
+    user_resource_002:{id:'user_resource_002',source:'user_created',content_type:'resource',content_schema_version:1,type:'contact',label:'Corporate Security',meta:{}},
+    user_resource_003:{id:'user_resource_003',source:'user_created',content_type:'resource',content_schema_version:1,type:'repository',label:'Security Equipment',meta:{}}
+  }
+};
+userLpState.lifepaths=[
+  {id:'military',skillDots:{},resourceDots:{}},
+  {id:'user_lifepath_001',skillDots:{},resourceDots:{}}
+];
+x=run('en',{'vtm_v6_alpha_chargen_v0_9_0':JSON.stringify(userLpState)});
+assert.ok(x.get('mainCard').innerHTML.includes('Corporate Security'), 'embedded user Lifepath did not render on another load');
+saved=JSON.parse(x.store.get('vtm_v6_alpha_chargen_v0_9_0'));
+assert.strictEqual(saved.user_content.lifepaths.user_lifepath_001.source,'user_created');
+assert.strictEqual(saved.user_content.lifepaths.user_lifepath_001.content_type,'lifepath');
+assert.strictEqual(saved.user_content.resources.user_resource_002.content_type,'resource');
+
+// Schema v2 Custom Lifepaths migrate into portable user_content definitions and stable Resource IDs.
+const v2Custom=JSON.parse(run('en').store.get('vtm_v6_alpha_chargen_v0_9_0'));
+v2Custom.schemaVersion=2;
+delete v2Custom.user_content;
+v2Custom.step=3;
+v2Custom.lifepaths=[
+  {id:'__custom__',skillDots:{awareness:2},resourceDots:{'0':1,'2':2},custom:{name:'Old Custom',description:'legacy',skills:['awareness','craft','fighting','shooting','survival'],resources:[{type:'wealth',label:''},{type:'contact',label:'X'},{type:'repository',label:'Y'}]}},
+  {id:'military',skillDots:{shooting:1},resourceDots:{'2':1},custom:null}
+];
+x=run('en',{'vtm_v6_alpha_chargen_v0_9_0':JSON.stringify(v2Custom)});
+saved=JSON.parse(x.store.get('vtm_v6_alpha_chargen_v0_9_0'));
+assert.strictEqual(saved.schemaVersion,3);
+assert.strictEqual(saved.lifepaths[0].id,'user_lifepath_001');
+assert.deepStrictEqual(saved.lifepaths[0].resourceDots,{user_resource_001:1,user_resource_003:2});
+assert.deepStrictEqual(saved.lifepaths[1].resourceDots,{'ally:former_comrades:2':1});
+assert.ok(saved.user_content.lifepaths.user_lifepath_001 && saved.user_content.resources.user_resource_003,'v2 Custom Lifepath migration did not embed its definitions');
+
 // Switching locale rerenders the same machine state rather than translating/storing display text.
 x=run('en');
 const beforeToggle=JSON.parse(x.store.get('vtm_v6_alpha_chargen_v0_9_0'));
@@ -155,7 +214,7 @@ const oldState={
 };
 x=run('en',{'vtm_v6_alpha_chargen_v0_8_1':JSON.stringify(oldState)});
 saved=JSON.parse(x.store.get('vtm_v6_alpha_chargen_v0_9_0'));
-assert.strictEqual(saved.schemaVersion,2);
+assert.strictEqual(saved.schemaVersion,3);
 assert.deepStrictEqual(saved.focuses.athletics[0],{ref:'running'});
 
 // Built-in Focus refs render through the active locale rather than storing display text.
@@ -169,8 +228,8 @@ assert.ok(!x.get('mainCard').innerHTML.includes('[[s_'), 'unresolved token remai
 const resState=JSON.parse(run('en').store.get('vtm_v6_alpha_chargen_v0_9_0'));
 resState.step=9;
 resState.lifepaths=[
-  {id:'military',skillDots:{},resourceDots:{'2':1},custom:null},
-  {id:null,skillDots:{},resourceDots:{},custom:null}
+  {id:'military',skillDots:{},resourceDots:{'ally:former_comrades:2':1}},
+  {id:null,skillDots:{},resourceDots:{}}
 ];
 resState.resources={free:[],details:{'ally|former_comrades':'DETAIL-STABLE'}};
 x=run('uk',{'vtm_v6_alpha_chargen_v0_9_0':JSON.stringify(resState)});
