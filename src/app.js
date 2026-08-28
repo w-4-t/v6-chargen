@@ -91,7 +91,16 @@
     const attrs = {};
     D.attributes.forEach((a) => (attrs[a.id] = 1));
     return {
-      schemaVersion: 2,
+      schemaVersion: 3,
+      user_content: {
+        schema_version: 1,
+        meta: {
+          created_by: "v6-chargen",
+          note: "User-created content embedded in this character save. Keep this block with the character when moving the JSON between devices.",
+        },
+        lifepaths: {},
+        resources: {},
+      },
       step: 0,
       creature: R.config.defaultCreature,
       young: false,
@@ -124,6 +133,7 @@
     };
   }
   let state = load() || blankState();
+  let editingUserLifepathId = null;
   normalizeState();
   function load() {
     try {
@@ -188,6 +198,73 @@
     }
     return out;
   }
+  function blankUserContent() {
+    return {
+      schema_version: 1,
+      meta: {
+        created_by: "v6-chargen",
+        note: "User-created content embedded in this character save. Keep this block with the character when moving the JSON between devices.",
+      },
+      lifepaths: {},
+      resources: {},
+    };
+  }
+  function ensureUserContent() {
+    if (!state.user_content || typeof state.user_content !== "object")
+      state.user_content = blankUserContent();
+    if (!state.user_content.meta || typeof state.user_content.meta !== "object")
+      state.user_content.meta = blankUserContent().meta;
+    state.user_content.schema_version = Number(state.user_content.schema_version || 1);
+    state.user_content.lifepaths = state.user_content.lifepaths || {};
+    state.user_content.resources = state.user_content.resources || {};
+  }
+  function nextUserContentId(type) {
+    ensureUserContent();
+    const bucket = type === "lifepath" ? state.user_content.lifepaths : state.user_content.resources;
+    const prefix = `user_${type}_`;
+    let max = 0;
+    for (const id of Object.keys(bucket || {})) {
+      const m = id.match(new RegExp(`^${prefix}(\\d+)$`));
+      if (m) max = Math.max(max, Number(m[1]));
+    }
+    return `${prefix}${String(max + 1).padStart(3, "0")}`;
+  }
+  function userLifepathRaw(id) {
+    ensureUserContent();
+    return state.user_content.lifepaths?.[id] || null;
+  }
+  function userResourceRaw(id) {
+    ensureUserContent();
+    return state.user_content.resources?.[id] || null;
+  }
+  function isUserLifepathId(id) {
+    return /^user_lifepath_\d+$/.test(String(id || ""));
+  }
+  function userResourceLabelKey(r) {
+    const label = normalizeResourceLabel(r?.label || "");
+    return label ? `user_label:${label}` : "";
+  }
+  function userLifepathDef(id) {
+    const c = userLifepathRaw(id);
+    if (!c) return null;
+    return {
+      id,
+      name: c.name || M("customLifepathFallback", { id }),
+      description: c.description || "",
+      type: "custom",
+      tier: "custom",
+      skills: (c.skills || []).map((skill) => ({ id: skill, skill, recommendationIds: [] })),
+      resources: (c.resources || []).map((rid) => {
+        const r = userResourceRaw(rid) || {};
+        return {
+          id: rid,
+          type: r.type || "",
+          labelKey: userResourceLabelKey(r),
+          label: r.label || "",
+        };
+      }),
+    };
+  }
   function migrateStateV1(old) {
     const next = old && typeof old === "object" ? old : blankState();
     next.schemaVersion = 2;
@@ -200,9 +277,66 @@
     next.resources.details = migrateResourceDetailKeys(next.resources.details);
     return next;
   }
+  function migrateStateV2(old) {
+    const next = old && typeof old === "object" ? old : blankState();
+    next.user_content = blankUserContent();
+    const used = { lifepath: 0, resource: 0 };
+    const allocSlots = Array.isArray(next.lifepaths) ? next.lifepaths : [];
+    for (const lp of allocSlots) {
+      lp.skillDots = lp.skillDots || {};
+      const oldResourceDots = { ...(lp.resourceDots || {}) };
+      lp.resourceDots = {};
+      if (lp.id === "__custom__") {
+        used.lifepath += 1;
+        const lpid = `user_lifepath_${String(used.lifepath).padStart(3, "0")}`;
+        const c = lp.custom || {};
+        const resourceIds = [];
+        (c.resources || []).forEach((r, ri) => {
+          used.resource += 1;
+          const rid = `user_resource_${String(used.resource).padStart(3, "0")}`;
+          resourceIds.push(rid);
+          next.user_content.resources[rid] = {
+            id: rid,
+            source: "user_created",
+            content_type: "resource",
+            content_schema_version: 1,
+            type: r.type || "",
+            label: r.label || "",
+            meta: { created_by: "v6-chargen", note: "User-created Resource embedded for a Custom Lifepath." },
+          };
+          const n = Number(oldResourceDots[String(ri)] || 0);
+          if (n) lp.resourceDots[rid] = n;
+        });
+        next.user_content.lifepaths[lpid] = {
+          id: lpid,
+          source: "user_created",
+          content_type: "lifepath",
+          content_schema_version: 1,
+          name: c.name || "",
+          description: c.description || "",
+          skills: Array.isArray(c.skills) ? [...c.skills] : [],
+          resources: resourceIds,
+          meta: { created_by: "v6-chargen", note: "User-created Lifepath embedded in this character save." },
+        };
+        lp.id = lpid;
+        delete lp.custom;
+      } else {
+        const d = (R.lifepaths || []).find((x) => x.id === lp.id);
+        (d?.resources || []).forEach((r, ri) => {
+          const n = Number(oldResourceDots[String(ri)] || 0);
+          if (n) lp.resourceDots[r.id] = n;
+        });
+        delete lp.custom;
+      }
+    }
+    next.schemaVersion = 3;
+    return next;
+  }
   function normalizeState() {
-    if (!state || ![1, 2].includes(Number(state.schemaVersion))) state = blankState();
+    if (!state || ![1, 2, 3].includes(Number(state.schemaVersion))) state = blankState();
     if (Number(state.schemaVersion) === 1) state = migrateStateV1(state);
+    if (Number(state.schemaVersion) === 2) state = migrateStateV2(state);
+    ensureUserContent();
     if (!state.attributes?.ratings) state.attributes = blankState().attributes;
     D.attributes.forEach((a) => {
       if (!Number.isFinite(Number(state.attributes.ratings[a.id])))
@@ -249,7 +383,6 @@
         id: null,
         skillDots: {},
         resourceDots: {},
-        custom: null,
       });
     if (state.lifepaths.length > n) state.lifepaths.length = n;
   }
@@ -269,26 +402,45 @@
   }
   function lpDef(slot) {
     const x = state.lifepaths[slot];
-    if (!x) return null;
-    if (x.id === "__custom__") return customLpDef(x);
+    if (!x?.id) return null;
+    if (isUserLifepathId(x.id)) return userLifepathDef(x.id);
     return lpById(x.id);
   }
-  function customLpDef(x) {
-    const c = x.custom || {};
-    return {
-      id: "__custom__",
-      name: c.name || S("s_be07deb375e0"),
-      description: c.description || "",
-      type: "custom",
-      tier: "custom",
-      skills: (c.skills || []).map((id) => ({ skill: id, focus: "" })),
-      resources: (c.resources || []).map((r, i) => ({
-        id: `custom:${i}`,
-        type: r.type,
-        labelKey: `custom:${normalizeResourceLabel(r.label)}`,
-        label: r.label || "",
-      })),
-    };
+  function lpDefById(id) {
+    if (!id) return null;
+    return isUserLifepathId(id) ? userLifepathDef(id) : lpById(id);
+  }
+  function selectedLifepathCount() {
+    return state.lifepaths.filter((x, i) => x?.id && lpDef(i)).length;
+  }
+  function selectedLifepathSlots() {
+    return state.lifepaths
+      .map((lp, slot) => ({ lp, slot, def: lpDef(slot) }))
+      .filter((x) => x.lp?.id && x.def);
+  }
+  function compactLifepathSlots() {
+    const n = lpCount();
+    const filled = state.lifepaths.filter((x) => x?.id);
+    state.lifepaths = filled.slice(0, n);
+    while (state.lifepaths.length < n)
+      state.lifepaths.push({ id: null, skillDots: {}, resourceDots: {} });
+  }
+  function selectedSlotForLifepath(id) {
+    return state.lifepaths.findIndex((x) => x?.id === id);
+  }
+  function lifepathDefinitionReady(d) {
+    if (!d) return false;
+    if (!isUserLifepathId(d.id)) return true;
+    const raw = userLifepathRaw(d.id);
+    if (!raw?.name?.trim() || (raw.skills || []).length !== 5 || (raw.resources || []).length !== 3) return false;
+    const resources = (raw.resources || []).map(userResourceRaw);
+    if (resources.some((r) => !r || !resourceType(r.type))) return false;
+    const keys = resources.map((r) => `${r.type}|${userResourceLabelKey(r)}`);
+    return new Set(keys).size === keys.length;
+  }
+  function lifepathMatricesReady() {
+    const selected = selectedLifepathSlots();
+    return selected.length === lpCount() && selected.every((x) => lifepathDefinitionReady(x.def));
   }
   function lifepathSkillRating(id) {
     return state.lifepaths.reduce(
@@ -523,8 +675,8 @@
     const out = [];
     state.lifepaths.forEach((lp, i) => {
       const d = lpDef(i);
-      (d?.resources || []).forEach((r, ri) => {
-        const n = Number(lp.resourceDots?.[String(ri)] || 0);
+      (d?.resources || []).forEach((r) => {
+        const n = Number(lp.resourceDots?.[r.id] || 0);
         if (n)
           out.push({
             source: d.name,
@@ -793,22 +945,31 @@
       source: S("s_a9c6ab0505df"),
     };
   }
-  function infoLp(slot) {
-    const d = lpDef(slot);
+  function infoLifepathDef(d) {
     if (!d) return infoForStep(3);
     return {
       kicker: S("s_51a33f5c1e2e"),
       title: d.name,
       summary: d.description,
-      meta: [
-        [
-          S("s_f3310e5bbc05"),
-          `${sum(state.lifepaths[slot].skillDots)} / ${lpSkillBudget()}`,
-        ],
-        [S("s_ab3884347a09"), `${lpResourceSpent(slot)} / ${lpResourceBudget()}`],
-      ],
-      body: `${M("lifepathSkillsBody", { skills: (d.skills || []).map((x) => lifepathFocusLabel(x) ? M("lifepathSuggestedFocus", { skill: skillById(x.skill)?.name || x.skill, focus: lifepathFocusLabel(x) }) : (skillById(x.skill)?.name || x.skill)).join(", ") })}\n\n${M("lifepathResourcesBody", { resources: (d.resources || []).map((x) => (resourceType(x.type)?.name || x.type) + (x.label ? `: ${x.label}` : "")).join(", ") })}\n\n${D.lifepathCompetence}`,
+      meta: [],
+      body: `${M("lifepathSkillsBody", { skills: (d.skills || []).map((x) => skillById(x.skill)?.name || x.skill).join(", ") })}
+
+${M("lifepathResourcesBody", { resources: (d.resources || []).map((x) => (resourceType(x.type)?.name || x.type) + (x.label ? `: ${x.label}` : "")).join(", ") })}
+
+${D.lifepathCompetence}`,
       source: S("s_a23c10b98141"),
+    };
+  }
+  function infoLifepathSkill(id) {
+    const s = skillById(id);
+    if (!s) return infoForStep(3);
+    return {
+      kicker: S("s_ec9f630c8693"),
+      title: s.name,
+      summary: s.description,
+      meta: [],
+      body: "",
+      source: S("s_f0fca5da9b18"),
     };
   }
   function infoPower(did, pid) {
@@ -1126,35 +1287,20 @@
         const d = lpDef(slot);
         if (!d) out.push(issue("incomplete", M("validationChooseLifepath", { n: slot + 1 })));
         else {
-          if (lp.id === "__custom__") {
-            if (!lp.custom?.name?.trim())
-              out.push(
-                issue(
-                  "incomplete",
-                  M("validationCustomName", { n: slot + 1 }),
-                ),
-              );
-            if ((lp.custom?.skills || []).length !== 5)
-              out.push(
-                issue(
-                  "incomplete",
-                  M("validationCustomSkills", { n: slot + 1 }),
-                ),
-              );
-            if ((lp.custom?.resources || []).length !== 3)
-              out.push(
-                issue(
-                  "incomplete",
-                  M("validationCustomResources", { n: slot + 1 }),
-                ),
-              );
-            if ((lp.custom?.resources || []).some((r) => !resourceType(r.type)))
-              out.push(
-                issue(
-                  "incomplete",
-                  M("validationCustomResourceTypes", { n: slot + 1 }),
-                ),
-              );
+          if (isUserLifepathId(lp.id)) {
+            const raw = userLifepathRaw(lp.id);
+            if (!raw?.name?.trim())
+              out.push(issue("incomplete", M("validationCustomName", { n: slot + 1 })));
+            if ((raw?.skills || []).length !== 5)
+              out.push(issue("incomplete", M("validationCustomSkills", { n: slot + 1 })));
+            if ((raw?.resources || []).length !== 3)
+              out.push(issue("incomplete", M("validationCustomResources", { n: slot + 1 })));
+            const userResources = (raw?.resources || []).map(userResourceRaw);
+            if (userResources.some((r) => !r || !resourceType(r.type)))
+              out.push(issue("incomplete", M("validationCustomResourceTypes", { n: slot + 1 })));
+            const resourceKeys = userResources.filter(Boolean).map((r) => `${r.type}|${userResourceLabelKey(r)}`);
+            if (resourceKeys.length === 3 && new Set(resourceKeys).size !== resourceKeys.length)
+              out.push(issue("incomplete", M("validationCustomResourceDuplicates", { n: slot + 1 })));
           }
           if (sum(lp.skillDots) !== lpSkillBudget())
             out.push(
@@ -1425,7 +1571,7 @@
     }
     if (i === 3) {
       const pathTotal = lpCount();
-      const pathDone = state.lifepaths.filter((_, j) => !!lpDef(j)).length;
+      const pathDone = state.lifepaths.filter((_, j) => lifepathDefinitionReady(lpDef(j))).length;
       const skillDone = state.lifepaths.reduce((n, lp) => n + sum(lp.skillDots), 0);
       const resourceDone = state.lifepaths.reduce((n, _lp, j) => n + lpResourceSpent(j), 0);
       return {
@@ -1598,42 +1744,77 @@
   }
   function renderLifepaths() {
     ensureLpSlots();
-    return `<section class="step active"><h1>[[s_1c173828f39d]]</h1><div class="lead">${e(M("chooseLifepathsLead", { count: lpCount(), pathWord: M(lpCount() === 1 ? "lifepathSingular" : "lifepathPlural"), skillDots: lpSkillBudget(), resourceDots: lpResourceBudget() }))}</div>${state.lifepaths.map((lp, i) => renderLpSlot(lp, i)).join("")}${issuesHtml(3)}</section>`;
+    const selected = selectedLifepathSlots();
+    const ready = lifepathMatricesReady();
+    const customIds = Object.keys(state.user_content?.lifepaths || {});
+    const groups = [
+      ["mortal", M("mortalLifepaths")],
+      ["neonate", M("neonateVampireLifepaths")],
+      ["ancilla", M("ancillaVampireLifepaths")],
+      ["elder", M("elderVampireLifepaths")],
+    ];
+    const standard = allowedLifepaths();
+    const selectionHtml = groups.map(([group, label]) => {
+      const items = standard.filter((x) => group === "mortal" ? x.type === "mortal" : x.type === "vampire" && x.tier === group);
+      if (!items.length) return "";
+      return `<div class="sectionTitle">${e(label)}</div><div class="lifepathChoiceGrid">${items.map(renderLifepathChoice).join("")}</div>`;
+    }).join("");
+    const customHtml = customIds.length
+      ? `<div class="sectionTitle">${e(M("userCreatedLifepaths"))}</div><div class="lifepathChoiceGrid">${customIds.map((id) => renderLifepathChoice(userLifepathDef(id))).join("")}</div>`
+      : "";
+    return `<section class="step active"><h1>[[s_1c173828f39d]]</h1><div class="lead">${e(M("chooseLifepathsSelectionLead", { count: lpCount(), pathWord: M(lpCount() === 1 ? "lifepathSingular" : "lifepathPlural") }))}</div><div class="lifepathSelectionStatus"><span class="pill ${selected.length === lpCount() ? "good" : selected.length ? "warn" : "danger"}">${e(M("selectedOf", { used: selected.length, total: lpCount() }))}</span><button class="btn" data-action="create-user-lifepath" ${selected.length >= lpCount() ? "disabled" : ""}>${e(M("createCustomLifepath"))}</button></div>${selectionHtml}${customHtml}${editingUserLifepathId ? renderUserLifepathEditor(editingUserLifepathId) : ""}<div class="lifepathAllocationStage"><div class="sectionTitle">${e(M("lifepathAllocation"))}</div>${ready ? `${renderLifepathSkillMatrix()}${renderLifepathResourceMatrix()}<div class="matrixActions"><button class="btn" data-action="reset-lifepath-allocations">${e(M("resetLifepathAllocations"))}</button></div>` : `<div class="notice">${e(M("completeLifepathsBeforeAllocation", { count: lpCount() }))}</div>`}</div>${issuesHtml(3)}</section>`;
   }
-  function renderLpSlot(lp, slot) {
-    const d = lpDef(slot),
-      allowed = allowedLifepaths();
-    return `<div class="lpCard"><div class="lpHead"><div><div class="sectionTitle" style="margin:0 0 6px">${e(M("lifepathNumber", { n: slot + 1 }))}</div>${d ? `<b style="font-size:18px">${e(d.name)}</b><div class="meta">${e(d.description)}</div>` : '<div class="meta">[[s_ab9fee6941a5]]</div>'}</div><div class="field" style="margin:0"><label>[[s_d1f8e5ea93b2]]</label><select data-lp-select="${slot}"><option value="">[[s_c3b69e661eec]]</option>${allowed.map((x) => `<option value="${x.id}" ${lp.id === x.id ? "selected" : ""}>${e(x.name)}${x.type === "vampire" ? ` · ${e(({ neonate: S("s_c994f9e6adb6"), ancilla: S("s_6ca3aa935891"), elder: S("s_f429030cf5c0") })[x.tier] || x.tier)}` : ""}</option>`).join("")}<option value="__custom__" ${lp.id === "__custom__" ? "selected" : ""}>[[s_47388a3e9202]]</option></select></div></div>${lp.id === "__custom__" ? renderCustomLp(lp, slot) : ""}${d ? `<div class="budgetBar"><span class="pill ${sum(lp.skillDots) === lpSkillBudget() ? "good" : "warn"}">${e(M("skillDotsProgress", { used: sum(lp.skillDots), total: lpSkillBudget() }))}</span><span class="pill ${lpResourceSpent(slot) === lpResourceBudget() ? "good" : "warn"}">${e(M("resourceDotsProgress", { used: lpResourceSpent(slot), total: lpResourceBudget() }))}</span><button class="fieldInfoBtn" data-info-lp="${slot}" aria-label="[[s_226781712bbe]]">?</button></div><div class="sectionTitle">[[s_bb2ff987995e]]</div><div class="lpSkillGrid">${(d.skills || []).map((x) => renderLpSkill(slot, x)).join("")}</div><div class="sectionTitle">[[s_5590f2a6ebe7]]</div><div class="lpResGrid">${(d.resources || []).map((r, ri) => renderLpResource(slot, r, ri)).join("")}</div>` : ""}</div>`;
+  function renderLifepathChoice(d) {
+    if (!d) return "";
+    const slot = selectedSlotForLifepath(d.id);
+    const selected = slot >= 0;
+    const full = selectedLifepathCount() >= lpCount();
+    const user = isUserLifepathId(d.id);
+    return `<div class="lifepathChoiceCard ${selected ? "selected" : ""} ${user && !lifepathDefinitionReady(d) ? "incomplete" : ""}"><button type="button" class="lifepathChoiceMain" data-lp-toggle="${e(d.id)}" ${!selected && full ? "disabled" : ""}><b>${e(d.name)}</b><span>${e(d.description)}</span></button><div class="lifepathChoiceActions"><button type="button" class="fieldInfoBtn" data-info-lp-id="${e(d.id)}" aria-label="${e(M("readInformation", { name: d.name }))}">?</button>${user ? `<button type="button" class="miniActionBtn" data-edit-user-lifepath="${e(d.id)}">${e(M("edit"))}</button><button type="button" class="miniActionBtn dangerText" data-delete-user-lifepath="${e(d.id)}">${e(M("delete"))}</button>` : ""}</div></div>`;
   }
-  function renderCustomLp(lp, slot) {
-    const c = lp.custom || {
-      name: "",
-      description: "",
-      skills: [],
-      resources: [],
-    };
+  function renderUserLifepathEditor(id) {
+    const c = userLifepathRaw(id);
+    if (!c) return "";
     const skillSet = new Set(c.skills || []);
-    return `<div class="grid2"><div class="field"><label>[[s_29024d7d22ea]]</label><input data-custom-name="${slot}" value="${e(c.name || "")}"></div><div class="field"><label>[[s_55f8ebc805e6]]</label><input data-custom-desc="${slot}" value="${e(c.description || "")}"></div></div><div class="sectionTitle">[[s_cdca8eca3a50]]</div><div class="gridAuto">${D.skills.map((s) => `<label class="card checkline"><input type="checkbox" data-custom-skill="${slot}:${s.id}" ${skillSet.has(s.id) ? "checked" : ""}><div><b>${e(s.name)}</b><div class="meta">${e(s.description)}</div></div></label>`).join("")}</div><div class="sectionTitle">[[s_0bb4dbf25a37]]</div><div class="grid3">${[
-      0, 1, 2,
-    ]
-      .map((ri) => {
-        const r = c.resources?.[ri] || { type: "", label: "" };
-        return `<div class="card"><div class="field"><label>${e(M("resourceNumber", { n: ri + 1 }))}</label><select data-custom-res-type="${slot}:${ri}"><option value="">[[s_c3b69e661eec]]</option>${D.resourceTypes.map((x) => `<option value="${x.id}" ${r.type === x.id ? "selected" : ""}>${e(x.name)}</option>`).join("")}</select></div><div class="field"><label>[[s_d15a04bf03ea]]</label><input data-custom-res-label="${slot}:${ri}" value="${e(r.label || "")}"></div></div>`;
-      })
-      .join("")}</div>`;
+    return `<div class="customLifepathEditor"><div class="customEditorHead"><div><div class="sectionTitle" style="margin:0">${e(M("editCustomLifepath"))}</div><code>${e(id)}</code></div><button class="btn" data-action="close-user-lifepath-editor">${e(M("done"))}</button></div><div class="grid2"><div class="field"><label>[[s_29024d7d22ea]]</label><input data-user-lp-name="${e(id)}" value="${e(c.name || "")}"></div><div class="field"><label>[[s_55f8ebc805e6]]</label><input data-user-lp-desc="${e(id)}" value="${e(c.description || "")}"></div></div><div class="sectionTitle">[[s_cdca8eca3a50]]</div><div class="customSkillGrid">${D.skills.map((s) => `<div class="card customSkillChoice"><label><input type="checkbox" data-user-lp-skill="${e(id)}|${e(s.id)}" ${skillSet.has(s.id) ? "checked" : ""}><b>${e(s.name)}</b></label><button type="button" class="fieldInfoBtn" data-info-lp-skill="${e(s.id)}" aria-label="${e(M("readInformation", { name: s.name }))}">?</button></div>`).join("")}</div><div class="sectionTitle">[[s_0bb4dbf25a37]]</div><div class="grid3">${(c.resources || []).map((rid, ri) => renderUserResourceEditor(rid, ri)).join("")}</div><div class="userContentNote"><code>${e(id)}</code><span>${e(M("embeddedUserContentNote"))}</span></div></div>`;
   }
-  function renderLpSkill(slot, x) {
-    const n = Number(state.lifepaths[slot].skillDots?.[x.skill] || 0),
-      s = skillById(x.skill),
-      cap = skillCap(x.skill),
-      sources = lifepathCapSources(x.skill),
-      suggested = lifepathFocusLabel(x);
-    return `<div class="row"><div><div class="rowname">${e(s?.name || x.skill)} ${suggested ? `<span class="tag">${e(M("suggestedFocus", { focus: suggested }))}</span>` : ""}</div><div class="rowmeta">${e(M("currentCapHouse", { current: finalSkill(x.skill), cap, bonus: sources.length }))}</div></div>${stepper(`lp-skill:${slot}:${x.skill}`, n, 0, lpSkillBudget())}</div>`;
+  function renderUserResourceEditor(rid, ri) {
+    const r = userResourceRaw(rid) || {};
+    return `<div class="card"><div class="field"><label>${e(M("resourceNumber", { n: ri + 1 }))}</label><select data-user-resource-type="${e(rid)}"><option value="">[[s_c3b69e661eec]]</option>${D.resourceTypes.map((x) => `<option value="${x.id}" ${r.type === x.id ? "selected" : ""}>${e(x.name)}</option>`).join("")}</select></div><div class="field"><label>[[s_d15a04bf03ea]]</label><input data-user-resource-label="${e(rid)}" value="${e(r.label || "")}"></div><div class="userContentId"><code>${e(rid)}</code></div></div>`;
   }
-  function renderLpResource(slot, r, ri) {
-    const n = Number(state.lifepaths[slot].resourceDots?.[String(ri)] || 0),
-      rt = resourceType(r.type);
-    return `<div class="row"><div><div class="rowname">${e(rt?.name || r.type)}${r.label ? `: ${e(r.label)}` : ""}</div><div class="rowmeta">${e(rt ? resourceCategoryLabel(rt.category) : S("s_021493f340d3"))}</div></div>${stepper(`lp-res:${slot}:${ri}`, n, 0, lpResourceBudget())}</div>`;
+  function lifepathSkillMatrixRows() {
+    const selected = selectedLifepathSlots();
+    return D.skills.filter((s) => selected.some((x) => (x.def.skills || []).some((v) => v.skill === s.id)));
+  }
+  function resourceMatrixKey(r) {
+    return resourceKey(r.type, r.labelKey || "");
+  }
+  function lifepathResourceMatrixRows() {
+    const map = new Map();
+    for (const { slot, def } of selectedLifepathSlots()) {
+      for (const r of def.resources || []) {
+        const key = resourceMatrixKey(r);
+        if (!map.has(key)) map.set(key, { key, type: r.type, label: r.label || "", cells: new Map() });
+        map.get(key).cells.set(slot, r);
+      }
+    }
+    return [...map.values()];
+  }
+  function matrixBudgetClass(used, total) {
+    return used === total ? "good" : used > 0 ? "warn" : "danger";
+  }
+  function renderLifepathSkillMatrix() {
+    const selected = selectedLifepathSlots();
+    const rows = lifepathSkillMatrixRows();
+    return `<div class="matrixSection"><div class="matrixSectionHead"><div><h3>${e(M("lifepathSkillMatrix"))}</h3><div class="meta">${e(M("lifepathSkillMatrixLead"))}</div></div></div><div class="lpMatrixWrap"><table class="lpMatrix"><thead><tr><th class="lpMatrixName">${e(M("skill"))}</th>${selected.map(({ slot, def }) => `<th class="lpMatrixPath"><span>${e(def.name)}</span><small class="${matrixBudgetClass(sum(state.lifepaths[slot].skillDots), lpSkillBudget())}">${sum(state.lifepaths[slot].skillDots)}/${lpSkillBudget()}</small></th>`).join("")}<th class="lpMatrixTotal">${e(M("total"))}</th></tr></thead><tbody>${rows.map((skill) => `<tr><th class="lpMatrixName"><div class="matrixRowName"><span>${e(skill.name)}</span><button type="button" class="fieldInfoBtn" data-info-lp-skill="${e(skill.id)}" aria-label="${e(M("readInformation", { name: skill.name }))}">?</button></div></th>${selected.map(({ slot, def }) => { const allowed = (def.skills || []).some((x) => x.skill === skill.id); const n = Number(state.lifepaths[slot].skillDots?.[skill.id] || 0); const canUp = sum(state.lifepaths[slot].skillDots) < lpSkillBudget() && finalSkill(skill.id) < skillCap(skill.id); return `<td class="lpMatrixCell">${allowed ? matrixStepper(`lp-skill:${slot}:${skill.id}`, n, n > 0, canUp) : `<span class="matrixDash">—</span>`}</td>`; }).join("")}<td class="lpMatrixTotal"><b>${lifepathSkillRating(skill.id)}</b></td></tr>`).join("")}</tbody></table></div></div>`;
+  }
+  function renderLifepathResourceMatrix() {
+    const selected = selectedLifepathSlots();
+    const rows = lifepathResourceMatrixRows();
+    return `<div class="matrixSection"><div class="matrixSectionHead"><div><h3>${e(M("lifepathResourceMatrix"))}</h3><div class="meta">${e(M("lifepathResourceMatrixLead"))}</div></div></div><div class="lpMatrixWrap"><table class="lpMatrix"><thead><tr><th class="lpMatrixName">${e(M("resource"))}</th>${selected.map(({ slot, def }) => `<th class="lpMatrixPath"><span>${e(def.name)}</span><small class="${matrixBudgetClass(lpResourceSpent(slot), lpResourceBudget())}">${lpResourceSpent(slot)}/${lpResourceBudget()}</small></th>`).join("")}<th class="lpMatrixTotal">${e(M("total"))}</th></tr></thead><tbody>${rows.map((row) => { const rt = resourceType(row.type); const label = `${rt?.name || row.type}${row.label ? `: ${row.label}` : ""}`; const rowTotal = selected.reduce((n, {slot}) => { const r = row.cells.get(slot); return n + (r ? Number(state.lifepaths[slot].resourceDots?.[r.id] || 0) : 0); }, 0); return `<tr><th class="lpMatrixName"><div class="matrixRowName"><span>${e(label)}</span></div></th>${selected.map(({slot}) => { const r = row.cells.get(slot); const n = r ? Number(state.lifepaths[slot].resourceDots?.[r.id] || 0) : 0; const canUp = !!r && lpResourceSpent(slot) < lpResourceBudget(); return `<td class="lpMatrixCell">${r ? matrixStepper(`lp-res:${slot}:${encodeURIComponent(r.id)}`, n, n > 0, canUp) : `<span class="matrixDash">—</span>`}</td>`; }).join("")}<td class="lpMatrixTotal"><b>${rowTotal}</b></td></tr>`; }).join("")}</tbody></table></div></div>`;
+  }
+  function matrixStepper(key, n, canDown, canUp) {
+    return `<div class="matrixStepper"><button data-stepper="${e(key)}" data-delta="-1" ${canDown ? "" : "disabled"}>−</button><div class="n">${n}</div><button data-stepper="${e(key)}" data-delta="1" ${canUp ? "" : "disabled"}>+</button></div>`;
   }
   function stepper(key, n, min, max) {
     return `<div class="stepper"><button data-stepper="${key}" data-delta="-1" ${n <= min ? "disabled" : ""}>−</button><div class="n">${n}</div><button data-stepper="${key}" data-delta="1" ${n >= max ? "disabled" : ""}>+</button></div>`;
@@ -2218,85 +2399,129 @@
           render();
         }),
     );
-    root.querySelectorAll("[data-lp-select]").forEach(
-      (sel) =>
-        (sel.onchange = () => {
-          const i = Number(sel.dataset.lpSelect);
-          state.lifepaths[i] = {
-            id: sel.value || null,
-            skillDots: {},
-            resourceDots: {},
-            custom:
-              sel.value === "__custom__"
-                ? {
-                    name: "",
-                    description: "",
-                    skills: [],
-                    resources: [
-                      { type: "", label: "" },
-                      { type: "", label: "" },
-                      { type: "", label: "" },
-                    ],
-                  }
-                : null,
+    root.querySelectorAll("[data-lp-toggle]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          const id = b.dataset.lpToggle;
+          const existing = selectedSlotForLifepath(id);
+          if (existing >= 0) {
+            const lp = state.lifepaths[existing];
+            if ((sum(lp.skillDots) || lpResourceSpent(existing)) && !confirm(M("confirmRemoveLifepathAllocations", { name: lpDef(existing)?.name || id }))) return;
+            state.lifepaths[existing] = { id: null, skillDots: {}, resourceDots: {} };
+            compactLifepathSlots();
+            enforceSkillCaps();
+            render();
+            return;
+          }
+          if (selectedLifepathCount() >= lpCount()) return;
+          const slot = state.lifepaths.findIndex((x) => !x?.id);
+          if (slot >= 0) state.lifepaths[slot] = { id, skillDots: {}, resourceDots: {} };
+          compactLifepathSlots();
+          enforceSkillCaps();
+          render();
+        }),
+    );
+    const createUserLp = root.querySelector('[data-action="create-user-lifepath"]');
+    if (createUserLp)
+      createUserLp.onclick = () => {
+        if (selectedLifepathCount() >= lpCount()) return;
+        const id = nextUserContentId("lifepath");
+        const resourceIds = [];
+        for (let i = 0; i < 3; i++) {
+          const rid = nextUserContentId("resource");
+          resourceIds.push(rid);
+          state.user_content.resources[rid] = {
+            id: rid,
+            source: "user_created",
+            content_type: "resource",
+            content_schema_version: 1,
+            type: "",
+            label: "",
+            meta: { created_by: "v6-chargen", note: "User-created Resource embedded for a Custom Lifepath." },
           };
-          enforceSkillCaps();
-          render();
-        }),
+        }
+        state.user_content.lifepaths[id] = {
+          id,
+          source: "user_created",
+          content_type: "lifepath",
+          content_schema_version: 1,
+          name: "",
+          description: "",
+          skills: [],
+          resources: resourceIds,
+          meta: { created_by: "v6-chargen", note: "User-created Lifepath embedded in this character save." },
+        };
+        const slot = state.lifepaths.findIndex((x) => !x?.id);
+        if (slot >= 0) state.lifepaths[slot] = { id, skillDots: {}, resourceDots: {} };
+        editingUserLifepathId = id;
+        render();
+      };
+    root.querySelectorAll("[data-edit-user-lifepath]").forEach(
+      (b) => (b.onclick = () => { editingUserLifepathId = b.dataset.editUserLifepath; render(); }),
     );
-    root.querySelectorAll("[data-custom-name]").forEach(
-      (x) =>
-        (x.oninput = () => {
-          state.lifepaths[Number(x.dataset.customName)].custom.name = x.value;
-          save();
-        }),
+    root.querySelectorAll("[data-delete-user-lifepath]").forEach(
+      (b) => (b.onclick = () => {
+        const id = b.dataset.deleteUserLifepath;
+        const slot = selectedSlotForLifepath(id);
+        const d = userLifepathRaw(id);
+        if (slot >= 0 && (sum(state.lifepaths[slot].skillDots) || lpResourceSpent(slot)) && !confirm(M("confirmDeleteCustomLifepath", { name: d?.name || id }))) return;
+        for (const rid of d?.resources || []) delete state.user_content.resources[rid];
+        delete state.user_content.lifepaths[id];
+        if (slot >= 0) state.lifepaths[slot] = { id: null, skillDots: {}, resourceDots: {} };
+        compactLifepathSlots();
+        if (editingUserLifepathId === id) editingUserLifepathId = null;
+        enforceSkillCaps();
+        render();
+      }),
     );
-    root.querySelectorAll("[data-custom-desc]").forEach(
-      (x) =>
-        (x.oninput = () => {
-          state.lifepaths[Number(x.dataset.customDesc)].custom.description =
-            x.value;
-          save();
-        }),
+    const closeUserLp = root.querySelector('[data-action="close-user-lifepath-editor"]');
+    if (closeUserLp) closeUserLp.onclick = () => { editingUserLifepathId = null; render(); };
+    root.querySelectorAll("[data-user-lp-name]").forEach(
+      (x) => (x.oninput = () => { const c = userLifepathRaw(x.dataset.userLpName); if (c) { c.name = x.value; save(); } }),
     );
-    root.querySelectorAll("[data-custom-skill]").forEach(
-      (x) =>
-        (x.onchange = () => {
-          const [si, id] = x.dataset.customSkill.split(":");
-          const c = state.lifepaths[Number(si)].custom;
-          let a = c.skills || [];
-          if (x.checked) {
-            if (a.length >= 5) {
-              x.checked = false;
-              return;
-            }
-            a = [...a, id];
-          } else a = a.filter((y) => y !== id);
-          c.skills = a;
-          state.lifepaths[Number(si)].skillDots = {};
-          enforceSkillCaps();
-          render();
-        }),
+    root.querySelectorAll("[data-user-lp-desc]").forEach(
+      (x) => (x.oninput = () => { const c = userLifepathRaw(x.dataset.userLpDesc); if (c) { c.description = x.value; save(); } }),
     );
-    root.querySelectorAll("[data-custom-res-type]").forEach(
-      (x) =>
-        (x.onchange = () => {
-          const [si, ri] = x.dataset.customResType.split(":");
-          state.lifepaths[Number(si)].custom.resources[Number(ri)].type =
-            x.value;
-          state.lifepaths[Number(si)].resourceDots = {};
-          render();
-        }),
+    root.querySelectorAll("[data-user-lp-skill]").forEach(
+      (x) => (x.onchange = () => {
+        const [id, skillId] = x.dataset.userLpSkill.split("|");
+        const c = userLifepathRaw(id);
+        if (!c) return;
+        const slot = selectedSlotForLifepath(id);
+        if (slot >= 0 && sum(state.lifepaths[slot].skillDots) && !confirm(M("confirmEditCustomLifepathAllocations", { name: c.name || id }))) { render(); return; }
+        let skills = [...(c.skills || [])];
+        if (x.checked) {
+          if (skills.length >= 5) { x.checked = false; return; }
+          skills.push(skillId);
+        } else skills = skills.filter((v) => v !== skillId);
+        c.skills = skills;
+        if (slot >= 0) state.lifepaths[slot].skillDots = {};
+        enforceSkillCaps();
+        render();
+      }),
     );
-    root.querySelectorAll("[data-custom-res-label]").forEach(
-      (x) =>
-        (x.oninput = () => {
-          const [si, ri] = x.dataset.customResLabel.split(":");
-          state.lifepaths[Number(si)].custom.resources[Number(ri)].label =
-            x.value;
-          save();
-        }),
+    root.querySelectorAll("[data-user-resource-type]").forEach(
+      (x) => (x.onchange = () => {
+        const r = userResourceRaw(x.dataset.userResourceType);
+        if (!r) return;
+        const owner = Object.values(state.user_content.lifepaths || {}).find((lp) => (lp.resources || []).includes(r.id));
+        const slot = owner ? selectedSlotForLifepath(owner.id) : -1;
+        if (slot >= 0 && lpResourceSpent(slot) && !confirm(M("confirmEditCustomLifepathAllocations", { name: owner?.name || owner?.id }))) { render(); return; }
+        r.type = x.value;
+        if (slot >= 0) state.lifepaths[slot].resourceDots = {};
+        render();
+      }),
     );
+    root.querySelectorAll("[data-user-resource-label]").forEach(
+      (x) => (x.oninput = () => { const r = userResourceRaw(x.dataset.userResourceLabel); if (r) { r.label = x.value; save(); } }),
+    );
+    const resetLpAlloc = root.querySelector('[data-action="reset-lifepath-allocations"]');
+    if (resetLpAlloc) resetLpAlloc.onclick = () => {
+      if (!confirm(M("confirmResetLifepathAllocations"))) return;
+      state.lifepaths.forEach((lp) => { lp.skillDots = {}; lp.resourceDots = {}; });
+      enforceSkillCaps();
+      render();
+    };
     root
       .querySelectorAll("[data-stepper]")
       .forEach(
@@ -2304,12 +2529,12 @@
           (b.onclick = () =>
             handleStepper(b.dataset.stepper, Number(b.dataset.delta))),
       );
-    root
-      .querySelectorAll("[data-info-lp]")
-      .forEach(
-        (b) =>
-          (b.onclick = () => setInfo(infoLp(Number(b.dataset.infoLp)), true)),
-      );
+    root.querySelectorAll("[data-info-lp-id]").forEach(
+      (b) => (b.onclick = (ev) => { ev.stopPropagation(); setInfo(infoLifepathDef(lpDefById(b.dataset.infoLpId)), true); }),
+    );
+    root.querySelectorAll("[data-info-lp-skill]").forEach(
+      (b) => (b.onclick = (ev) => { ev.stopPropagation(); setInfo(infoLifepathSkill(b.dataset.infoLpSkill), true); }),
+    );
     root.querySelectorAll("[data-role]").forEach(
       (sel) =>
         (sel.onchange = () => {
@@ -2557,18 +2782,18 @@
       lp.skillDots[sid] = Math.max(0, cur + delta);
       if (lp.skillDots[sid] === 0) delete lp.skillDots[sid];
       ensureFocusSlots();
-      setInfo(infoSkill(sid), false);
+      setInfo(infoLifepathSkill(sid), false);
       render();
       return;
     }
     if (parts[0] === "lp-res") {
       const slot = Number(parts[1]),
-        ri = parts[2],
+        rid = decodeURIComponent(parts.slice(2).join(":")),
         lp = state.lifepaths[slot],
-        cur = Number(lp.resourceDots[ri] || 0);
+        cur = Number(lp.resourceDots[rid] || 0);
       if (delta > 0 && lpResourceSpent(slot) >= lpResourceBudget()) return;
-      lp.resourceDots[ri] = Math.max(0, cur + delta);
-      if (lp.resourceDots[ri] === 0) delete lp.resourceDots[ri];
+      lp.resourceDots[rid] = Math.max(0, cur + delta);
+      if (lp.resourceDots[rid] === 0) delete lp.resourceDots[rid];
       render();
       return;
     }
@@ -2649,7 +2874,7 @@
     r.onload = () => {
       try {
         const x = JSON.parse(r.result);
-        if (![1, 2].includes(Number(x.schemaVersion))) throw new Error(S("s_7804e1e535fb"));
+        if (![1, 2, 3].includes(Number(x.schemaVersion))) throw new Error(S("s_7804e1e535fb"));
         state = x;
         normalizeState();
         render();
