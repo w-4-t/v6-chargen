@@ -1,4 +1,4 @@
-# QA — v0.10.1
+# QA — v0.10.2
 
 ## Data / logic separation
 
@@ -59,7 +59,7 @@
 
 - [x] Desktop Reset / Export / Import labels are short in EN and UA.
 - [x] `adaptive PWA` and the project-house-rules badge are absent from the desktop sidebar.
-- [x] Version `v0.10.1` is displayed beneath Export / Import.
+- [x] Version `v0.10.2` is displayed beneath Export / Import.
 - [x] Desktop Character Generator / Генератор Персонажа title is forced to one line.
 - [x] UA desktop navigation uses Істота / Сір / Фокус / Сили.
 - [x] Desktop navigation uses one aggregate `N/M` counter per step.
@@ -67,12 +67,22 @@
 - [x] The old green completion checkmark is removed.
 - [x] Lifepath aggregate totals include each path selection plus all Lifepath Skill and Resource dots.
 
+## Creature / Істота regression
+
+- [x] Creature tiles contain the tier name plus narrative summary only; maximum dots, Generation Modifier, Attribute budgets, and Discipline budgets are absent from the tile body.
+- [x] Neonate, Ancilla, and Elder tiles have separate EN/UA narrative summaries in the locale packs.
+- [x] The desktop information panel derives all Creature numeric values from `data/core.js` and renders the labels through the active locale.
+- [x] The selected Creature info panel exposes Generation band, Generation Modifier, maximum ratings, Lifepaths, Attribute budgets, Discipline allocation, Discipline Powers, Merits, Clan Traits, free Skill dots, and free Resource dots.
+- [x] The one-Lifepath young-character choice contains narrative copy only.
+- [x] When the young-character option is active, its 1 Lifepath / 8 Skill dots / 5 Resource dots / project cap-4 rule appears in the information panel instead of the choice card.
+- [x] Creature info is rebuilt from the current locale on render rather than persisting localized Creature help text in character data.
+
 ## Automated checks
 
 - [x] `node --check` passes for `data/core.js`, `data/en.js`, `data/uk.js`, `src/data.js`, `src/i18n.js`, and `src/app.js`.
 - [x] `node tools/qa-data.cjs` passes.
 - [x] `node tools/smoke-app.cjs` passes.
-- [x] Service worker cache is `vtm-v6-alpha-chargen-v0.10.1` and includes all runtime data files.
+- [x] Service worker cache is `vtm-v6-alpha-chargen-v0.10.2` and includes all runtime data files.
 
 ## Manual browser checks still required
 
@@ -86,6 +96,9 @@ Container Chromium remains unreliable in this runtime, so final real-browser che
 - [ ] Lifepath Resource detail text remains attached to the same Resource after switching locale.
 - [ ] Long Ukrainian strings do not introduce overflow in Skills, Focuses, Powers, Resources, or Finish.
 - [ ] Contextual help remains readable at desktop widths and in the mobile drawer.
+- [ ] Creature tiles remain balanced at common desktop widths after removing numeric tags.
+- [ ] Selecting Neonate / Ancilla / Elder updates the right information panel immediately.
+- [ ] Enabling the one-Lifepath option exposes its detailed rule math only in the information panel.
 - [ ] PWA upgrade replaces the previous service-worker cache without retaining stale older files.
 
 ## Terminology status

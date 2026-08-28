@@ -27,6 +27,10 @@ function run(locale='en', initialStore={}) {
 
 let x=run('en');
 assert.ok(x.get('mainCard').innerHTML.includes('Vampire (Neonate)'), 'EN localized rules data did not render');
+assert.ok(x.get('mainCard').innerHTML.includes('A recently Embraced vampire, usually within the first 50 years of unlife.'), 'EN Creature tile narrative did not render');
+assert.ok(!x.get('mainCard').innerHTML.includes('Max dots 5') && !x.get('mainCard').innerHTML.includes('3+1 Discipline dots'), 'Creature tile still exposes chargen math');
+assert.ok(x.get('infoContent').innerHTML.includes('Maximum dots') && x.get('infoContent').innerHTML.includes('5'), 'EN Creature mechanics were not moved to the info panel');
+assert.ok(x.get('infoContent').innerHTML.includes('Generations 11–13'), 'EN Creature generation band is missing from info panel');
 assert.ok(x.get('mainCard').innerHTML.includes('Step 1 · What Are You?'), 'EN static text key did not render');
 assert.ok(!x.get('mainCard').innerHTML.includes('[[s_'), 'unresolved static text token remained in EN main render');
 assert.ok(!x.get('infoContent').innerHTML.includes('[[s_'), 'unresolved static text token remained in EN info render');
@@ -42,7 +46,10 @@ assert.strictEqual(saved.schemaVersion,2);
 x=run('uk');
 assert.ok(x.get('mainCard').innerHTML.includes('Вампір (Неонат)'), 'UK localized rules data did not render directly');
 assert.ok(x.get('mainCard').innerHTML.includes('Крок 1 · Хто ви?'), 'UK static text key did not render');
-assert.ok(x.get('mainCard').innerHTML.includes('Макс. точок 5'), 'UK keyed dynamic message did not render');
+assert.ok(x.get('mainCard').innerHTML.includes('Нещодавно Обернений вампір, зазвичай у межах перших 50 років нежиття.'), 'UK Creature tile narrative did not render');
+assert.ok(!x.get('mainCard').innerHTML.includes('Макс. точок 5') && !x.get('mainCard').innerHTML.includes('3+1 точок Дисциплін'), 'UK Creature tile still exposes chargen math');
+assert.ok(x.get('infoContent').innerHTML.includes('Максимум точок') && x.get('infoContent').innerHTML.includes('5'), 'UK Creature mechanics were not moved to the info panel');
+assert.ok(x.get('infoContent').innerHTML.includes('Покоління 11–13'), 'UK Creature generation band is missing from info panel');
 assert.ok(!x.get('mainCard').innerHTML.includes('[[s_'), 'unresolved static text token remained in UK main render');
 assert.ok(!x.get('infoContent').innerHTML.includes('[[s_'), 'unresolved static text token remained in UK info render');
 assert.strictEqual(x.ctx.V6I18N.text('s_44c57abd888a'), 'Скинути');
@@ -53,6 +60,15 @@ assert.ok(x.get('navSteps').children[0].innerHTML.includes('1. Істота'), '
 assert.ok(x.get('navSteps').children[2].innerHTML.includes('3. Сір'), 'UK desktop nav label Sire was not updated');
 assert.ok(x.get('navSteps').children[6].innerHTML.includes('7. Фокус'), 'UK desktop nav label Focus was not updated');
 assert.ok(x.get('navSteps').children[7].innerHTML.includes('8. Сили'), 'UK desktop nav label Powers was not updated');
+
+// The one-Lifepath option keeps narrative copy in the choice and moves its numeric rule detail to the info panel.
+const youngState=JSON.parse(run('uk').store.get('vtm_v6_alpha_chargen_v0_9_0'));
+youngState.step=0; youngState.creature='vampire_neonate'; youngState.young=true;
+x=run('uk',{'vtm_v6_alpha_chargen_v0_9_0':JSON.stringify(youngState)});
+assert.ok(x.get('mainCard').innerHTML.includes('Молодий персонаж, чий смертний і вампірський досвід'), 'young-character narrative summary is missing from the choice');
+assert.ok(!x.get('mainCard').innerHTML.includes('8 точок Навичок') && !x.get('mainCard').innerHTML.includes('5 точок Ресурсів'), 'young-character choice still exposes numeric allocation rules');
+assert.ok(x.get('infoContent').innerHTML.includes('8 точок Навичок') && x.get('infoContent').innerHTML.includes('5 точок Ресурсів'), 'young-character numeric rules are missing from the info panel');
+assert.ok(x.get('infoContent').innerHTML.includes('4 точки для Навичок'), 'young-character project Skill cap is missing from the info panel');
 
 // Switching locale rerenders the same machine state rather than translating/storing display text.
 x=run('en');

@@ -580,15 +580,53 @@
     renderInfo();
     if (openMobile && innerWidth <= 900) openDrawer();
   }
+  function infoCreature(c) {
+    c = c || creature();
+    const gens = (D.generationByTier[c.tier] || []).map(Number);
+    const genBand = gens.length > 1
+      ? `${Math.min(...gens)}–${Math.max(...gens)}`
+      : (gens[0] ?? "—");
+    const genValue = gens.length
+      ? M(gens.length === 1 ? "creatureGenerationBand" : "creatureGenerationBandPlural", { generations: genBand })
+      : "—";
+    const meta = [
+      [S("s_c01d0a100001"), genValue],
+      [S("s_c01d0a100002"), String(c.generationModifier)],
+      [S("s_c01d0a100003"), String(c.maxDots)],
+      [S("s_c01d0a100004"), String(c.maxDisciplineDots)],
+      [S("s_c01d0a100005"), String(c.lifepaths)],
+      [S("s_c01d0a100006"), M("creatureAttributeBudgetValue", { budgets: c.attributeBudgets.join(" / ") })],
+      [S("s_c01d0a100007"), String(c.disciplineDots)],
+      [S("s_c01d0a100008"), M("creatureSireBonusValue", { bonus: c.sireBonus })],
+      [S("s_c01d0a100009"), String(c.disciplinePowers)],
+      [S("s_c01d0a10000a"), String(c.merits)],
+      [S("s_c01d0a10000b"), String(c.clanTraits)],
+      [S("s_c01d0a10000c"), String(c.freeSkillDots)],
+      [S("s_c01d0a10000d"), String(c.freeResourceDots)],
+    ];
+    let body = c.details || S("s_6be9c5fe6ad8");
+    if (youngRuleApplies()) {
+      meta.push(
+        [S("s_c01d0a10000e"), M("creatureYoungStatus")],
+        [S("s_c01d0a10000f"), String(R.config.youngCharacter.lifepaths)],
+        [S("s_c01d0a100010"), M("creatureYoungSkillDots", { dots: R.config.youngCharacter.skillDots })],
+        [S("s_c01d0a100011"), M("creatureYoungResourceDots", { dots: R.config.youngCharacter.resourceDots })],
+        [S("s_c01d0a100012"), M("creatureYoungSkillCap", { cap: R.config.skillBaseChargenCap + 1 })],
+      );
+      body += `\n\n${D.youngCharacter.details}`;
+    }
+    return {
+      kicker: S("s_6b74730c1fa8"),
+      title: c.name,
+      summary: c.description || S("s_7a86e32b667f"),
+      meta,
+      body,
+      source: S("s_b16d86448469"),
+    };
+  }
   function infoForStep(i) {
+    if (i === 0) return infoCreature(creature());
     const defs = [
-      {
-        kicker: S("s_6b74730c1fa8"),
-        title: S("s_e458f8c1f366"),
-        summary:
-          S("s_7a86e32b667f"),
-        body: S("s_0bce06af27e4"),
-      },
       {
         kicker: S("s_93e867006f47"),
         title: S("s_c0dce5113590"),
@@ -660,7 +698,7 @@
         body: S("s_d6f6623ba186"),
       },
     ];
-    return defs[i];
+    return defs[i - 1];
   }
   function infoAttribute(id) {
     const a = attrById(id);
@@ -967,7 +1005,7 @@
     };
   }
   function renderInfo() {
-    const I = state.info || infoForStep(state.step);
+    const I = state.step === 0 ? infoForStep(0) : (state.info || infoForStep(state.step));
     const meta = (I.meta || [])
       .map(
         ([k, v]) => `<div class="kv"><span>${e(k)}</span><b>${e(v)}</b></div>`,
@@ -1482,7 +1520,7 @@
 
   function renderCreature() {
     const options = D.creatures.filter((c) => c.id.startsWith("vampire_"));
-    return `<section class="step active"><h1>[[s_ff7f77cc88bd]]</h1><div class="lead">[[s_f59ac5cba69f]]</div><div class="grid3">${options.map((c) => `<button class="choiceCard ${state.creature === c.id ? "selected" : ""}" data-creature="${c.id}"><h3>${e(c.name)}</h3><div class="meta">${e(M("creatureMeta", { maxDots: c.maxDots, maxDiscipline: c.maxDisciplineDots, modifier: c.generationModifier }))}</div><div class="tagrow"><span class="tag">${e(M("creatureLifepaths", { count: c.lifepaths }))}</span><span class="tag">${e(M("creatureAttributes", { budgets: c.attributeBudgets.join("/") }))}</span><span class="tag">${e(M("creatureDisciplineDots", { dots: c.disciplineDots, bonus: c.sireBonus }))}</span></div></button>`).join("")}</div>${tierOf() === "neonate" ? `<div class="sectionTitle">[[s_43397f29829c]]</div><label class="card checkline"><input type="checkbox" id="youngToggle" ${state.young ? "checked" : ""}><div><b>[[s_160d9b4c3d17]]</b><div class="meta">${e(D.youngCharacter)} ${e(S("s_4973c42c631e"))}</div></div></label>` : ""}${issuesHtml(0)}</section>`;
+    return `<section class="step active"><h1>[[s_ff7f77cc88bd]]</h1><div class="lead">[[s_f59ac5cba69f]]</div><div class="grid3">${options.map((c) => `<button class="choiceCard ${state.creature === c.id ? "selected" : ""}" data-creature="${c.id}"><h3>${e(c.name)}</h3><div class="meta">${e(c.description || "")}</div></button>`).join("")}</div>${tierOf() === "neonate" ? `<div class="sectionTitle">[[s_43397f29829c]]</div><label class="card checkline"><input type="checkbox" id="youngToggle" ${state.young ? "checked" : ""}><div><b>[[s_160d9b4c3d17]]</b><div class="meta">${e(D.youngCharacter.description || "")}</div></div></label>` : ""}${issuesHtml(0)}</section>`;
   }
   function renderClan() {
     const selected = clanById(state.clan.id);

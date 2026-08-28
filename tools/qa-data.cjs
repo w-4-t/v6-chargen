@@ -171,7 +171,7 @@ for (const forbidden of ['Character Generator','V6 Alpha · project house rules 
   assert.ok(!html.includes(forbidden), `index.html embeds localized EN UI copy: ${forbidden}`);
 assert.ok(!html.includes('adaptive PWA'), 'desktop header still exposes adaptive PWA label');
 assert.ok(!html.includes('rawBadge'), 'removed project-house-rules badge still exists in desktop markup/CSS');
-assert.ok(html.includes('<div class="versionLabel">v0.10.1</div>'), 'version is not placed beneath desktop Export/Import controls');
+assert.ok(html.includes('<div class="versionLabel">v0.10.2</div>'), 'version is not placed beneath desktop Export/Import controls');
 assert.ok(html.includes('class="brandTitle"') && html.includes('white-space: nowrap'), 'desktop generator title is not constrained to one line');
 
 // Runtime lookup is key-based only: no reverse English-value matching.

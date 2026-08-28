@@ -1,4 +1,4 @@
-# VTM V6 Alpha Character Generator — v0.10.1
+# VTM V6 Alpha Character Generator — v0.10.2
 
 Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 
@@ -7,6 +7,15 @@ Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 - `vtmv6_for_machine.docx` supplied with the project.
 - Character-creation rules follow the V6 Alpha Player Packet unless a project interpretation or house rule is explicitly labelled.
 - No V5 / V5.5 hybrid rules are intentionally imported.
+
+## v0.10.2 — Creature / Істота presentation pass
+
+- Creature choice tiles now show only the tier name and a short narrative description.
+- Tier-specific chargen math was removed from the choice tiles and moved into the contextual information panel.
+- The information panel now shows the selected tier’s Generation band, Generation Modifier, maximum ratings, Lifepaths, Attribute budgets, Discipline allocation, Discipline Powers, Merits, Clan Traits, free Skill dots, and free Resource dots.
+- Neonate / Ancilla / Elder narrative summaries now communicate their approximate age/status directly without turning the tile into a rules summary.
+- The optional one-Lifepath young-character choice now uses a short narrative description only. Its 1-Lifepath / 8-Skill-dot / 5-Resource-dot allocation and project Skill-cap rule are shown in the information panel when the option is active.
+- Creature and young-character prose remains locale data; all numeric budgets and limits continue to come from `data/core.js`.
 
 ## v0.10.1 — desktop navigation/UI pass
 
@@ -110,4 +119,4 @@ The number of known Powers is a separate chargen budget from Discipline dots. A 
 
 ## Deployment
 
-Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.1`.
+Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.2`.
