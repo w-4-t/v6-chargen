@@ -868,6 +868,258 @@
         padding: 12px;
         margin: 9px 0;
       }
+      .lifepathSelectionStatus {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin: 8px 0 12px;
+      }
+      .lifepathChoiceGrid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 9px;
+        align-items: stretch;
+      }
+      .lifepathChoiceCard {
+        position: relative;
+        display: grid;
+        grid-template-rows: 1fr auto;
+        min-height: 142px;
+        border: 1px solid var(--line);
+        background: var(--panel2);
+        border-radius: 13px;
+        overflow: hidden;
+      }
+      .lifepathChoiceCard.selected {
+        border-color: var(--good);
+        box-shadow: inset 0 0 0 1px var(--good);
+      }
+      .lifepathChoiceCard.incomplete {
+        border-color: var(--warn);
+      }
+      .lifepathChoiceMain {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        text-align: left;
+        padding: 12px;
+        cursor: pointer;
+      }
+      .lifepathChoiceMain:disabled {
+        opacity: 0.38;
+        cursor: not-allowed;
+      }
+      .lifepathChoiceMain b {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 15px;
+      }
+      .lifepathChoiceMain span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+      .lifepathChoiceActions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 8px;
+        border-top: 1px solid var(--line);
+        background: rgba(255,255,255,0.015);
+      }
+      .miniActionBtn {
+        min-height: 28px;
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--muted);
+        border-radius: 8px;
+        padding: 4px 7px;
+        font-size: 10px;
+        font-weight: 750;
+      }
+      .dangerText { color: var(--danger); }
+      .customLifepathEditor {
+        border: 1px solid var(--line2);
+        background: var(--panel2);
+        border-radius: 15px;
+        padding: 13px;
+        margin-top: 14px;
+      }
+      .customEditorHead {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .customEditorHead code,
+      .userContentId code,
+      .userContentNote code {
+        color: var(--info);
+        font-size: 10px;
+      }
+      .customSkillGrid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .customSkillChoice {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        min-height: 58px;
+        gap: 8px;
+      }
+      .customSkillChoice label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        cursor: pointer;
+      }
+      .userContentId {
+        margin-top: 8px;
+        border-top: 1px solid var(--line);
+        padding-top: 7px;
+      }
+      .userContentNote {
+        display: flex;
+        gap: 9px;
+        align-items: baseline;
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.4;
+      }
+      .lifepathAllocationStage {
+        margin-top: 18px;
+      }
+      .matrixSection {
+        margin-top: 12px;
+      }
+      .matrixSectionHead {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: end;
+        margin-bottom: 7px;
+      }
+      .matrixSectionHead h3 {
+        margin: 0 0 3px;
+        font-size: 15px;
+      }
+      .lpMatrixWrap {
+        width: 100%;
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        background: var(--panel2);
+        scrollbar-width: thin;
+      }
+      .lpMatrix {
+        width: 100%;
+        min-width: max-content;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 12px;
+      }
+      .lpMatrix th,
+      .lpMatrix td {
+        border-right: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        padding: 8px;
+        background: var(--panel2);
+        vertical-align: middle;
+      }
+      .lpMatrix tr:last-child th,
+      .lpMatrix tr:last-child td { border-bottom: 0; }
+      .lpMatrix th:last-child,
+      .lpMatrix td:last-child { border-right: 0; }
+      .lpMatrix thead th {
+        background: var(--panel3);
+        font-size: 11px;
+        text-align: center;
+      }
+      .lpMatrixName {
+        position: sticky;
+        left: 0;
+        z-index: 3;
+        min-width: 190px;
+        width: 190px;
+        max-width: 230px;
+        text-align: left !important;
+        box-shadow: 1px 0 0 var(--line);
+      }
+      .lpMatrix thead .lpMatrixName { z-index: 5; }
+      .lpMatrixPath {
+        min-width: 150px;
+        width: 150px;
+        max-width: 170px;
+      }
+      .lpMatrixPath span {
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      .lpMatrixPath small {
+        display: inline-block;
+        margin-top: 4px;
+        border-radius: 7px;
+        padding: 2px 6px;
+        font-weight: 900;
+        color: #111216;
+      }
+      .lpMatrixPath small.good { background: var(--good); }
+      .lpMatrixPath small.warn { background: var(--warn); }
+      .lpMatrixPath small.danger { background: var(--danger); }
+      .lpMatrixCell {
+        min-width: 150px;
+        width: 150px;
+        text-align: center;
+      }
+      .lpMatrixTotal {
+        min-width: 70px;
+        width: 70px;
+        text-align: center;
+        background: var(--panel3) !important;
+      }
+      .matrixRowName {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .matrixRowName span {
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+      .matrixStepper {
+        display: grid;
+        grid-template-columns: 30px 34px 30px;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
+      }
+      .matrixStepper button {
+        width: 30px;
+        height: 30px;
+        border: 1px solid var(--line2);
+        background: var(--panel3);
+        color: var(--text);
+        border-radius: 8px;
+        font-weight: 900;
+      }
+      .matrixStepper button:disabled { opacity: .24; }
+      .matrixStepper .n { text-align: center; font-weight: 900; }
+      .matrixDash { color: var(--muted); }
+      .matrixActions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 10px;
+      }
       .lpHead {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 190px;
@@ -1090,6 +1342,10 @@
         display: none !important;
       }
       @media (max-width: 1280px) {
+        .lifepathChoiceGrid,
+        .customSkillGrid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
         .desktopShell {
           grid-template-columns: 205px minmax(0, 1fr) 330px;
         }
@@ -1108,6 +1364,24 @@
         }
       }
       @media (max-width: 900px) {
+        .lifepathChoiceGrid,
+        .customSkillGrid {
+          grid-template-columns: 1fr;
+        }
+        .lifepathSelectionStatus {
+          align-items: stretch;
+          flex-direction: column;
+        }
+        .lpMatrixName {
+          min-width: 155px;
+          width: 155px;
+          max-width: 180px;
+        }
+        .lpMatrixPath,
+        .lpMatrixCell {
+          min-width: 138px;
+          width: 138px;
+        }
         .desktopShell {
           display: block;
           padding: 0 10px calc(84px + env(safe-area-inset-bottom));
@@ -2200,7 +2474,7 @@
                 hidden
             /></label>
           </div>
-          <div class="versionLabel">v0.10.7</div>
+          <div class="versionLabel">v0.10.8</div>
         </div>
       </aside>
       <main class="main">

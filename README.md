@@ -1,4 +1,4 @@
-# VTM V6 Alpha Character Generator — v0.10.7
+# VTM V6 Alpha Character Generator — v0.10.8
 
 Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 
@@ -7,6 +7,17 @@ Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 - `vtmv6_for_machine.docx` supplied with the project.
 - Character-creation rules follow the V6 Alpha Player Packet unless a project interpretation or house rule is explicitly labelled.
 - No V5 / V5.5 hybrid rules are intentionally imported.
+
+
+## v0.10.8 — Lifepath matrix + embedded user content
+
+- Step 4 is split conceptually into Lifepath selection first and allocation second.
+- Lifepath Skill dots use one shared matrix: rows are Skills, columns are selected Lifepaths, and overlapping Skills occupy one row.
+- Lifepath Resource dots use the same matrix model and merge matching built-in Resources into one row.
+- Lifepath allocation no longer shows Current/Cap/house-rule helper copy or Focus recommendations. Skill rows expose concise `?` help instead.
+- Custom Lifepaths are stored as portable `user_content`, with readable IDs such as `user_lifepath_001` and `user_resource_001`.
+- Every embedded user-created object includes `source`, `content_type`, `content_schema_version`, and descriptive `meta` data.
+- Schema v2 Custom Lifepaths migrate automatically into schema v3 embedded user content; existing standard Resource allocations migrate from index keys to stable Resource IDs.
 
 ## v0.10.7 — Sire / Сір presentation pass
 
@@ -154,4 +165,4 @@ The number of known Powers is a separate chargen budget from Discipline dots. A 
 
 ## Deployment
 
-Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.7`.
+Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.8`.
