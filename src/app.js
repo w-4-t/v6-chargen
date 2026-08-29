@@ -428,19 +428,35 @@
   function selectedSlotForLifepath(id) {
     return state.lifepaths.findIndex((x) => x?.id === id);
   }
-  function lifepathDefinitionReady(d) {
+  function lifepathSkillDefinitionReady(d) {
     if (!d) return false;
     if (!isUserLifepathId(d.id)) return true;
     const raw = userLifepathRaw(d.id);
-    if (!raw?.name?.trim() || (raw.skills || []).length !== 5 || (raw.resources || []).length !== 3) return false;
+    return (raw?.skills || []).length === 5;
+  }
+  function lifepathResourceDefinitionReady(d) {
+    if (!d) return false;
+    if (!isUserLifepathId(d.id)) return true;
+    const raw = userLifepathRaw(d.id);
+    if ((raw?.resources || []).length !== 3) return false;
     const resources = (raw.resources || []).map(userResourceRaw);
     if (resources.some((r) => !r || !resourceType(r.type))) return false;
     const keys = resources.map((r) => `${r.type}|${userResourceLabelKey(r)}`);
     return new Set(keys).size === keys.length;
   }
-  function lifepathMatricesReady() {
+  function lifepathDefinitionReady(d) {
+    if (!d) return false;
+    if (!isUserLifepathId(d.id)) return true;
+    const raw = userLifepathRaw(d.id);
+    return !!raw?.name?.trim() && lifepathSkillDefinitionReady(d) && lifepathResourceDefinitionReady(d);
+  }
+  function lifepathSkillMatrixReady() {
     const selected = selectedLifepathSlots();
-    return selected.length === lpCount() && selected.every((x) => lifepathDefinitionReady(x.def));
+    return selected.length === lpCount() && selected.every((x) => lifepathSkillDefinitionReady(x.def));
+  }
+  function lifepathResourceMatrixReady() {
+    const selected = selectedLifepathSlots();
+    return selected.length === lpCount() && selected.every((x) => lifepathResourceDefinitionReady(x.def));
   }
   function lifepathSkillRating(id) {
     return state.lifepaths.reduce(
@@ -1745,7 +1761,9 @@ ${D.lifepathCompetence}`,
   function renderLifepaths() {
     ensureLpSlots();
     const selected = selectedLifepathSlots();
-    const ready = lifepathMatricesReady();
+    const selectionReady = selected.length === lpCount();
+    const skillReady = lifepathSkillMatrixReady();
+    const resourceReady = lifepathResourceMatrixReady();
     const customIds = Object.keys(state.user_content?.lifepaths || {});
     const groups = [
       ["mortal", M("mortalLifepaths")],
@@ -1762,7 +1780,17 @@ ${D.lifepathCompetence}`,
     const customHtml = customIds.length
       ? `<div class="sectionTitle">${e(M("userCreatedLifepaths"))}</div><div class="lifepathChoiceGrid">${customIds.map((id) => renderLifepathChoice(userLifepathDef(id))).join("")}</div>`
       : "";
-    return `<section class="step active"><h1>[[s_1c173828f39d]]</h1><div class="lead">${e(M("chooseLifepathsSelectionLead", { count: lpCount(), pathWord: M(lpCount() === 1 ? "lifepathSingular" : "lifepathPlural") }))}</div><div class="lifepathSelectionStatus"><span class="pill ${selected.length === lpCount() ? "good" : selected.length ? "warn" : "danger"}">${e(M("selectedOf", { used: selected.length, total: lpCount() }))}</span><button class="btn" data-action="create-user-lifepath" ${selected.length >= lpCount() ? "disabled" : ""}>${e(M("createCustomLifepath"))}</button></div>${selectionHtml}${customHtml}${editingUserLifepathId ? renderUserLifepathEditor(editingUserLifepathId) : ""}<div class="lifepathAllocationStage"><div class="sectionTitle">${e(M("lifepathAllocation"))}</div>${ready ? `${renderLifepathSkillMatrix()}${renderLifepathResourceMatrix()}<div class="matrixActions"><button class="btn" data-action="reset-lifepath-allocations">${e(M("resetLifepathAllocations"))}</button></div>` : `<div class="notice">${e(M("completeLifepathsBeforeAllocation", { count: lpCount() }))}</div>`}</div>${issuesHtml(3)}</section>`;
+    const editorHtml = editingUserLifepathId ? renderUserLifepathEditor(editingUserLifepathId) : "";
+    const skillStage = skillReady
+      ? renderLifepathSkillMatrix()
+      : `<div class="notice warn">${e(M(selectionReady ? "completeLifepathSkillsBeforeAllocation" : "completeLifepathsBeforeAllocation", { count: lpCount() }))}</div>`;
+    const resourceStage = resourceReady
+      ? renderLifepathResourceMatrix()
+      : selectionReady ? `<div class="notice warn">${e(M("completeLifepathResourcesBeforeAllocation"))}</div>` : "";
+    const reset = skillReady || resourceReady
+      ? `<div class="matrixActions"><button class="btn" data-action="reset-lifepath-allocations">${e(M("resetLifepathAllocations"))}</button></div>`
+      : "";
+    return `<section class="step active"><h1>[[s_1c173828f39d]]</h1><div class="lead">${e(M("chooseLifepathsSelectionLead", { count: lpCount(), pathWord: M(lpCount() === 1 ? "lifepathSingular" : "lifepathPlural") }))}</div><div class="lifepathSelectionStatus"><span class="pill ${selected.length === lpCount() ? "good" : selected.length ? "warn" : "danger"}">${e(M("selectedOf", { used: selected.length, total: lpCount() }))}</span><button class="btn" data-action="create-user-lifepath" ${selected.length >= lpCount() ? "disabled" : ""}>${e(M("createCustomLifepath"))}</button></div>${editorHtml}${selectionHtml}${customHtml}<div class="lifepathAllocationStage"><div class="sectionTitle">${e(M("lifepathAllocation"))}</div>${skillStage}${resourceStage}${reset}</div><div class="lifepathIssues">${issuesHtml(3)}</div></section>`;
   }
   function renderLifepathChoice(d) {
     if (!d) return "";
@@ -1770,7 +1798,11 @@ ${D.lifepathCompetence}`,
     const selected = slot >= 0;
     const full = selectedLifepathCount() >= lpCount();
     const user = isUserLifepathId(d.id);
-    return `<div class="lifepathChoiceCard ${selected ? "selected" : ""} ${user && !lifepathDefinitionReady(d) ? "incomplete" : ""}"><button type="button" class="lifepathChoiceMain" data-lp-toggle="${e(d.id)}" ${!selected && full ? "disabled" : ""}><b>${e(d.name)}</b><span>${e(d.description)}</span></button><div class="lifepathChoiceActions"><button type="button" class="fieldInfoBtn" data-info-lp-id="${e(d.id)}" aria-label="${e(M("readInformation", { name: d.name }))}">?</button>${user ? `<button type="button" class="miniActionBtn" data-edit-user-lifepath="${e(d.id)}">${e(M("edit"))}</button><button type="button" class="miniActionBtn dangerText" data-delete-user-lifepath="${e(d.id)}">${e(M("delete"))}</button>` : ""}</div></div>`;
+    const aliases = Array.isArray(d.aliases) && d.aliases.length
+      ? `<span class="lifepathChoiceAliases">${e(M("lifepathAlsoRepresents", { aliases: d.aliases.join(" / ") }))}</span>`
+      : "";
+    const summary = d.tileDescription || d.description || "";
+    return `<div class="lifepathChoiceCard ${selected ? "selected" : ""} ${user && !lifepathDefinitionReady(d) ? "incomplete" : ""}"><button type="button" class="lifepathChoiceMain" data-lp-toggle="${e(d.id)}" ${!selected && full ? "disabled" : ""}><b>${e(d.name)}</b>${aliases}<span>${e(summary)}</span></button><div class="lifepathChoiceActions"><button type="button" class="fieldInfoBtn" data-info-lp-id="${e(d.id)}" aria-label="${e(M("readInformation", { name: d.name }))}">?</button>${user ? `<button type="button" class="miniActionBtn" data-edit-user-lifepath="${e(d.id)}">${e(M("edit"))}</button><button type="button" class="miniActionBtn dangerText" data-delete-user-lifepath="${e(d.id)}">${e(M("delete"))}</button>` : ""}</div></div>`;
   }
   function renderUserLifepathEditor(id) {
     const c = userLifepathRaw(id);
@@ -1789,6 +1821,10 @@ ${D.lifepathCompetence}`,
   function resourceMatrixKey(r) {
     return resourceKey(r.type, r.labelKey || "");
   }
+  function lifepathResourceMatrixLabel(row) {
+    const rt = resourceType(row.type);
+    return `${rt?.name || row.type}${row.label ? `: ${row.label}` : ""}`;
+  }
   function lifepathResourceMatrixRows() {
     const map = new Map();
     for (const { slot, def } of selectedLifepathSlots()) {
@@ -1798,7 +1834,8 @@ ${D.lifepathCompetence}`,
         map.get(key).cells.set(slot, r);
       }
     }
-    return [...map.values()];
+    const locale = window.V6Data.getLocale() === "uk" ? "uk" : "en";
+    return [...map.values()].sort((a, b) => lifepathResourceMatrixLabel(a).localeCompare(lifepathResourceMatrixLabel(b), locale, { sensitivity: "base" }));
   }
   function matrixBudgetClass(used, total) {
     return used === total ? "good" : used > 0 ? "warn" : "danger";
@@ -1811,7 +1848,7 @@ ${D.lifepathCompetence}`,
   function renderLifepathResourceMatrix() {
     const selected = selectedLifepathSlots();
     const rows = lifepathResourceMatrixRows();
-    return `<div class="matrixSection"><div class="matrixSectionHead"><div><h3>${e(M("lifepathResourceMatrix"))}</h3><div class="meta">${e(M("lifepathResourceMatrixLead"))}</div></div></div><div class="lpMatrixWrap"><table class="lpMatrix"><thead><tr><th class="lpMatrixName">${e(M("resource"))}</th>${selected.map(({ slot, def }) => `<th class="lpMatrixPath"><span>${e(def.name)}</span><small class="${matrixBudgetClass(lpResourceSpent(slot), lpResourceBudget())}">${lpResourceSpent(slot)}/${lpResourceBudget()}</small></th>`).join("")}<th class="lpMatrixTotal">${e(M("total"))}</th></tr></thead><tbody>${rows.map((row) => { const rt = resourceType(row.type); const label = `${rt?.name || row.type}${row.label ? `: ${row.label}` : ""}`; const rowTotal = selected.reduce((n, {slot}) => { const r = row.cells.get(slot); return n + (r ? Number(state.lifepaths[slot].resourceDots?.[r.id] || 0) : 0); }, 0); return `<tr><th class="lpMatrixName"><div class="matrixRowName"><span>${e(label)}</span></div></th>${selected.map(({slot}) => { const r = row.cells.get(slot); const n = r ? Number(state.lifepaths[slot].resourceDots?.[r.id] || 0) : 0; const canUp = !!r && lpResourceSpent(slot) < lpResourceBudget(); return `<td class="lpMatrixCell">${r ? matrixStepper(`lp-res:${slot}:${encodeURIComponent(r.id)}`, n, n > 0, canUp) : `<span class="matrixDash">—</span>`}</td>`; }).join("")}<td class="lpMatrixTotal"><b>${rowTotal}</b></td></tr>`; }).join("")}</tbody></table></div></div>`;
+    return `<div class="matrixSection"><div class="matrixSectionHead"><div><h3>${e(M("lifepathResourceMatrix"))}</h3><div class="meta">${e(M("lifepathResourceMatrixLead"))}</div></div></div><div class="lpMatrixWrap"><table class="lpMatrix"><thead><tr><th class="lpMatrixName">${e(M("resource"))}</th>${selected.map(({ slot, def }) => `<th class="lpMatrixPath"><span>${e(def.name)}</span><small class="${matrixBudgetClass(lpResourceSpent(slot), lpResourceBudget())}">${lpResourceSpent(slot)}/${lpResourceBudget()}</small></th>`).join("")}<th class="lpMatrixTotal">${e(M("total"))}</th></tr></thead><tbody>${rows.map((row) => { const label = lifepathResourceMatrixLabel(row); const rowTotal = selected.reduce((n, {slot}) => { const r = row.cells.get(slot); return n + (r ? Number(state.lifepaths[slot].resourceDots?.[r.id] || 0) : 0); }, 0); return `<tr><th class="lpMatrixName"><div class="matrixRowName"><span>${e(label)}</span><button type="button" class="fieldInfoBtn" data-info-resource="${e(row.type)}" aria-label="${e(M("readInformation", { name: label }))}">?</button></div></th>${selected.map(({slot}) => { const r = row.cells.get(slot); const n = r ? Number(state.lifepaths[slot].resourceDots?.[r.id] || 0) : 0; const canUp = !!r && lpResourceSpent(slot) < lpResourceBudget(); return `<td class="lpMatrixCell">${r ? matrixStepper(`lp-res:${slot}:${encodeURIComponent(r.id)}`, n, n > 0, canUp) : `<span class="matrixDash">—</span>`}</td>`; }).join("")}<td class="lpMatrixTotal"><b>${rowTotal}</b></td></tr>`; }).join("")}</tbody></table></div></div>`;
   }
   function matrixStepper(key, n, canDown, canUp) {
     return `<div class="matrixStepper"><button data-stepper="${e(key)}" data-delta="-1" ${canDown ? "" : "disabled"}>−</button><div class="n">${n}</div><button data-stepper="${e(key)}" data-delta="1" ${canUp ? "" : "disabled"}>+</button></div>`;
