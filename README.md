@@ -1,4 +1,4 @@
-# VTM V6 Alpha Character Generator — v0.10.8
+# VTM V6 Alpha Character Generator — v0.10.9
 
 Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 
@@ -9,15 +9,15 @@ Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 - No V5 / V5.5 hybrid rules are intentionally imported.
 
 
-## v0.10.8 — Lifepath matrix + embedded user content
+## v0.10.9 — Lifepath presentation and Custom Lifepath flow
 
-- Step 4 is split conceptually into Lifepath selection first and allocation second.
-- Lifepath Skill dots use one shared matrix: rows are Skills, columns are selected Lifepaths, and overlapping Skills occupy one row.
-- Lifepath Resource dots use the same matrix model and merge matching built-in Resources into one row.
-- Lifepath allocation no longer shows Current/Cap/house-rule helper copy or Focus recommendations. Skill rows expose concise `?` help instead.
-- Custom Lifepaths are stored as portable `user_content`, with readable IDs such as `user_lifepath_001` and `user_resource_001`.
-- Every embedded user-created object includes `source`, `content_type`, `content_schema_version`, and descriptive `meta` data.
-- Schema v2 Custom Lifepaths migrate automatically into schema v3 embedded user content; existing standard Resource allocations migrate from index keys to stable Resource IDs.
+- Built-in Lifepath tiles now use compact narrative summaries; the full Alpha text remains available through `?`.
+- Alpha alternate-role mappings are visible directly on the relevant tiles: Hound → Sweeper / Ductus, Diplomat → Emissary / Herald, Sheriff → Warlord.
+- The Custom Lifepath editor renders immediately below the create/edit controls instead of appearing after the full Lifepath catalog.
+- Skill and Resource matrix readiness are evaluated independently for Custom Lifepaths. A selected Custom Lifepath with five defined Skills can enter Skill allocation even while its Resource definition is still incomplete.
+- Resource rows now expose `?` help and are sorted alphabetically by their localized display labels.
+- Validation/status output below `Reset allocations` has explicit spacing in both incomplete and complete states.
+- The portable `user_content` model from v0.10.8 is preserved unchanged: `user_lifepath_NNN` / `user_resource_NNN`, embedded definitions, typed metadata, and schema-versioned migration.
 
 ## v0.10.7 — Sire / Сір presentation pass
 
@@ -165,4 +165,4 @@ The number of known Powers is a separate chargen budget from Discipline dots. A 
 
 ## Deployment
 
-Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.8`.
+Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.9`.

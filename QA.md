@@ -1,4 +1,4 @@
-# QA — v0.10.8
+# QA — v0.10.9
 
 ## Data / logic separation
 
@@ -59,7 +59,7 @@
 
 - [x] Desktop Reset / Export / Import labels are short in EN and UA.
 - [x] `adaptive PWA` and the project-house-rules badge are absent from the desktop sidebar.
-- [x] Version `v0.10.8` is displayed beneath Export / Import.
+- [x] Version `v0.10.9` is displayed beneath Export / Import.
 - [x] Desktop Character Generator / Генератор Персонажа title is forced to one line.
 - [x] UA desktop navigation uses Істота / Сір / Фокус / Сили.
 - [x] Desktop navigation uses one aggregate `N/M` counter per step.
@@ -94,7 +94,7 @@
 - [x] `node --check` passes for `data/core.js`, `data/en.js`, `data/uk.js`, `src/data.js`, `src/i18n.js`, and `src/app.js`.
 - [x] `node tools/qa-data.cjs` passes.
 - [x] `node tools/smoke-app.cjs` passes.
-- [x] Service worker cache is `vtm-v6-alpha-chargen-v0.10.8` and includes all runtime data files.
+- [x] Service worker cache is `vtm-v6-alpha-chargen-v0.10.9` and includes all runtime data files.
 
 ## Manual browser checks still required
 
@@ -143,15 +143,18 @@ Current Ukrainian wording remains a working localization pass. Terminology chang
 - [x] Existing core/locale split and stable machine IDs remain intact.
 
 
-## v0.10.8 focused checks
+## v0.10.9 focused checks
 
-- [x] Lifepaths are selected before allocation; the shared matrices appear only when the required Lifepaths and any Custom Lifepath definitions are complete.
+- [x] Built-in Lifepath tiles use compact summaries while `?` retains the full localized Alpha description.
+- [x] Hound shows `Sweeper / Ductus`, Diplomat shows `Emissary / Herald`, and Sheriff shows `Warlord` directly in the tile.
+- [x] Custom Lifepath editor appears immediately below the create/edit control area.
+- [x] A selected Custom Lifepath with five valid Skills unlocks the Skill matrix independently of unfinished Resource definitions.
+- [x] Resource matrix remains gated until the selected Custom Lifepath has three distinct valid Resource definitions.
 - [x] Skill matrix has one row per Skill and one allocation column per selected Lifepath.
 - [x] Matching Resource definitions from standard Lifepaths share one matrix row.
-- [x] Skill rows in Step 4 expose `?` help without Current/Cap or Focus recommendation copy.
+- [x] Skill and Resource rows in Step 4 expose `?` help.
+- [x] Resource rows are alphabetically sorted using the active locale's display labels.
 - [x] Matrix containers scroll horizontally and keep the Skill/Resource name column sticky on narrow screens and high browser zoom.
 - [x] `Reset allocations` clears Lifepath Skill/Resource dots while preserving Lifepath selections.
-- [x] New Custom Lifepaths are embedded under `user_content` with `user_lifepath_NNN` / `user_resource_NNN` IDs.
-- [x] Embedded user-created objects carry `source: user_created`, `content_type`, `content_schema_version`, and readable `meta.note` fields.
-- [x] Schema v2 Custom Lifepaths and index-keyed Resource allocations migrate to schema v3.
-- [x] Imported schema v3 saves do not depend on localStorage definitions from another device.
+- [x] Validation/status output below the reset control has explicit vertical spacing.
+- [x] Portable `user_content` remains self-contained and schema-versioned for cross-device JSON import.
