@@ -48,6 +48,12 @@
   const dots = (n) => "●".repeat(Math.max(0, Number(n) || 0));
   const sum = (o) =>
     Object.values(o || {}).reduce((a, b) => a + (Number(b) || 0), 0);
+  const autosizeTextarea = (el) => {
+    if (!el?.style) return;
+    el.style.height = "auto";
+    const h = Number(el.scrollHeight || 0);
+    if (h > 0) el.style.height = `${h}px`;
+  };
   const tierOf = () => creature()?.tier || "neonate";
   const tierDisplayName = (tier = tierOf()) =>
     ({
@@ -1778,9 +1784,8 @@ ${D.lifepathCompetence}`,
       return `<div class="sectionTitle">${e(label)}</div><div class="lifepathChoiceGrid">${items.map(renderLifepathChoice).join("")}</div>`;
     }).join("");
     const customHtml = customIds.length
-      ? `<div class="sectionTitle">${e(M("userCreatedLifepaths"))}</div><div class="lifepathChoiceGrid">${customIds.map((id) => renderLifepathChoice(userLifepathDef(id))).join("")}</div>`
+      ? `<div class="userLifepathSection"><div class="sectionTitle">${e(M("userCreatedLifepaths"))}</div><div class="userLifepathList">${customIds.map((id) => renderUserLifepathChoice(id)).join("")}</div></div>`
       : "";
-    const editorHtml = editingUserLifepathId ? renderUserLifepathEditor(editingUserLifepathId) : "";
     const skillStage = skillReady
       ? renderLifepathSkillMatrix()
       : `<div class="notice warn">${e(M(selectionReady ? "completeLifepathSkillsBeforeAllocation" : "completeLifepathsBeforeAllocation", { count: lpCount() }))}</div>`;
@@ -1790,25 +1795,48 @@ ${D.lifepathCompetence}`,
     const reset = skillReady || resourceReady
       ? `<div class="matrixActions"><button class="btn" data-action="reset-lifepath-allocations">${e(M("resetLifepathAllocations"))}</button></div>`
       : "";
-    return `<section class="step active"><h1>[[s_1c173828f39d]]</h1><div class="lead">${e(M("chooseLifepathsSelectionLead", { count: lpCount(), pathWord: M(lpCount() === 1 ? "lifepathSingular" : "lifepathPlural") }))}</div><div class="lifepathSelectionStatus"><span class="pill ${selected.length === lpCount() ? "good" : selected.length ? "warn" : "danger"}">${e(M("selectedOf", { used: selected.length, total: lpCount() }))}</span><button class="btn" data-action="create-user-lifepath" ${selected.length >= lpCount() ? "disabled" : ""}>${e(M("createCustomLifepath"))}</button></div>${editorHtml}${selectionHtml}${customHtml}<div class="lifepathAllocationStage"><div class="sectionTitle">${e(M("lifepathAllocation"))}</div>${skillStage}${resourceStage}${reset}</div><div class="lifepathIssues">${issuesHtml(3)}</div></section>`;
+    return `<section class="step active"><h1>[[s_1c173828f39d]]</h1><div class="lead">${e(M("chooseLifepathsSelectionLead", { count: lpCount(), pathWord: M(lpCount() === 1 ? "lifepathSingular" : "lifepathPlural") }))}</div><div class="lifepathSelectionStatus"><span class="pill ${selected.length === lpCount() ? "good" : selected.length ? "warn" : "danger"}">${e(M("selectedOf", { used: selected.length, total: lpCount() }))}</span><button class="btn" data-action="create-user-lifepath" ${selected.length >= lpCount() ? "disabled" : ""}>${e(M("createCustomLifepath"))}</button></div>${customHtml}${selectionHtml}<div class="lifepathAllocationStage"><div class="sectionTitle">${e(M("lifepathAllocation"))}</div>${skillStage}${resourceStage}${reset}</div><div class="lifepathIssues">${issuesHtml(3)}</div></section>`;
+  }
+  function lifepathSelectionNumber(id) {
+    const slot = selectedSlotForLifepath(id);
+    return slot >= 0 ? slot + 1 : 0;
+  }
+  function renderLifepathOrderBadge(id) {
+    const n = lifepathSelectionNumber(id);
+    return n ? `<span class="lifepathOrderBadge"># ${n}</span>` : "";
   }
   function renderLifepathChoice(d) {
     if (!d) return "";
     const slot = selectedSlotForLifepath(d.id);
     const selected = slot >= 0;
     const full = selectedLifepathCount() >= lpCount();
-    const user = isUserLifepathId(d.id);
     const aliases = Array.isArray(d.aliases) && d.aliases.length
       ? `<span class="lifepathChoiceAliases">${e(M("lifepathAlsoRepresents", { aliases: d.aliases.join(" / ") }))}</span>`
       : "";
     const summary = d.tileDescription || d.description || "";
-    return `<div class="lifepathChoiceCard ${selected ? "selected" : ""} ${user && !lifepathDefinitionReady(d) ? "incomplete" : ""}"><button type="button" class="lifepathChoiceMain" data-lp-toggle="${e(d.id)}" ${!selected && full ? "disabled" : ""}><b>${e(d.name)}</b>${aliases}<span>${e(summary)}</span></button><div class="lifepathChoiceActions"><button type="button" class="fieldInfoBtn" data-info-lp-id="${e(d.id)}" aria-label="${e(M("readInformation", { name: d.name }))}">?</button>${user ? `<button type="button" class="miniActionBtn" data-edit-user-lifepath="${e(d.id)}">${e(M("edit"))}</button><button type="button" class="miniActionBtn dangerText" data-delete-user-lifepath="${e(d.id)}">${e(M("delete"))}</button>` : ""}</div></div>`;
+    return `<div class="lifepathChoiceCard ${selected ? "selected" : ""}"><button type="button" class="lifepathChoiceMain" data-lp-toggle="${e(d.id)}" ${!selected && full ? "disabled" : ""}><div class="lifepathChoiceTitleRow"><b>${e(d.name)}</b>${renderLifepathOrderBadge(d.id)}</div>${aliases}<span>${e(summary)}</span></button><div class="lifepathChoiceActions"><button type="button" class="fieldInfoBtn" data-info-lp-id="${e(d.id)}" aria-label="${e(M("readInformation", { name: d.name }))}">?</button></div></div>`;
+  }
+  function renderUserLifepathChoice(id) {
+    const d = userLifepathDef(id);
+    const c = userLifepathRaw(id);
+    if (!d || !c) return "";
+    const slot = selectedSlotForLifepath(id);
+    const selected = slot >= 0;
+    const full = selectedLifepathCount() >= lpCount();
+    const editing = editingUserLifepathId === id;
+    const incomplete = !lifepathDefinitionReady(d);
+    const summaryName = c.name || M("customLifepathFallback", { id });
+    const summaryDescription = c.description || "";
+    if (editing) {
+      return `<div class="userLifepathCard expanded ${selected ? "selected" : ""} ${incomplete ? "incomplete" : ""}"><div class="userLifepathEditorTop"><input class="customLifepathNameInput" data-user-lp-name="${e(id)}" value="${e(c.name || "")}" placeholder="[[s_29024d7d22ea]]"><div class="userLifepathActions">${renderLifepathOrderBadge(id)}<button type="button" class="fieldInfoBtn" data-info-lp-id="${e(id)}" aria-label="${e(M("readInformation", { name: summaryName }))}">?</button><button type="button" class="miniActionBtn" data-action="close-user-lifepath-editor">${e(M("done"))}</button><button type="button" class="miniActionBtn" data-reset-user-lifepath="${e(id)}">${e(S("s_44c57abd888a"))}</button><button type="button" class="miniActionBtn dangerText" data-delete-user-lifepath="${e(id)}">${e(M("delete"))}</button></div></div>${renderUserLifepathEditor(id)}</div>`;
+    }
+    return `<div class="userLifepathCard ${selected ? "selected" : ""} ${incomplete ? "incomplete" : ""}"><button type="button" class="userLifepathSummary" data-lp-toggle="${e(id)}" ${!selected && full ? "disabled" : ""}><div class="userLifepathSummaryTitle"><b>${e(summaryName)}</b>${renderLifepathOrderBadge(id)}</div>${summaryDescription ? `<span>${e(summaryDescription)}</span>` : ""}</button><div class="userLifepathActions"><button type="button" class="fieldInfoBtn" data-info-lp-id="${e(id)}" aria-label="${e(M("readInformation", { name: summaryName }))}">?</button><button type="button" class="miniActionBtn" data-edit-user-lifepath="${e(id)}">${e(M("edit"))}</button><button type="button" class="miniActionBtn dangerText" data-delete-user-lifepath="${e(id)}">${e(M("delete"))}</button></div></div>`;
   }
   function renderUserLifepathEditor(id) {
     const c = userLifepathRaw(id);
     if (!c) return "";
     const skillSet = new Set(c.skills || []);
-    return `<div class="customLifepathEditor"><div class="customEditorHead"><div><div class="sectionTitle" style="margin:0">${e(M("editCustomLifepath"))}</div><code>${e(id)}</code></div><button class="btn" data-action="close-user-lifepath-editor">${e(M("done"))}</button></div><div class="grid2"><div class="field"><label>[[s_29024d7d22ea]]</label><input data-user-lp-name="${e(id)}" value="${e(c.name || "")}"></div><div class="field"><label>[[s_55f8ebc805e6]]</label><input data-user-lp-desc="${e(id)}" value="${e(c.description || "")}"></div></div><div class="sectionTitle">[[s_cdca8eca3a50]]</div><div class="customSkillGrid">${D.skills.map((s) => `<div class="card customSkillChoice"><label><input type="checkbox" data-user-lp-skill="${e(id)}|${e(s.id)}" ${skillSet.has(s.id) ? "checked" : ""}><b>${e(s.name)}</b></label><button type="button" class="fieldInfoBtn" data-info-lp-skill="${e(s.id)}" aria-label="${e(M("readInformation", { name: s.name }))}">?</button></div>`).join("")}</div><div class="sectionTitle">[[s_0bb4dbf25a37]]</div><div class="grid3">${(c.resources || []).map((rid, ri) => renderUserResourceEditor(rid, ri)).join("")}</div><div class="userContentNote"><code>${e(id)}</code><span>${e(M("embeddedUserContentNote"))}</span></div></div>`;
+    return `<div class="customLifepathEditor"><div class="field customDescriptionField"><label>[[s_55f8ebc805e6]]</label><textarea class="autoGrowTextarea" rows="1" data-user-lp-desc="${e(id)}">${e(c.description || "")}</textarea></div><div class="sectionTitle">[[s_cdca8eca3a50]]</div><div class="customSkillGrid">${D.skills.map((s) => `<div class="card customSkillChoice"><label><input type="checkbox" data-user-lp-skill="${e(id)}|${e(s.id)}" ${skillSet.has(s.id) ? "checked" : ""}><b>${e(s.name)}</b></label><button type="button" class="fieldInfoBtn" data-info-lp-skill="${e(s.id)}" aria-label="${e(M("readInformation", { name: s.name }))}">?</button></div>`).join("")}</div><div class="sectionTitle">[[s_0bb4dbf25a37]]</div><div class="grid3">${(c.resources || []).map((rid, ri) => renderUserResourceEditor(rid, ri)).join("")}</div><div class="userContentNote"><code>${e(id)}</code><span>${e(M("embeddedUserContentNote"))}</span></div></div>`;
   }
   function renderUserResourceEditor(rid, ri) {
     const r = userResourceRaw(rid) || {};
@@ -1840,15 +1868,18 @@ ${D.lifepathCompetence}`,
   function matrixBudgetClass(used, total) {
     return used === total ? "good" : used > 0 ? "warn" : "danger";
   }
+  function renderLifepathMatrixHeader(slot, def, used, total, selectedCount) {
+    return `<th class="lpMatrixPath"><div class="matrixPathTitle"><span class="matrixPathOrder"># ${slot + 1}</span><span class="matrixPathName">${e(def.name)}</span><span class="matrixPathReorder"><button type="button" data-lp-move="${slot}:-1" ${slot <= 0 ? "disabled" : ""} aria-label="${e(M("moveLifepathEarlier", { name: def.name }))}">←</button><button type="button" data-lp-move="${slot}:1" ${slot >= selectedCount - 1 ? "disabled" : ""} aria-label="${e(M("moveLifepathLater", { name: def.name }))}">→</button></span></div><small class="${matrixBudgetClass(used, total)}">${used}/${total}</small></th>`;
+  }
   function renderLifepathSkillMatrix() {
     const selected = selectedLifepathSlots();
     const rows = lifepathSkillMatrixRows();
-    return `<div class="matrixSection"><div class="matrixSectionHead"><div><h3>${e(M("lifepathSkillMatrix"))}</h3><div class="meta">${e(M("lifepathSkillMatrixLead"))}</div></div></div><div class="lpMatrixWrap"><table class="lpMatrix"><thead><tr><th class="lpMatrixName">${e(M("skill"))}</th>${selected.map(({ slot, def }) => `<th class="lpMatrixPath"><span>${e(def.name)}</span><small class="${matrixBudgetClass(sum(state.lifepaths[slot].skillDots), lpSkillBudget())}">${sum(state.lifepaths[slot].skillDots)}/${lpSkillBudget()}</small></th>`).join("")}<th class="lpMatrixTotal">${e(M("total"))}</th></tr></thead><tbody>${rows.map((skill) => `<tr><th class="lpMatrixName"><div class="matrixRowName"><span>${e(skill.name)}</span><button type="button" class="fieldInfoBtn" data-info-lp-skill="${e(skill.id)}" aria-label="${e(M("readInformation", { name: skill.name }))}">?</button></div></th>${selected.map(({ slot, def }) => { const allowed = (def.skills || []).some((x) => x.skill === skill.id); const n = Number(state.lifepaths[slot].skillDots?.[skill.id] || 0); const canUp = sum(state.lifepaths[slot].skillDots) < lpSkillBudget() && finalSkill(skill.id) < skillCap(skill.id); return `<td class="lpMatrixCell">${allowed ? matrixStepper(`lp-skill:${slot}:${skill.id}`, n, n > 0, canUp) : `<span class="matrixDash">—</span>`}</td>`; }).join("")}<td class="lpMatrixTotal"><b>${lifepathSkillRating(skill.id)}</b></td></tr>`).join("")}</tbody></table></div></div>`;
+    return `<div class="matrixSection"><div class="matrixSectionHead"><div><h3>${e(M("lifepathSkillMatrix"))}</h3><div class="meta">${e(M("lifepathSkillMatrixLead"))}</div></div></div><div class="lpMatrixWrap"><table class="lpMatrix"><thead><tr><th class="lpMatrixName">${e(M("skill"))}</th>${selected.map(({ slot, def }) => renderLifepathMatrixHeader(slot, def, sum(state.lifepaths[slot].skillDots), lpSkillBudget(), selected.length)).join("")}<th class="lpMatrixTotal">${e(M("total"))}</th></tr></thead><tbody>${rows.map((skill) => `<tr><th class="lpMatrixName"><div class="matrixRowName"><span>${e(skill.name)}</span><button type="button" class="fieldInfoBtn" data-info-lp-skill="${e(skill.id)}" aria-label="${e(M("readInformation", { name: skill.name }))}">?</button></div></th>${selected.map(({ slot, def }) => { const allowed = (def.skills || []).some((x) => x.skill === skill.id); const n = Number(state.lifepaths[slot].skillDots?.[skill.id] || 0); const canUp = sum(state.lifepaths[slot].skillDots) < lpSkillBudget() && finalSkill(skill.id) < skillCap(skill.id); return `<td class="lpMatrixCell">${allowed ? matrixStepper(`lp-skill:${slot}:${skill.id}`, n, n > 0, canUp) : `<span class="matrixDash">—</span>`}</td>`; }).join("")}<td class="lpMatrixTotal"><b>${lifepathSkillRating(skill.id)}</b></td></tr>`).join("")}</tbody></table></div></div>`;
   }
   function renderLifepathResourceMatrix() {
     const selected = selectedLifepathSlots();
     const rows = lifepathResourceMatrixRows();
-    return `<div class="matrixSection"><div class="matrixSectionHead"><div><h3>${e(M("lifepathResourceMatrix"))}</h3><div class="meta">${e(M("lifepathResourceMatrixLead"))}</div></div></div><div class="lpMatrixWrap"><table class="lpMatrix"><thead><tr><th class="lpMatrixName">${e(M("resource"))}</th>${selected.map(({ slot, def }) => `<th class="lpMatrixPath"><span>${e(def.name)}</span><small class="${matrixBudgetClass(lpResourceSpent(slot), lpResourceBudget())}">${lpResourceSpent(slot)}/${lpResourceBudget()}</small></th>`).join("")}<th class="lpMatrixTotal">${e(M("total"))}</th></tr></thead><tbody>${rows.map((row) => { const label = lifepathResourceMatrixLabel(row); const rowTotal = selected.reduce((n, {slot}) => { const r = row.cells.get(slot); return n + (r ? Number(state.lifepaths[slot].resourceDots?.[r.id] || 0) : 0); }, 0); return `<tr><th class="lpMatrixName"><div class="matrixRowName"><span>${e(label)}</span><button type="button" class="fieldInfoBtn" data-info-resource="${e(row.type)}" aria-label="${e(M("readInformation", { name: label }))}">?</button></div></th>${selected.map(({slot}) => { const r = row.cells.get(slot); const n = r ? Number(state.lifepaths[slot].resourceDots?.[r.id] || 0) : 0; const canUp = !!r && lpResourceSpent(slot) < lpResourceBudget(); return `<td class="lpMatrixCell">${r ? matrixStepper(`lp-res:${slot}:${encodeURIComponent(r.id)}`, n, n > 0, canUp) : `<span class="matrixDash">—</span>`}</td>`; }).join("")}<td class="lpMatrixTotal"><b>${rowTotal}</b></td></tr>`; }).join("")}</tbody></table></div></div>`;
+    return `<div class="matrixSection"><div class="matrixSectionHead"><div><h3>${e(M("lifepathResourceMatrix"))}</h3><div class="meta">${e(M("lifepathResourceMatrixLead"))}</div></div></div><div class="lpMatrixWrap"><table class="lpMatrix"><thead><tr><th class="lpMatrixName">${e(M("resource"))}</th>${selected.map(({ slot, def }) => renderLifepathMatrixHeader(slot, def, lpResourceSpent(slot), lpResourceBudget(), selected.length)).join("")}<th class="lpMatrixTotal">${e(M("total"))}</th></tr></thead><tbody>${rows.map((row) => { const label = lifepathResourceMatrixLabel(row); const rowTotal = selected.reduce((n, {slot}) => { const r = row.cells.get(slot); return n + (r ? Number(state.lifepaths[slot].resourceDots?.[r.id] || 0) : 0); }, 0); return `<tr><th class="lpMatrixName"><div class="matrixRowName"><span>${e(label)}</span><button type="button" class="fieldInfoBtn" data-info-resource="${e(row.type)}" aria-label="${e(M("readInformation", { name: label }))}">?</button></div></th>${selected.map(({slot}) => { const r = row.cells.get(slot); const n = r ? Number(state.lifepaths[slot].resourceDots?.[r.id] || 0) : 0; const canUp = !!r && lpResourceSpent(slot) < lpResourceBudget(); return `<td class="lpMatrixCell">${r ? matrixStepper(`lp-res:${slot}:${encodeURIComponent(r.id)}`, n, n > 0, canUp) : `<span class="matrixDash">—</span>`}</td>`; }).join("")}<td class="lpMatrixTotal"><b>${rowTotal}</b></td></tr>`; }).join("")}</tbody></table></div></div>`;
   }
   function matrixStepper(key, n, canDown, canUp) {
     return `<div class="matrixStepper"><button data-stepper="${e(key)}" data-delta="-1" ${canDown ? "" : "disabled"}>−</button><div class="n">${n}</div><button data-stepper="${e(key)}" data-delta="1" ${canUp ? "" : "disabled"}>+</button></div>`;
@@ -2517,7 +2548,39 @@ ${D.lifepathCompetence}`,
       (x) => (x.oninput = () => { const c = userLifepathRaw(x.dataset.userLpName); if (c) { c.name = x.value; save(); } }),
     );
     root.querySelectorAll("[data-user-lp-desc]").forEach(
-      (x) => (x.oninput = () => { const c = userLifepathRaw(x.dataset.userLpDesc); if (c) { c.description = x.value; save(); } }),
+      (x) => {
+        autosizeTextarea(x);
+        x.oninput = () => {
+          const c = userLifepathRaw(x.dataset.userLpDesc);
+          if (c) {
+            c.description = x.value;
+            autosizeTextarea(x);
+            save();
+          }
+        };
+      },
+    );
+    root.querySelectorAll("[data-reset-user-lifepath]").forEach(
+      (b) => (b.onclick = () => {
+        const id = b.dataset.resetUserLifepath;
+        const c = userLifepathRaw(id);
+        if (!c) return;
+        if (!confirm(M("confirmResetCustomLifepath", { name: c.name || id }))) return;
+        c.name = "";
+        c.description = "";
+        c.skills = [];
+        for (const rid of c.resources || []) {
+          const r = userResourceRaw(rid);
+          if (r) { r.type = ""; r.label = ""; }
+        }
+        const slot = selectedSlotForLifepath(id);
+        if (slot >= 0) {
+          state.lifepaths[slot].skillDots = {};
+          state.lifepaths[slot].resourceDots = {};
+        }
+        enforceSkillCaps();
+        render();
+      }),
     );
     root.querySelectorAll("[data-user-lp-skill]").forEach(
       (x) => (x.onchange = () => {
@@ -2551,6 +2614,16 @@ ${D.lifepathCompetence}`,
     );
     root.querySelectorAll("[data-user-resource-label]").forEach(
       (x) => (x.oninput = () => { const r = userResourceRaw(x.dataset.userResourceLabel); if (r) { r.label = x.value; save(); } }),
+    );
+    root.querySelectorAll("[data-lp-move]").forEach(
+      (b) => (b.onclick = () => {
+        const [slotRaw, deltaRaw] = String(b.dataset.lpMove || "").split(":");
+        const slot = Number(slotRaw), delta = Number(deltaRaw), target = slot + delta;
+        const count = selectedLifepathSlots().length;
+        if (!Number.isInteger(slot) || !Number.isInteger(delta) || target < 0 || target >= count) return;
+        [state.lifepaths[slot], state.lifepaths[target]] = [state.lifepaths[target], state.lifepaths[slot]];
+        render();
+      }),
     );
     const resetLpAlloc = root.querySelector('[data-action="reset-lifepath-allocations"]');
     if (resetLpAlloc) resetLpAlloc.onclick = () => {
@@ -2953,6 +3026,10 @@ ${D.lifepathCompetence}`,
     if (lb) lb.onclick = lang;
     const mlb = document.getElementById("mobileLangToggleBtn");
     if (mlb) mlb.onclick = lang;
+    if (typeof window.addEventListener === "function")
+      window.addEventListener("resize", () =>
+        document.querySelectorAll?.(".autoGrowTextarea")?.forEach(autosizeTextarea),
+      );
     document.getElementById("drawerClose").onclick = closeDrawer;
     document.getElementById("drawerBack").onclick = closeDrawer;
     document.getElementById("mobileInfoTop").onclick = () => {
