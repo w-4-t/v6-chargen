@@ -1,0 +1,318 @@
+{
+  "schemaVersion": 3,
+  "user_content": {
+    "schema_version": 1,
+    "meta": {
+      "created_by": "v6-chargen",
+      "note": "User-created content embedded in this character save. Keep this block with the character when moving the JSON between devices."
+    },
+    "lifepaths": {
+      "user_lifepath_001": {
+        "id": "user_lifepath_001",
+        "source": "user_created",
+        "content_type": "lifepath",
+        "content_schema_version": 1,
+        "name": "Боксер",
+        "description": "Ви були бійцем у ринзі. Можливо навіть заробляли цим на життя чи тренували інших. 111111111111111111111111111111",
+        "skills": [
+          "athletics",
+          "awareness",
+          "fighting",
+          "subterfuge",
+          "medicine"
+        ],
+        "resources": [
+          "user_resource_001",
+          "user_resource_002",
+          "user_resource_003"
+        ],
+        "meta": {
+          "created_by": "v6-chargen",
+          "note": "User-created Lifepath embedded in this character save."
+        }
+      }
+    },
+    "resources": {
+      "user_resource_001": {
+        "id": "user_resource_001",
+        "source": "user_created",
+        "content_type": "resource",
+        "content_schema_version": 1,
+        "type": "wealth",
+        "label": "",
+        "meta": {
+          "created_by": "v6-chargen",
+          "note": "User-created Resource embedded for a Custom Lifepath."
+        }
+      },
+      "user_resource_002": {
+        "id": "user_resource_002",
+        "source": "user_created",
+        "content_type": "resource",
+        "content_schema_version": 1,
+        "type": "contact",
+        "label": "Організатор боїв",
+        "meta": {
+          "created_by": "v6-chargen",
+          "note": "User-created Resource embedded for a Custom Lifepath."
+        }
+      },
+      "user_resource_003": {
+        "id": "user_resource_003",
+        "source": "user_created",
+        "content_type": "resource",
+        "content_schema_version": 1,
+        "type": "fame",
+        "label": "Місцевий спортклуб",
+        "meta": {
+          "created_by": "v6-chargen",
+          "note": "User-created Resource embedded for a Custom Lifepath."
+        }
+      }
+    }
+  },
+  "step": 10,
+  "creature": "vampire_ancilla",
+  "young": false,
+  "clan": {
+    "id": "brujah",
+    "choice": null,
+    "caitiffDisciplines": []
+  },
+  "sire": {
+    "type": "caring_sire",
+    "relatedClan": null,
+    "bonusDiscipline": "potence"
+  },
+  "generation": 10,
+  "lifepaths": [
+    {
+      "id": "user_lifepath_001",
+      "skillDots": {
+        "athletics": 1,
+        "awareness": 1,
+        "fighting": 1,
+        "medicine": 1,
+        "subterfuge": 1
+      },
+      "resourceDots": {
+        "user_resource_002": 1,
+        "user_resource_003": 1,
+        "user_resource_001": 1
+      }
+    },
+    {
+      "id": "criminal",
+      "skillDots": {
+        "athletics": 1,
+        "awareness": 1,
+        "fighting": 1,
+        "sabotage": 1,
+        "subterfuge": 1
+      },
+      "resourceDots": {
+        "contact:fencer:0": 1,
+        "mask:default:2": 1,
+        "wealth:default:1": 1
+      }
+    },
+    {
+      "id": "hound",
+      "skillDots": {
+        "fighting": 3,
+        "investigation": 1,
+        "survival": 1
+      },
+      "resourceDots": {
+        "contact:vampiric_authority:2": 1,
+        "status:sect:0": 1,
+        "repository:armory:1": 1
+      }
+    }
+  ],
+  "attributes": {
+    "roles": {
+      "physical": "primary",
+      "social": "tertiary",
+      "mental": "secondary"
+    },
+    "ratings": {
+      "strength": 4,
+      "dexterity": 3,
+      "stamina": 4,
+      "charisma": 2,
+      "manipulation": 2,
+      "composure": 3,
+      "intelligence": 2,
+      "wits": 4,
+      "resolve": 3
+    }
+  },
+  "freeSkills": {
+    "knowledge": 1,
+    "shooting": 1,
+    "persuasion": 2,
+    "athletics": 2,
+    "awareness": 2
+  },
+  "focuses": {
+    "athletics": [
+      {
+        "ref": "running"
+      },
+      {
+        "ref": "lifting"
+      }
+    ],
+    "awareness": [
+      {
+        "ref": "empathy"
+      },
+      {
+        "ref": "instinct"
+      }
+    ],
+    "craft": [],
+    "expression": [],
+    "fighting": [
+      {
+        "ref": "hand_to_hand"
+      },
+      {
+        "ref": "fighting_dirty"
+      },
+      {
+        "ref": "improvised_weaponry"
+      }
+    ],
+    "investigation": [
+      {
+        "ref": "streetwise"
+      }
+    ],
+    "knowledge": [
+      {
+        "custom": "Спорт"
+      }
+    ],
+    "medicine": [
+      {
+        "ref": "first_aid"
+      }
+    ],
+    "persuasion": [
+      {
+        "ref": "intimidation"
+      }
+    ],
+    "sabotage": [
+      {
+        "ref": "burglary"
+      }
+    ],
+    "shooting": [
+      {
+        "ref": "light_firearms"
+      }
+    ],
+    "subterfuge": [
+      {
+        "custom": "Обманний прийом"
+      }
+    ],
+    "survival": [
+      {
+        "ref": "lp_urban_tracking"
+      }
+    ]
+  },
+  "disciplines": {
+    "clanDots": {
+      "celerity": 2,
+      "presence": 1,
+      "potence": 2
+    },
+    "powers": [
+      {
+        "disciplineId": "celerity",
+        "powerId": "rapid_reflexes"
+      },
+      {
+        "disciplineId": "celerity",
+        "powerId": "blink"
+      },
+      {
+        "disciplineId": "potence",
+        "powerId": "soaring_leap"
+      },
+      {
+        "disciplineId": "potence",
+        "powerId": "powerful_strike"
+      },
+      {
+        "disciplineId": "potence",
+        "powerId": "strike_true"
+      },
+      {
+        "disciplineId": "presence",
+        "powerId": "awe"
+      }
+    ]
+  },
+  "traits": [
+    "prowess",
+    "wrestler",
+    "living_weapon"
+  ],
+  "merits": [
+    "intimidating_presence",
+    "bond_resistant"
+  ],
+  "humanity": {
+    "position": 0,
+    "nature": "survivor"
+  },
+  "resources": {
+    "free": [
+      {
+        "type": "property",
+        "label": "Закритий спортивний клуб",
+        "dots": 2,
+        "description": ""
+      },
+      {
+        "type": "vehicle",
+        "label": "VW Golf Gen 4",
+        "dots": 1,
+        "description": ""
+      },
+      {
+        "type": "herd",
+        "label": "Спортсмени",
+        "dots": 2,
+        "description": ""
+      }
+    ],
+    "details": {}
+  },
+  "identity": {
+    "name": "Jonh Butch",
+    "alias": "",
+    "apparentAge": "42",
+    "actualAge": "45",
+    "nostalgicDecade": "1990",
+    "flaws": "",
+    "items": [
+      "Боксерськи рукавиці",
+      "Захищений телефон",
+      "Посвідчення детектива поліції"
+    ],
+    "weapons": ""
+  },
+  "info": {
+    "kicker": "Крок 9 · Player Packet",
+    "title": "Завершення персонажа",
+    "summary": "Розрахуйте Vitae та Силу Волі, після чого визначте деталі ідентичності, Важливі Предмети й необов’язкові Недоліки.",
+    "body": "Максимум Vitae = 10 + Витривалість. Максимум Сили Волі = 5 + Самовладання + Рішучість. Ви отримуєте один додатковий Важливий Предмет за кожен Життєвий Шлях, якщо він відповідає цьому Життєвому Шляху. У пакеті Alpha Недоліки не мають фіксованого механічного бонусу чи штрафу."
+  }
+}
