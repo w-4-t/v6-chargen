@@ -649,6 +649,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
         "id": "artist",
         "name": "Artist",
         "description": "You are a writer, actor, painter, designer, sculptor, or a creative of any other kind. You might have focused on one art form or have explored many different forms of expression, as you figured out how to express yourself.",
+        "tileDescription": "You made a living through creative work and artistic expression.",
         "skills": [
           {
             "id": "awareness",
@@ -693,6 +694,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
         "id": "corporate_executive",
         "name": "Corporate Executive",
         "description": "Your battlefield is the corporate boardroom, where you exercise your quick wits and sharp acumen. You do what you need to get what you want, and you know how to use people that are standing in your way.",
+        "tileDescription": "You navigated corporate power, negotiation, and internal politics.",
         "skills": [
           {
             "id": "awareness",
@@ -740,6 +742,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
         "id": "criminal",
         "name": "Criminal",
         "description": "You make your living by breaking the law, either by taking what you want from others who have it, or by more subtle means. You might have spent some time in prison or worked with other criminals in an organized fashion, and now you count some of them among your contacts.",
+        "tileDescription": "You lived by breaking the law and working around its boundaries.",
         "skills": [
           {
             "id": "athletics",
@@ -787,6 +790,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
         "id": "holy_person",
         "name": "Holy Person",
         "description": "You dedicated part of your life to the study and dissemination of a religious faith. You might have delved deep into mythological studies and discovered a lot about the hidden world before you became what you are today.",
+        "tileDescription": "You dedicated part of your life to religious study and service.",
         "skills": [
           {
             "id": "awareness",
@@ -832,6 +836,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
         "id": "hunter",
         "name": "Hunter",
         "description": "You know how to track prey, set traps, and survive in the areas where your quarry is located. You might have grown up near the wilderness, or you might have just hunted for sport. Either way, you understand your quarry’s behavior and use it to your advantage.",
+        "tileDescription": "You tracked prey, set traps, and survived where your quarry lived.",
         "skills": [
           {
             "id": "awareness",
@@ -877,6 +882,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
         "id": "military",
         "name": "Military",
         "description": "You served your country in its armed forces and received extensive training in the art of war and survival. Weapons are your most trusted tools, and you rarely leave your companions behind. You might still have contact with some of your former comrades, as you survived hell together.",
+        "tileDescription": "You served in the armed forces and trained for combat and survival.",
         "skills": [
           {
             "id": "athletics",
@@ -922,6 +928,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
         "id": "politician",
         "name": "Politician",
         "description": "You worked in the political arena, making policies, negotiating deals, and battling for the public’s attention. You learned that the political game runs on negotiation, and that most of it happens well outside the legal boundaries.",
+        "tileDescription": "You worked in politics, negotiation, public influence, and dealmaking.",
         "skills": [
           {
             "id": "awareness",
@@ -971,6 +978,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
         "id": "technician",
         "name": "Technician",
         "description": "You learned how to work with your hands, even without the deep theoretical knowledge to back it up. You are resourceful and can usually figure your way out of most problems you face.",
+        "tileDescription": "You solved practical problems with tools, repair work, and improvisation.",
         "skills": [
           {
             "id": "athletics",
@@ -1016,6 +1024,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
         "id": "blood_deliverer",
         "name": "Blood Deliverer",
         "description": "Vampires need blood, and some have specific tastes and requirements. That’s where you come in. You hunt down the blood they need and deliver it to them. You might have discovered a way to get rich after becoming a vampire, or you were simply coerced into service by the elders, possibly with the promise of greater status.",
+        "tileDescription": "You acquired and delivered blood for other vampires.",
         "skills": [
           {
             "id": "athletics",
@@ -1059,6 +1068,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
         "id": "clean_up_crew",
         "name": "Clean Up Crew",
         "description": "When things get messy, you are called to make the trouble disappear. It’s a dirty job, but someone has to do it. That someone is you. You might have been forced into this role, or you might have taken it to earn favors and boons from those that need your services.",
+        "tileDescription": "You made dangerous vampiric messes, evidence, and complications disappear.",
         "skills": [
           {
             "id": "athletics",
@@ -1102,6 +1112,8 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
         "id": "hound",
         "name": "Hound",
         "description": "You can also use this [lifepath] to represent a Sweeper or Ductus. You were the muscle for the local authority, using your martial training and limited authority to keep the domain safe and make others follow the rules. Whether you wielded that power wisely or abused it is up to you, but other vampires will resent you either way.",
+        "tileDescription": "You served as an enforcer for local vampiric authority.",
+        "aliases": ["Sweeper", "Ductus"],
         "skills": [
           {
             "id": "fighting",
@@ -1147,6 +1159,8 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
         "id": "diplomat",
         "name": "Diplomat",
         "description": "You can also use this [lifepath] to represent an Emissary or Herald. You were chosen for your exceptional charisma, your skill with words, and your ability to blend in. You traveled to another sect’s domain and opened communications with them, or some faction of them. Sometimes you simply weren’t chased out, and other times you forged alliances.",
+        "tileDescription": "You represented vampiric interests across factions or domains.",
+        "aliases": ["Emissary", "Herald"],
         "skills": [
           {
             "id": "awareness",
@@ -1195,6 +1209,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
         "id": "harpy",
         "name": "Harpy",
         "description": "You set the tone of vampiric society, shaping how others behaved and even how they thought. You kept the ledger of who owed favors to whom, you could raise a reputation or ruin one, and you often held secrets and information that everyone else worked to keep hidden.",
+        "tileDescription": "You shaped reputation, status, and social pressure in vampiric society.",
         "skills": [
           {
             "id": "awareness",
@@ -1240,6 +1255,8 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
         "id": "sheriff",
         "name": "Sheriff",
         "description": "You can also use this [lifepath] to represent a Warlord. You enforced the laws of vampiric society and punished those who broke them. This role came with great authority and freedom, but with heavy responsibility as well. You might have abused that authority for your own ends, but others fear the consequences of crossing you anyway.",
+        "tileDescription": "You enforced vampiric law with broad authority and responsibility.",
+        "aliases": ["Warlord"],
         "skills": [
           {
             "id": "awareness",
@@ -2994,6 +3011,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
       "userCreatedLifepaths": "User-created Lifepaths",
       "chooseLifepathsSelectionLead": "Choose {count} {pathWord}. Finish the Lifepath selection first; Skill and Resource dots are allocated afterward in shared matrices.",
       "createCustomLifepath": "Create Custom Lifepath",
+      "lifepathAlsoRepresents": "Also represents: {aliases}",
       "editCustomLifepath": "Edit Custom Lifepath",
       "edit": "Edit",
       "delete": "Delete",
@@ -3001,6 +3019,8 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
       "embeddedUserContentNote": "This is embedded user-created content. Its definition is stored inside the character JSON and travels with the save.",
       "lifepathAllocation": "Lifepath allocation",
       "completeLifepathsBeforeAllocation": "Complete all {count} Lifepath selections and finish any Custom Lifepath definitions to unlock allocation.",
+      "completeLifepathSkillsBeforeAllocation": "Choose all {count} Lifepaths and define five Skills for each Custom Lifepath to unlock the Skill matrix.",
+      "completeLifepathResourcesBeforeAllocation": "Define three distinct Resource types for each selected Custom Lifepath to unlock the Resource matrix.",
       "lifepathSkillMatrix": "Skill dots from Lifepaths",
       "lifepathSkillMatrixLead": "Each column is one Lifepath. Shared Skills occupy a single row; each cell still records that Lifepath’s own contribution.",
       "lifepathResourceMatrix": "Resource dots from Lifepaths",
