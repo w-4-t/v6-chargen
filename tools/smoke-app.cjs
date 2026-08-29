@@ -151,9 +151,14 @@ const lpHtml=x.get('mainCard').innerHTML;
 assert.ok(lpHtml.includes('Skill dots from Lifepaths') && lpHtml.includes('Resource dots from Lifepaths'), 'Lifepath matrices are not rendered after all paths are selected');
 assert.ok(lpHtml.includes('class="lpMatrix"'), 'Lifepath allocation is not using the shared matrix UI');
 assert.strictEqual((lpHtml.match(/data-info-lp-skill="fighting"/g)||[]).length,1,'shared Fighting Skill is duplicated instead of occupying one matrix row');
-assert.strictEqual((lpHtml.match(/Repository: Armory/g)||[]).length,1,'shared Armory Resource is duplicated instead of occupying one matrix row');
+assert.strictEqual((lpHtml.match(/<span>Repository: Armory<\/span>/g)||[]).length,1,'shared Armory Resource is duplicated instead of occupying one matrix row');
 assert.ok(!lpHtml.includes('Current 0') && !lpHtml.includes('house-rule cap bonus') && !lpHtml.includes('Suggested Focus'), 'Lifepath step still exposes cap or Focus recommendation noise');
 assert.ok(lpHtml.includes('data-info-lp-skill="awareness"'), 'Lifepath Skill rows are missing ? info controls');
+assert.ok(lpHtml.includes('data-info-resource="repository"'), 'Lifepath Resource rows are missing ? info controls');
+assert.ok(lpHtml.indexOf('<span>Ally: Fellow hunter</span>') < lpHtml.indexOf('<span>Repository: Armory</span>') && lpHtml.indexOf('<span>Repository: Armory</span>') < lpHtml.indexOf('<span>Status: Sect</span>'), 'Lifepath Resource rows are not alphabetically ordered by their localized display labels');
+assert.ok(lpHtml.includes('Also represents: Sweeper / Ductus'), 'Hound tile does not expose its Alpha alternate roles');
+assert.ok(lpHtml.includes('Also represents: Warlord') || x.ctx.V6Data.forLocale('en').lifepaths.find(v=>v.id==='sheriff').aliases.includes('Warlord'), 'Sheriff alternate role is missing from localized Lifepath data');
+assert.ok(!lpHtml.includes('You can also use this [lifepath] to represent a Sweeper or Ductus.'), 'Hound tile still renders the long Alpha paragraph instead of compact tile copy');
 
 // Embedded user-created content is self-contained and visibly typed in the save.
 const userLpState=JSON.parse(JSON.stringify(lpState));
@@ -179,6 +184,16 @@ saved=JSON.parse(x.store.get('vtm_v6_alpha_chargen_v0_9_0'));
 assert.strictEqual(saved.user_content.lifepaths.user_lifepath_001.source,'user_created');
 assert.strictEqual(saved.user_content.lifepaths.user_lifepath_001.content_type,'lifepath');
 assert.strictEqual(saved.user_content.resources.user_resource_002.content_type,'resource');
+
+// A selected Custom Lifepath unlocks the Skill matrix as soon as its five Skills are defined; incomplete Resources do not block Skill allocation.
+const partialUserLpState=JSON.parse(JSON.stringify(userLpState));
+partialUserLpState.user_content.resources.user_resource_001.type='';
+partialUserLpState.user_content.resources.user_resource_002.type='';
+partialUserLpState.user_content.resources.user_resource_003.type='';
+x=run('en',{'vtm_v6_alpha_chargen_v0_9_0':JSON.stringify(partialUserLpState)});
+const partialUserLpHtml=x.get('mainCard').innerHTML;
+assert.ok(partialUserLpHtml.includes('Skill dots from Lifepaths') && partialUserLpHtml.includes('Corporate Security'), 'selected Custom Lifepath with five Skills does not unlock the Skill matrix');
+assert.ok(partialUserLpHtml.includes('Define three distinct Resource types'), 'incomplete Custom Lifepath Resources do not get their own Resource-matrix notice');
 
 // Schema v2 Custom Lifepaths migrate into portable user_content definitions and stable Resource IDs.
 const v2Custom=JSON.parse(run('en').store.get('vtm_v6_alpha_chargen_v0_9_0'));
