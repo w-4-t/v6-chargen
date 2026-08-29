@@ -189,7 +189,7 @@ for (const forbidden of ['Character Generator','V6 Alpha · project house rules 
   assert.ok(!html.includes(forbidden), `index.html embeds localized EN UI copy: ${forbidden}`);
 assert.ok(!html.includes('adaptive PWA'), 'desktop header still exposes adaptive PWA label');
 assert.ok(!html.includes('rawBadge'), 'removed project-house-rules badge still exists in desktop markup/CSS');
-assert.ok(html.includes('<div class="versionLabel">v0.10.9</div>'), 'version is not placed beneath desktop Export/Import controls');
+assert.ok(html.includes('<div class="versionLabel">v0.10.10</div>'), 'version is not placed beneath desktop Export/Import controls');
 assert.ok(html.includes('class="brandTitle"') && html.includes('white-space: nowrap'), 'desktop generator title is not constrained to one line');
 assert.ok(app.includes('data-info-creature=') && app.includes('data-info-young'), 'Creature choices are missing dedicated info controls');
 assert.ok(html.includes('.creatureGrid') && html.includes('grid-auto-rows: 1fr'), 'Creature tiles are not normalized to equal-height grid rows');
@@ -197,6 +197,12 @@ assert.ok(app.includes('variableDisciplineBlock') && app.includes('data-clan-cho
 assert.ok(app.includes('renderClanDisciplineList') && app.includes('clanDisciplineLine'), 'Clan rows do not use the structured Discipline list');
 assert.ok(app.includes('${renderClanDisciplineList(c)}'), 'unavailable Clan rows do not receive the same Discipline list');
 assert.ok(html.includes('grid-template-columns: minmax(0, 66fr) minmax(0, 34fr)'), 'desktop Clan Discipline column is not proportionally constrained');
+assert.ok(app.includes('userLifepathSection') && app.indexOf('${customHtml}${selectionHtml}') >= 0, 'user-created Lifepaths are not rendered above built-in categories');
+assert.ok(app.includes('userLifepathCard expanded') && app.includes('data-reset-user-lifepath'), 'expanded user Lifepath row lacks integrated edit/reset controls');
+assert.ok(app.includes('autoGrowTextarea') && app.includes('autosizeTextarea'), 'Custom Lifepath Description does not use auto-growing textarea behavior');
+assert.ok(app.includes('lifepathOrderBadge') && app.includes('data-lp-move='), 'Lifepath selection order markers or matrix reorder controls are missing');
+assert.ok(html.includes('.userLifepathList') && html.includes('grid-template-columns: 1fr'), 'user-created Lifepaths are not constrained to full-width rows');
+assert.ok(html.includes('.lpMatrix thead .lpMatrixTotal') && html.includes('border-bottom: 2px solid var(--line2)'), 'Total matrix header lacks a visible divider');
 
 // Runtime lookup is key-based only: no reverse English-value matching.
 {
