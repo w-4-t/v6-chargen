@@ -1803,7 +1803,7 @@ ${D.lifepathCompetence}`,
   }
   function renderLifepathOrderBadge(id) {
     const n = lifepathSelectionNumber(id);
-    return n ? `<span class="lifepathOrderBadge"># ${n}</span>` : "";
+    return `<span class="lifepathOrderSlot" aria-hidden="true">${n ? `<span class="lifepathOrderBadge"># ${n}</span>` : ""}</span>`;
   }
   function renderLifepathChoice(d) {
     if (!d) return "";
@@ -1811,10 +1811,10 @@ ${D.lifepathCompetence}`,
     const selected = slot >= 0;
     const full = selectedLifepathCount() >= lpCount();
     const aliases = Array.isArray(d.aliases) && d.aliases.length
-      ? `<span class="lifepathChoiceAliases">${e(M("lifepathAlsoRepresents", { aliases: d.aliases.join(" / ") }))}</span>`
+      ? e(M("lifepathAlsoRepresents", { aliases: d.aliases.join(" / ") }))
       : "";
     const summary = d.tileDescription || d.description || "";
-    return `<div class="lifepathChoiceCard ${selected ? "selected" : ""}"><button type="button" class="lifepathChoiceMain" data-lp-toggle="${e(d.id)}" ${!selected && full ? "disabled" : ""}><div class="lifepathChoiceTitleRow"><b>${e(d.name)}</b>${renderLifepathOrderBadge(d.id)}</div>${aliases}<span>${e(summary)}</span></button><div class="lifepathChoiceActions"><button type="button" class="fieldInfoBtn" data-info-lp-id="${e(d.id)}" aria-label="${e(M("readInformation", { name: d.name }))}">?</button></div></div>`;
+    return `<div class="lifepathChoiceCard ${selected ? "selected" : ""}"><button type="button" class="lifepathChoiceMain" data-lp-toggle="${e(d.id)}" ${!selected && full ? "disabled" : ""}><div class="lifepathChoiceHead"><div class="lifepathChoiceTitleRow"><b>${e(d.name)}</b>${renderLifepathOrderBadge(d.id)}</div><span class="lifepathChoiceAliasSlot ${aliases ? "" : "empty"}">${aliases || "&nbsp;"}</span></div><span class="lifepathChoiceDescription">${e(summary)}</span></button><div class="lifepathChoiceActions"><button type="button" class="fieldInfoBtn" data-info-lp-id="${e(d.id)}" aria-label="${e(M("readInformation", { name: d.name }))}">?</button></div></div>`;
   }
   function renderUserLifepathChoice(id) {
     const d = userLifepathDef(id);
@@ -1869,7 +1869,7 @@ ${D.lifepathCompetence}`,
     return used === total ? "good" : used > 0 ? "warn" : "danger";
   }
   function renderLifepathMatrixHeader(slot, def, used, total, selectedCount) {
-    return `<th class="lpMatrixPath"><div class="matrixPathTitle"><span class="matrixPathOrder"># ${slot + 1}</span><span class="matrixPathName">${e(def.name)}</span><span class="matrixPathReorder"><button type="button" data-lp-move="${slot}:-1" ${slot <= 0 ? "disabled" : ""} aria-label="${e(M("moveLifepathEarlier", { name: def.name }))}">←</button><button type="button" data-lp-move="${slot}:1" ${slot >= selectedCount - 1 ? "disabled" : ""} aria-label="${e(M("moveLifepathLater", { name: def.name }))}">→</button></span></div><small class="${matrixBudgetClass(used, total)}">${used}/${total}</small></th>`;
+    return `<th class="lpMatrixPath"><div class="matrixPathTitle"><span class="matrixPathName">${e(def.name)}</span><span class="matrixPathReorder"><button type="button" data-lp-move="${slot}:-1" ${slot <= 0 ? "disabled" : ""} aria-label="${e(M("moveLifepathEarlier", { name: def.name }))}">&lt;</button><button type="button" data-lp-move="${slot}:1" ${slot >= selectedCount - 1 ? "disabled" : ""} aria-label="${e(M("moveLifepathLater", { name: def.name }))}">&gt;</button></span></div><small class="${matrixBudgetClass(used, total)}">${used}/${total}</small></th>`;
   }
   function renderLifepathSkillMatrix() {
     const selected = selectedLifepathSlots();
