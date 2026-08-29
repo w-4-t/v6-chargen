@@ -1,4 +1,4 @@
-# VTM V6 Alpha Character Generator — v0.10.10
+# VTM V6 Alpha Character Generator — v0.10.11
 
 Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 
@@ -8,6 +8,14 @@ Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 - Character-creation rules follow the V6 Alpha Player Packet unless a project interpretation or house rule is explicitly labelled.
 - No V5 / V5.5 hybrid rules are intentionally imported.
 
+
+
+## v0.10.11 — Lifepath tile stability and matrix reorder pass
+
+- Lifepath order numbers remain on selection tiles only; matrix headers no longer repeat `# N`.
+- Matrix reorder controls are compact `<` / `>` overlays that do not affect column width. On hover-capable devices they appear only on hover/focus; touch devices retain access.
+- Built-in Lifepath tiles reserve stable space for the `# N` badge before selection, preventing title reflow when a path is chosen.
+- Title/alias areas use a shared reserved height so tile descriptions align more consistently across a grid row.
 
 ## v0.10.10 — Lifepath ordering and user-created editor pass
 
@@ -167,4 +175,4 @@ The number of known Powers is a separate chargen budget from Discipline dots. A 
 
 ## Deployment
 
-Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.10`.
+Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.11`.

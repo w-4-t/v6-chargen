@@ -913,44 +913,64 @@
       }
       .lifepathChoiceMain b {
         display: block;
-        margin-bottom: 5px;
+        margin: 0;
         font-size: 15px;
+        line-height: 1.28;
+      }
+      .lifepathChoiceHead {
+        min-height: 62px;
+        display: grid;
+        grid-template-rows: minmax(38px, auto) 17px;
+        align-content: start;
       }
       .lifepathChoiceTitleRow,
       .userLifepathSummaryTitle {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: space-between;
         gap: 8px;
         min-width: 0;
       }
+      .lifepathChoiceTitleRow { min-height: 38px; }
       .lifepathChoiceTitleRow b,
       .userLifepathSummaryTitle b { margin-bottom: 0; min-width: 0; }
+      .lifepathOrderSlot {
+        flex: 0 0 36px;
+        width: 36px;
+        min-height: 23px;
+        display: inline-flex !important;
+        align-items: flex-start;
+        justify-content: flex-end;
+      }
       .lifepathOrderBadge {
         flex: 0 0 auto;
-        display: inline-flex;
+        display: inline-flex !important;
         align-items: center;
         justify-content: center;
         min-height: 23px;
         border: 1px solid var(--good);
         border-radius: 999px;
         padding: 2px 7px;
-        color: var(--good);
+        color: var(--good) !important;
         background: rgba(93, 211, 158, 0.08);
-        font-size: 10px;
+        font-size: 10px !important;
         font-weight: 900;
-        line-height: 1;
+        line-height: 1 !important;
+        white-space: nowrap;
       }
-      .lifepathChoiceAliases {
+      .lifepathChoiceAliasSlot {
         display: block;
-        margin-bottom: 5px;
+        min-height: 17px;
         color: var(--info) !important;
         font-size: 10px !important;
         line-height: 1.25 !important;
         font-weight: 750;
+        overflow-wrap: anywhere;
       }
-      .lifepathChoiceMain span {
+      .lifepathChoiceAliasSlot.empty { visibility: hidden; }
+      .lifepathChoiceDescription {
         display: block;
+        margin-top: 4px;
         color: var(--muted);
         font-size: 12px;
         line-height: 1.45;
@@ -1168,40 +1188,57 @@
         overflow-wrap: anywhere;
       }
       .matrixPathTitle {
-        display: grid;
-        grid-template-columns: auto minmax(0, 1fr) auto;
+        position: relative;
+        min-height: 24px;
+        display: flex;
         align-items: center;
-        gap: 5px;
-      }
-      .matrixPathOrder {
-        color: var(--good);
-        font-size: 9px;
-        font-weight: 900;
-        white-space: nowrap;
+        justify-content: center;
       }
       .matrixPathName {
         min-width: 0;
+        max-width: 100%;
         font-weight: 800;
         line-height: 1.25;
+        text-align: center;
       }
       .matrixPathReorder {
-        display: inline-flex !important;
-        gap: 3px;
-        white-space: nowrap;
+        position: absolute;
+        inset: 50% 2px auto 2px;
+        transform: translateY(-50%);
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        pointer-events: auto;
       }
       .matrixPathReorder button {
-        width: 22px;
-        height: 22px;
-        min-height: 22px;
-        border: 1px solid var(--line2);
-        background: var(--panel2);
-        color: var(--text);
-        border-radius: 6px;
+        width: 17px;
+        height: 17px;
+        min-height: 17px;
+        border: 0;
+        background: rgba(13, 14, 17, .88);
+        color: var(--muted);
+        border-radius: 4px;
         padding: 0;
         font-size: 11px;
-        line-height: 1;
+        font-weight: 900;
+        line-height: 17px;
+        text-align: center;
       }
-      .matrixPathReorder button:disabled { opacity: .22; }
+      .matrixPathReorder button:hover,
+      .matrixPathReorder button:focus-visible { color: var(--text); background: var(--panel); }
+      .matrixPathReorder button:disabled { opacity: .16; }
+      @media (hover: hover) {
+        .matrixPathReorder {
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity .12s ease;
+        }
+        .lpMatrixPath:hover .matrixPathReorder,
+        .lpMatrixPath:focus-within .matrixPathReorder {
+          opacity: 1;
+          pointer-events: auto;
+        }
+      }
       .lpMatrixPath small {
         display: inline-block;
         margin-top: 4px;
@@ -2628,7 +2665,7 @@
                 hidden
             /></label>
           </div>
-          <div class="versionLabel">v0.10.10</div>
+          <div class="versionLabel">v0.10.11</div>
         </div>
       </aside>
       <main class="main">
