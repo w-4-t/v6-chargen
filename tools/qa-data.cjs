@@ -129,7 +129,7 @@ assert.ok(app.includes('infoLifepathSkill(sid)'), 'Lifepath steppers should keep
 const htmlForLifepaths = fs.readFileSync('index.html','utf8');
 assert.ok(htmlForLifepaths.includes('.lpMatrixWrap') && htmlForLifepaths.includes('overflow-x: auto'), 'Lifepath matrices are not horizontally scrollable');
 assert.ok(htmlForLifepaths.includes('.lpMatrixName') && htmlForLifepaths.includes('position: sticky'), 'Lifepath matrix row labels are not sticky');
-assert.ok(htmlForLifepaths.includes('.lifepathChoiceAliases'), 'Lifepath alternate-role line styling is missing');
+assert.ok(htmlForLifepaths.includes('.lifepathChoiceAliasSlot'), 'Lifepath alternate-role line styling is missing');
 assert.ok(htmlForLifepaths.includes('.lifepathIssues') && htmlForLifepaths.includes('margin-top: 12px'), 'Lifepath validation messages are not spaced from allocation controls');
 assert.ok(app.includes('lifepathSkillMatrixReady') && app.includes('lifepathResourceMatrixReady'), 'Custom Lifepath Skill/Resource matrix readiness is not separated');
 assert.ok(app.includes('data-info-resource=') && app.includes('lifepathResourceMatrixLabel'), 'Lifepath Resource matrix lacks row help or alphabetic display-label sorting');
@@ -189,7 +189,7 @@ for (const forbidden of ['Character Generator','V6 Alpha · project house rules 
   assert.ok(!html.includes(forbidden), `index.html embeds localized EN UI copy: ${forbidden}`);
 assert.ok(!html.includes('adaptive PWA'), 'desktop header still exposes adaptive PWA label');
 assert.ok(!html.includes('rawBadge'), 'removed project-house-rules badge still exists in desktop markup/CSS');
-assert.ok(html.includes('<div class="versionLabel">v0.10.10</div>'), 'version is not placed beneath desktop Export/Import controls');
+assert.ok(html.includes('<div class="versionLabel">v0.10.11</div>'), 'version is not placed beneath desktop Export/Import controls');
 assert.ok(html.includes('class="brandTitle"') && html.includes('white-space: nowrap'), 'desktop generator title is not constrained to one line');
 assert.ok(app.includes('data-info-creature=') && app.includes('data-info-young'), 'Creature choices are missing dedicated info controls');
 assert.ok(html.includes('.creatureGrid') && html.includes('grid-auto-rows: 1fr'), 'Creature tiles are not normalized to equal-height grid rows');
@@ -201,6 +201,9 @@ assert.ok(app.includes('userLifepathSection') && app.indexOf('${customHtml}${sel
 assert.ok(app.includes('userLifepathCard expanded') && app.includes('data-reset-user-lifepath'), 'expanded user Lifepath row lacks integrated edit/reset controls');
 assert.ok(app.includes('autoGrowTextarea') && app.includes('autosizeTextarea'), 'Custom Lifepath Description does not use auto-growing textarea behavior');
 assert.ok(app.includes('lifepathOrderBadge') && app.includes('data-lp-move='), 'Lifepath selection order markers or matrix reorder controls are missing');
+assert.ok(!app.includes('matrixPathOrder'), 'matrix headers still render Lifepath order numbers');
+assert.ok(html.includes('@media (hover: hover)') && html.includes('.lpMatrixPath:hover .matrixPathReorder') && html.includes('position: absolute'), 'matrix reorder controls are not hover-revealed overlays');
+assert.ok(html.includes('.lifepathOrderSlot') && html.includes('flex: 0 0 36px') && html.includes('.lifepathChoiceHead') && html.includes('min-height: 62px'), 'Lifepath tile title/order layout does not reserve stable space');
 assert.ok(html.includes('.userLifepathList') && html.includes('grid-template-columns: 1fr'), 'user-created Lifepaths are not constrained to full-width rows');
 assert.ok(html.includes('.lpMatrix thead .lpMatrixTotal') && html.includes('border-bottom: 2px solid var(--line2)'), 'Total matrix header lacks a visible divider');
 

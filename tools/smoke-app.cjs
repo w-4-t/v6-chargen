@@ -159,10 +159,10 @@ assert.ok(lpHtml.indexOf('<span>Ally: Fellow hunter</span>') < lpHtml.indexOf('<
 assert.ok(lpHtml.includes('Also represents: Sweeper / Ductus'), 'Hound tile does not expose its Alpha alternate roles');
 assert.ok(lpHtml.includes('Also represents: Warlord') || x.ctx.V6Data.forLocale('en').lifepaths.find(v=>v.id==='sheriff').aliases.includes('Warlord'), 'Sheriff alternate role is missing from localized Lifepath data');
 assert.ok(!lpHtml.includes('You can also use this [lifepath] to represent a Sweeper or Ductus.'), 'Hound tile still renders the long Alpha paragraph instead of compact tile copy');
-assert.ok(lpHtml.includes('Hunter</b><span class="lifepathOrderBadge"># 1</span>'), 'first selected Lifepath tile lacks # 1 order marker');
-assert.ok(lpHtml.includes('Hound</b><span class="lifepathOrderBadge"># 2</span>'), 'second selected Lifepath tile lacks # 2 order marker');
+assert.ok(lpHtml.includes('Hunter</b><span class="lifepathOrderSlot" aria-hidden="true"><span class="lifepathOrderBadge"># 1</span>'), 'first selected Lifepath tile lacks # 1 order marker');
+assert.ok(lpHtml.includes('Hound</b><span class="lifepathOrderSlot" aria-hidden="true"><span class="lifepathOrderBadge"># 2</span>'), 'second selected Lifepath tile lacks # 2 order marker');
 assert.ok(lpHtml.includes('data-lp-move="0:-1"') && lpHtml.includes('data-lp-move="0:1"') && lpHtml.includes('data-lp-move="1:-1"') && lpHtml.includes('data-lp-move="1:1"'), 'matrix Lifepath reorder controls are missing');
-assert.ok(lpHtml.includes('class="matrixPathOrder"># 1</span>') && lpHtml.includes('class="matrixPathOrder"># 2</span>'), 'matrix headers do not expose Lifepath order');
+assert.ok(!lpHtml.includes('matrixPathOrder') && !lpHtml.includes('class="lpMatrixPath"><div class="matrixPathTitle"><span class="matrixPathOrder"'), 'matrix headers still expose Lifepath order numbers');
 
 // Embedded user-created content is self-contained and visibly typed in the save.
 const userLpState=JSON.parse(JSON.stringify(lpState));
@@ -186,7 +186,7 @@ x=run('en',{'vtm_v6_alpha_chargen_v0_9_0':JSON.stringify(userLpState)});
 assert.ok(x.get('mainCard').innerHTML.includes('Corporate Security'), 'embedded user Lifepath did not render on another load');
 const userLpHtml=x.get('mainCard').innerHTML;
 assert.ok(userLpHtml.indexOf('User-created Lifepaths') < userLpHtml.indexOf('Mortal Lifepaths'), 'user-created Lifepath section is not above built-in categories');
-assert.ok(userLpHtml.includes('class="userLifepathCard selected') && userLpHtml.includes('Corporate Security</b><span class="lifepathOrderBadge"># 2</span>'), 'collapsed user-created Lifepath row/order marker did not render');
+assert.ok(userLpHtml.includes('class="userLifepathCard selected') && userLpHtml.includes('Corporate Security</b><span class="lifepathOrderSlot" aria-hidden="true"><span class="lifepathOrderBadge"># 2</span>'), 'collapsed user-created Lifepath row/order marker did not render');
 assert.ok(userLpHtml.includes('data-edit-user-lifepath="user_lifepath_001"') && userLpHtml.includes('data-delete-user-lifepath="user_lifepath_001"') && userLpHtml.includes('data-info-lp-id="user_lifepath_001"'), 'collapsed user-created Lifepath controls are incomplete');
 saved=JSON.parse(x.store.get('vtm_v6_alpha_chargen_v0_9_0'));
 assert.strictEqual(saved.user_content.lifepaths.user_lifepath_001.source,'user_created');
