@@ -1,4 +1,4 @@
-# VTM V6 Alpha Character Generator — v0.10.9
+# VTM V6 Alpha Character Generator — v0.10.10
 
 Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 
@@ -9,15 +9,17 @@ Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 - No V5 / V5.5 hybrid rules are intentionally imported.
 
 
-## v0.10.9 — Lifepath presentation and Custom Lifepath flow
+## v0.10.10 — Lifepath ordering and user-created editor pass
 
-- Built-in Lifepath tiles now use compact narrative summaries; the full Alpha text remains available through `?`.
-- Alpha alternate-role mappings are visible directly on the relevant tiles: Hound → Sweeper / Ductus, Diplomat → Emissary / Herald, Sheriff → Warlord.
-- The Custom Lifepath editor renders immediately below the create/edit controls instead of appearing after the full Lifepath catalog.
-- Skill and Resource matrix readiness are evaluated independently for Custom Lifepaths. A selected Custom Lifepath with five defined Skills can enter Skill allocation even while its Resource definition is still incomplete.
-- Resource rows now expose `?` help and are sorted alphabetically by their localized display labels.
-- Validation/status output below `Reset allocations` has explicit spacing in both incomplete and complete states.
-- The portable `user_content` model from v0.10.8 is preserved unchanged: `user_lifepath_NNN` / `user_resource_NNN`, embedded definitions, typed metadata, and schema-versioned migration.
+- User-created Lifepaths stay in a dedicated full-width section above every built-in Lifepath category.
+- Each user-created Lifepath is a single full-width row. `Edit` expands that same row into the editor; while expanded, `Done` replaces `Edit`, while `Delete`, `Reset`, and `?` remain available.
+- The expanded editor uses the Lifepath name as a single-line input and an auto-growing Description textarea; collapsing the editor returns both to plain text.
+- `Reset` clears the embedded definition and its associated allocations without deleting the stable `user_lifepath_NNN` / `user_resource_NNN` identities.
+- Selected Lifepaths receive visible `# N` order markers. Removing a Lifepath compacts the remaining order automatically; selecting a new one appends it to the end.
+- Skill and Resource matrices follow Lifepath selection order and expose compact left/right controls in each Lifepath header for manual reordering.
+- Reordering swaps the complete Lifepath allocation objects, so Skill/Resource contributions remain attached to their originating Lifepath.
+- The `Total / Разом` matrix header now has a stronger bottom divider so it does not visually merge into the first Total body cell.
+- The portable `user_content` schema remains self-contained and unchanged.
 
 ## v0.10.7 — Sire / Сір presentation pass
 
@@ -165,4 +167,4 @@ The number of known Powers is a separate chargen budget from Discipline dots. A 
 
 ## Deployment
 
-Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.9`.
+Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.10`.

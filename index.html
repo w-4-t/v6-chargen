@@ -916,6 +916,31 @@
         margin-bottom: 5px;
         font-size: 15px;
       }
+      .lifepathChoiceTitleRow,
+      .userLifepathSummaryTitle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        min-width: 0;
+      }
+      .lifepathChoiceTitleRow b,
+      .userLifepathSummaryTitle b { margin-bottom: 0; min-width: 0; }
+      .lifepathOrderBadge {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 23px;
+        border: 1px solid var(--good);
+        border-radius: 999px;
+        padding: 2px 7px;
+        color: var(--good);
+        background: rgba(93, 211, 158, 0.08);
+        font-size: 10px;
+        font-weight: 900;
+        line-height: 1;
+      }
       .lifepathChoiceAliases {
         display: block;
         margin-bottom: 5px;
@@ -950,21 +975,91 @@
         font-weight: 750;
       }
       .dangerText { color: var(--danger); }
-      .customLifepathEditor {
-        border: 1px solid var(--line2);
-        background: var(--panel2);
-        border-radius: 15px;
-        padding: 13px;
-        margin: 10px 0 16px;
+      .userLifepathSection { margin: 12px 0 16px; }
+      .userLifepathList {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 9px;
       }
-      .customEditorHead {
+      .userLifepathCard {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: stretch;
+        border: 1px solid var(--line);
+        background: var(--panel2);
+        border-radius: 13px;
+        overflow: hidden;
+      }
+      .userLifepathCard.selected {
+        border-color: var(--good);
+        box-shadow: inset 0 0 0 1px var(--good);
+      }
+      .userLifepathCard.incomplete { border-color: var(--warn); }
+      .userLifepathCard.expanded {
+        display: block;
+        overflow: visible;
+      }
+      .userLifepathSummary {
+        min-width: 0;
+        width: 100%;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        text-align: left;
+        padding: 11px 12px;
+        cursor: pointer;
+      }
+      .userLifepathSummary:disabled { opacity: .38; cursor: not-allowed; }
+      .userLifepathSummary b { font-size: 15px; }
+      .userLifepathSummary > span {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+      }
+      .userLifepathActions {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        margin-bottom: 12px;
+        justify-content: flex-end;
+        gap: 6px;
+        padding: 7px 8px;
+        border-left: 1px solid var(--line);
+        background: rgba(255,255,255,0.015);
       }
-      .customEditorHead code,
+      .userLifepathEditorTop {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: stretch;
+        border-bottom: 1px solid var(--line);
+      }
+      .customLifepathNameInput {
+        min-width: 0;
+        width: 100%;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        color: var(--text) !important;
+        padding: 12px !important;
+        font-size: 15px !important;
+        font-weight: 850;
+      }
+      .customLifepathNameInput:focus { outline: 1px solid var(--info); outline-offset: -2px; }
+      .customLifepathEditor {
+        background: transparent;
+        padding: 12px;
+        margin: 0;
+      }
+      .customDescriptionField { margin-bottom: 12px; }
+      .field textarea.autoGrowTextarea {
+        width: 100%;
+        min-height: 38px;
+        overflow: hidden;
+        resize: none;
+        line-height: 1.45;
+        box-sizing: border-box;
+      }
       .userContentId code,
       .userContentNote code {
         color: var(--info);
@@ -1072,6 +1167,41 @@
         display: block;
         overflow-wrap: anywhere;
       }
+      .matrixPathTitle {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 5px;
+      }
+      .matrixPathOrder {
+        color: var(--good);
+        font-size: 9px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+      .matrixPathName {
+        min-width: 0;
+        font-weight: 800;
+        line-height: 1.25;
+      }
+      .matrixPathReorder {
+        display: inline-flex !important;
+        gap: 3px;
+        white-space: nowrap;
+      }
+      .matrixPathReorder button {
+        width: 22px;
+        height: 22px;
+        min-height: 22px;
+        border: 1px solid var(--line2);
+        background: var(--panel2);
+        color: var(--text);
+        border-radius: 6px;
+        padding: 0;
+        font-size: 11px;
+        line-height: 1;
+      }
+      .matrixPathReorder button:disabled { opacity: .22; }
       .lpMatrixPath small {
         display: inline-block;
         margin-top: 4px;
@@ -1093,6 +1223,10 @@
         width: 70px;
         text-align: center;
         background: var(--panel3) !important;
+      }
+      .lpMatrix thead .lpMatrixTotal {
+        border-bottom: 2px solid var(--line2) !important;
+        box-shadow: inset 0 -1px 0 rgba(255,255,255,.08);
       }
       .matrixRowName {
         display: flex;
@@ -1382,6 +1516,15 @@
         .lifepathSelectionStatus {
           align-items: stretch;
           flex-direction: column;
+        }
+        .userLifepathCard,
+        .userLifepathEditorTop {
+          grid-template-columns: 1fr;
+        }
+        .userLifepathActions {
+          border-left: 0;
+          border-top: 1px solid var(--line);
+          flex-wrap: wrap;
         }
         .lpMatrixName {
           min-width: 155px;
@@ -2485,7 +2628,7 @@
                 hidden
             /></label>
           </div>
-          <div class="versionLabel">v0.10.9</div>
+          <div class="versionLabel">v0.10.10</div>
         </div>
       </aside>
       <main class="main">
