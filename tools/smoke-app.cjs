@@ -287,7 +287,7 @@ assert.ok(x.get('mainCard').innerHTML.includes('Чудовисько 1'), 'Human
 
 console.log('smoke-app: OK');
 
-// v0.10.15 Skill row metadata/state presentation.
+// v0.10.17 Skill row metadata/state presentation.
 const skillState=JSON.parse(run('uk').store.get('vtm_v6_alpha_chargen_v0_9_0'));
 skillState.step=5;
 skillState.lifepaths=[

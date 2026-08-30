@@ -2296,10 +2296,10 @@
           background 0.15s;
       }
       .skillRow.hasRating {
-        border-color: #475947;
+        border-color: #3a4049;
         background: linear-gradient(
           90deg,
-          rgba(183, 214, 182, 0.07),
+          rgba(255, 255, 255, 0.025),
           var(--panel2) 38%
         );
       }
@@ -2325,8 +2325,8 @@
         color: var(--muted);
       }
       .skillStat.lifepathDots.matched {
-        border-color: #596359;
-        background: rgba(183, 214, 182, 0.05);
+        border-color: var(--line2);
+        background: rgba(255, 255, 255, 0.035);
         color: var(--text);
       }
       .skillNameBtn {
@@ -2388,28 +2388,29 @@
         margin-left: 3px;
       }
       .skillStat.cap {
-        border-color: #3b4650;
-        color: var(--info);
+        border-color: var(--line2);
+        color: var(--muted);
       }
       .skillStat.cap.matched {
-        border-color: #596b59;
-        background: rgba(183, 214, 182, 0.06);
-        color: var(--good);
+        border-color: #6a717b;
+        background: rgba(255, 255, 255, 0.045);
+        color: var(--text);
       }
       .stepper .skillLevelValue-minimum {
-        border-color: #45484e;
-        color: var(--muted);
-        background: rgba(255,255,255,.018);
+        border-color: #4d535c;
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.035);
       }
       .stepper .skillLevelValue-intermediate {
-        border-color: #5a5137;
-        color: var(--warn);
-        background: rgba(214, 190, 105, .045);
+        border-color: #666d77;
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.055);
       }
       .stepper .skillLevelValue-cap {
-        border-color: #536453;
-        color: var(--good);
-        background: rgba(183, 214, 182, .055);
+        border-color: #858d97;
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.085);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.045);
       }
 
       .fieldLabelRow,
@@ -3011,7 +3012,7 @@
                 hidden
             /></label>
           </div>
-          <div class="versionLabel">v0.10.15</div>
+          <div class="versionLabel">v0.10.17</div>
         </div>
       </aside>
       <main class="main">

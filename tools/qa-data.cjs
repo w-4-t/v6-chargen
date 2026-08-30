@@ -189,7 +189,7 @@ for (const forbidden of ['Character Generator','V6 Alpha · project house rules 
   assert.ok(!html.includes(forbidden), `index.html embeds localized EN UI copy: ${forbidden}`);
 assert.ok(!html.includes('adaptive PWA'), 'desktop header still exposes adaptive PWA label');
 assert.ok(!html.includes('rawBadge'), 'removed project-house-rules badge still exists in desktop markup/CSS');
-assert.ok(html.includes('<div class="versionLabel">v0.10.15</div>'), 'version is not placed beneath desktop Export/Import controls');
+assert.ok(html.includes('<div class="versionLabel">v0.10.17</div>'), 'version is not placed beneath desktop Export/Import controls');
 assert.ok(html.includes('class="brandTitle"') && html.includes('white-space: nowrap'), 'desktop generator title is not constrained to one line');
 assert.ok(app.includes('data-info-creature=') && app.includes('data-info-young'), 'Creature choices are missing dedicated info controls');
 assert.ok(html.includes('.creatureGrid') && html.includes('grid-auto-rows: 1fr'), 'Creature tiles are not normalized to equal-height grid rows');
@@ -226,7 +226,7 @@ assert.ok(ctx.V6Data.locales.en.strings.messages.focusExamples.includes('{exampl
 assert.ok(app.includes('focusExamplesForSkillHelp') && app.includes('M("focusExamples"'), 'Skill help does not build examples from localized Skill/Focus data');
 
 
-// v0.10.15 mobile navigation, Lifepath matrix, and Skill metadata pass.
+// v0.10.17 mobile navigation, Lifepath matrix, and Skill metadata pass.
 assert.ok(html.includes('id="mobileSettingsBtn"') && html.includes('id="mobileSettingsMenu"'), 'mobile gear/settings controls are missing');
 assert.ok(!html.includes('class="mobileActions"'), 'legacy permanent mobile action row still exists');
 assert.ok(html.includes('data-mobile-locale="en"') && html.includes('data-mobile-locale="uk"') && html.includes('id="mobileExportBtn"') && html.includes('id="mobileImportFile"') && html.includes('id="mobileResetBtn"'), 'mobile settings menu is missing locale/export/import/reset actions');
@@ -245,6 +245,9 @@ assert.ok(app.includes('>↑</button>') && app.includes('>↓</button>'), 'mobil
 assert.ok(html.includes('.stepper button:disabled') && html.includes('opacity: 0.25'), 'disabled Skill +/- controls are not visually muted');
 assert.ok(app.includes('levelState = total >= cap ? "cap" : total <= base ? "minimum" : "intermediate"') && app.includes('skillLevel-${levelState}'), 'Skill minimum/intermediate/cap states are missing');
 assert.ok(html.includes('.skillLevelValue-minimum') && html.includes('.skillLevelValue-intermediate') && html.includes('.skillLevelValue-cap'), 'Skill level state styling is missing');
+assert.ok(html.includes('.skillLevelValue-minimum') && html.includes('border-color: #4d535c') && html.includes('border-color: #666d77') && html.includes('border-color: #858d97'), 'Skill level states are not using the restrained neutral hierarchy');
+assert.ok(html.includes('.skillRow.hasRating .skillNameLabel {\n        color: var(--good);'), 'non-zero Skill names are no longer highlighted green');
+assert.ok(!html.includes('.stepper .skillLevelValue-intermediate {\n        border-color: #5a5137;'), 'legacy yellow intermediate Skill state emphasis is still present');
 
 // Runtime lookup is key-based only: no reverse English-value matching.
 {
@@ -269,7 +272,7 @@ assert.ok(html.includes('.skillLevelValue-minimum') && html.includes('.skillLeve
 }
 
 const sw = fs.readFileSync('service-worker.js','utf8');
-assert.ok(sw.includes('vtm-v6-alpha-chargen-v0.10.15'), 'service worker cache key was not bumped to v0.10.15');
+assert.ok(sw.includes('vtm-v6-alpha-chargen-v0.10.17'), 'service worker cache key was not bumped to v0.10.17');
 for (const asset of ['./data/core.js','./data/en.js','./data/uk.js','./src/data.js','./src/i18n.js']) assert.ok(sw.includes(asset), `service worker missing ${asset}`);
 
 console.log('qa-data: OK');

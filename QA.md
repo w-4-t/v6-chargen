@@ -1,4 +1,4 @@
-# QA — v0.10.15
+# QA — v0.10.17
 
 ## Data / logic separation
 
@@ -59,7 +59,7 @@
 
 - [x] Desktop Reset / Export / Import labels are short in EN and UA.
 - [x] `adaptive PWA` and the project-house-rules badge are absent from the desktop sidebar.
-- [x] Version `v0.10.15` is displayed beneath Export / Import.
+- [x] Version `v0.10.17` is displayed beneath Export / Import.
 - [x] Desktop Character Generator / Генератор Персонажа title is forced to one line.
 - [x] UA desktop navigation uses Істота / Сір / Фокус / Сили.
 - [x] Desktop navigation uses one aggregate `N/M` counter per step.
@@ -94,7 +94,7 @@
 - [x] `node --check` passes for `data/core.js`, `data/en.js`, `data/uk.js`, `src/data.js`, `src/i18n.js`, and `src/app.js`.
 - [x] `node tools/qa-data.cjs` passes.
 - [x] `node tools/smoke-app.cjs` passes.
-- [x] Service worker cache is `vtm-v6-alpha-chargen-v0.10.15` and includes all runtime data files.
+- [x] Service worker cache is `vtm-v6-alpha-chargen-v0.10.17` and includes all runtime data files.
 
 ## Manual browser checks still required
 
@@ -193,7 +193,7 @@ Current Ukrainian wording remains a working localization pass. Terminology chang
 - [x] Skills help includes Focus thresholds, counts, and localized examples.
 - [x] Mobile top Info control renders as `?`.
 
-## v0.10.15 focused checks
+## v0.10.17 focused checks
 
 - [x] Mobile header contains a screen-level `?` and a gear button; the old permanent EN/UA / Export / Import / Reset row is absent.
 - [x] Gear menu contains EN/UA, Export, Import, and Reset controls.
@@ -212,3 +212,8 @@ Current Ukrainian wording remains a working localization pass. Terminology chang
 - [x] Matching Lifepath minimum and Cap badges receive only color/background emphasis, with no size change.
 - [x] Mobile gear menu can be dismissed through a full-screen safe backdrop that consumes the outside tap.
 - [x] Mobile Lifepath order controls use `↑` / `↓` to match the vertical list.
+
+## v0.10.17 correction
+
+- [x] Skill names remain green whenever the final Skill value is greater than 0.
+- [x] Minimum / intermediate / cap state styling remains restrained and neutral; green is reserved for the non-zero Skill-name identifier.

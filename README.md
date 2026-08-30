@@ -1,9 +1,11 @@
-# VTM V6 Alpha Character Generator — v0.10.15
+# VTM V6 Alpha Character Generator — v0.10.17
 
 Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 
 
-## v0.10.15 — Skill-state / mobile interaction pass
+## v0.10.17 — Skill-state visual correction
+
+- Restored green Skill names whenever the final Skill value is above 0. This remains the single positive/non-zero identifier while minimum/intermediate/cap state styling stays neutral.
 
 - Skills only show the Lifepath badge when the Skill actually received Lifepath dots.
 - Lifepath and Cap badges now use parallel compact formatting.
@@ -211,4 +213,4 @@ The number of known Powers is a separate chargen budget from Discipline dots. A 
 
 ## Deployment
 
-Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.15`.
+Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.17`.
