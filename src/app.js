@@ -829,6 +829,17 @@
       source: S("s_c01d0a100013"),
     };
   }
+  function focusExamplesForSkillHelp() {
+    return ["awareness", "fighting", "investigation"]
+      .map((id) => {
+        const skill = skillById(id);
+        if (!skill) return "";
+        const examples = (skill.focuses || []).slice(0, 2).map((f) => f.name).join(" / ");
+        return examples ? `${skill.name}: ${examples}` : "";
+      })
+      .filter(Boolean)
+      .join(" · ");
+  }
   function infoForStep(i) {
     if (i === 0) return infoCreature(creature());
     const defs = [
@@ -865,7 +876,11 @@
         title: S("s_e09212c7d3ea"),
         summary:
           S("s_95dd68b6f8d5"),
-        body: S("s_75e4b6763084"),
+        body: `${S("s_75e4b6763084")}
+
+${D.focusRuleText}
+
+${M("focusExamples", { examples: focusExamplesForSkillHelp() })}`,
       },
       {
         kicker: S("s_888cbc4ee772"),
@@ -1953,30 +1968,16 @@ ${D.lifepathCompetence}`,
       freeOnly = D.skills.filter((s) => lifepathSkillRating(s.id) === 0),
       used = sum(state.freeSkills),
       left = Math.max(0, creature().freeSkillDots - used);
-    return `<section class="step active"><h1>[[s_4b9f7c999804]]</h1><div class="lead">${e(M("skillsLead", { count: creature().freeSkillDots }))}</div><div class="allocationStatus ${left === 0 ? "complete" : ""}"><div><span>[[s_d5ad6bf8fba7]]</span><strong>${left}</strong><small>${e(M("distributedOf", { used, total: creature().freeSkillDots }))}</small></div><button class="btn resetStepBtn" data-action="reset-skills">[[s_f4dd509ac115]]</button></div><div class="budgetBar"><span class="pill">[[s_8a66c3199e81]]</span></div><div class="sectionTitle">[[s_829318c8d255]]</div>${fromLp.length ? `<div class="optionList">${fromLp.map(renderSkillRow).join("")}</div>` : '<div class="notice">[[s_b5fcfbeba84a]]</div>'}<div class="sectionTitle">[[s_0e49bb3a8b01]]</div><div class="optionList">${freeOnly.map(renderSkillRow).join("")}</div>${issuesHtml(5)}</section>`;
+    return `<section class="step active"><h1>[[s_4b9f7c999804]]</h1><div class="lead">${e(M("skillsLead", { count: creature().freeSkillDots }))}</div><div class="allocationStatus ${left === 0 ? "complete" : ""}"><div><span>[[s_d5ad6bf8fba7]]</span><strong>${left}</strong></div><button class="btn resetStepBtn" data-action="reset-skills">[[s_f4dd509ac115]]</button></div><div class="sectionTitle">[[s_829318c8d255]]</div>${fromLp.length ? `<div class="optionList">${fromLp.map(renderSkillRow).join("")}</div>` : '<div class="notice">[[s_b5fcfbeba84a]]</div>'}<div class="sectionTitle">[[s_0e49bb3a8b01]]</div><div class="optionList">${freeOnly.map(renderSkillRow).join("")}</div>${issuesHtml(5)}</section>`;
   }
   function renderSkillRow(s) {
     const base = lifepathSkillRating(s.id),
       free = Number(state.freeSkills[s.id] || 0),
       total = base + free,
-      sources = lifepathSkillSources(s.id),
-      capSources = lifepathCapSources(s.id),
-      cap = skillCap(s.id);
-    const canDown = free > 0,
-      canUp = sum(state.freeSkills) < creature().freeSkillDots && total < cap,
-      allocationParts = [];
-    if (capSources.length)
-      allocationParts.push(
-        M("capDetail", { bonus: capSources.length, sources: capSources.join(" · "), rest: "" }),
-      );
-    if (base) {
-      const sourceText = sources.length
-        ? ` (${sources.map((x) => M("resourceSourceTag", { source: x.source, dots: x.dots })).join(" · ")})`
-        : "";
-      allocationParts.push(M("lifepathDotsDetail", { dots: base, rest: sourceText }));
-    }
-    if (free) allocationParts.push(M("freePlus", { dots: free }));
-    return `<div class="skillRow ${total > 0 ? "hasRating" : ""}"><div class="skillRowMain"><div class="skillTitleLine"><button class="skillNameBtn" data-info-skill="${s.id}">${e(s.name)}</button><span class="skillStat current">${e(S("s_4fc0e2bc8073"))} <b>${total}</b></span><span class="skillStat cap">${e(S("s_b38fd978df2c"))} <b>${cap}</b></span></div><div class="rowmeta">${e(allocationParts.join(" · "))}</div><div class="choiceRowMeta">${e(s.description)}</div></div><div class="stepper"><button data-stepper="free-skill:${s.id}" data-delta="-1" ${canDown ? "" : "disabled"}>−</button><div class="n">${total}</div><button data-stepper="free-skill:${s.id}" data-delta="1" ${canUp ? "" : "disabled"}>+</button></div></div>`;
+      cap = skillCap(s.id),
+      canDown = free > 0,
+      canUp = sum(state.freeSkills) < creature().freeSkillDots && total < cap;
+    return `<div class="skillRow ${total > 0 ? "hasRating" : ""}"><div class="skillRowMain"><div class="skillTitleLine"><div class="skillNameWithInfo"><span class="skillNameLabel">${e(s.name)}</span><button class="fieldInfoBtn" data-info-skill="${s.id}" aria-label="${e(M("readRules", { name: s.name }))}">?</button></div><span class="skillStat cap">${e(S("s_b38fd978df2c"))} <b>${cap}</b></span></div></div><div class="stepper"><button data-stepper="free-skill:${s.id}" data-delta="-1" ${canDown ? "" : "disabled"}>−</button><div class="n">${total}</div><button data-stepper="free-skill:${s.id}" data-delta="1" ${canUp ? "" : "disabled"}>+</button></div></div>`;
   }
   function renderFocuses() {
     ensureFocusSlots();

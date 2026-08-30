@@ -189,7 +189,7 @@ for (const forbidden of ['Character Generator','V6 Alpha · project house rules 
   assert.ok(!html.includes(forbidden), `index.html embeds localized EN UI copy: ${forbidden}`);
 assert.ok(!html.includes('adaptive PWA'), 'desktop header still exposes adaptive PWA label');
 assert.ok(!html.includes('rawBadge'), 'removed project-house-rules badge still exists in desktop markup/CSS');
-assert.ok(html.includes('<div class="versionLabel">v0.10.12</div>'), 'version is not placed beneath desktop Export/Import controls');
+assert.ok(html.includes('<div class="versionLabel">v0.10.13</div>'), 'version is not placed beneath desktop Export/Import controls');
 assert.ok(html.includes('class="brandTitle"') && html.includes('white-space: nowrap'), 'desktop generator title is not constrained to one line');
 assert.ok(app.includes('data-info-creature=') && app.includes('data-info-young'), 'Creature choices are missing dedicated info controls');
 assert.ok(html.includes('.creatureGrid') && html.includes('grid-auto-rows: 1fr'), 'Creature tiles are not normalized to equal-height grid rows');
@@ -213,6 +213,17 @@ assert.ok(html.includes('.issues {') && html.includes('margin-top: 12px') && htm
 assert.strictEqual(ctx.V6Data.locales.uk.strings.text.s_a9a96ec01949, 'Ключові');
 assert.strictEqual(ctx.V6Data.locales.uk.strings.text.s_025de599ea0a, 'Допоміжні');
 assert.strictEqual(ctx.V6Data.locales.uk.strings.text.s_b710a1f98200, 'Побічні');
+
+// v0.10.13 Skills UI cleanup.
+assert.ok(!app.includes('[[s_8a66c3199e81]]'), 'Skills step still renders the project Skill-cap banner');
+assert.ok(!app.includes('M("distributedOf", { used, total: creature().freeSkillDots })'), 'Skills step still renders redundant distributed-of-total text');
+assert.ok(!app.includes('skillStat current'), 'Skills rows still render redundant Current metadata');
+assert.ok(app.includes('skillNameWithInfo') && app.includes('data-info-skill="${s.id}"') && app.includes('>?</button>'), 'Skills rows are missing compact ? help controls');
+assert.ok(app.includes('skillStat cap'), 'Skills rows no longer expose the chargen cap');
+assert.ok(html.includes('id="mobileInfoTop" data-i18n-aria="s_4b631f698425">?</button>'), 'mobile top info control is not the compact ? button');
+assert.ok(ctx.V6Data.locales.uk.rules.focusRuleText.includes('один Фокус на 1–2') && ctx.V6Data.locales.uk.rules.focusRuleText.includes('три на 5'), 'UK Skill help does not explain Focus counts by dot threshold');
+assert.ok(ctx.V6Data.locales.en.strings.messages.focusExamples.includes('{examples}') && ctx.V6Data.locales.uk.strings.messages.focusExamples.includes('{examples}'), 'Skill help is missing localized Focus-example formatting');
+assert.ok(app.includes('focusExamplesForSkillHelp') && app.includes('M("focusExamples"'), 'Skill help does not build examples from localized Skill/Focus data');
 
 // Runtime lookup is key-based only: no reverse English-value matching.
 {

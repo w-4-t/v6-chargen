@@ -2994,7 +2994,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
       }
     ],
     "resourceRuleText": "Physical and Social Assets must be specific. Each asset type has its own dots. Free Resource dots come from the Dot Distribution table in addition to Lifepath Resources.",
-    "focusRuleText": "At each odd number of dots in a Skill (1, 3, and 5), you can acquire a Focus. A relevant Focus gives +1 die to the test. During character creation, Skills cannot exceed 3 dots.",
+    "focusRuleText": "A Skill grants Focus choices at 1, 3, and 5 dots: one Focus at 1–2 dots, two at 3–4 dots, and three at 5 dots. When relevant, a Focus gives +1 die to the test. You may choose one of the listed examples or create another relevant Focus.",
     "lifepathCompetence": "At the Storyteller’s discretion, when no other Skill applies but a Lifepath suggests competence, add 2 dice to the pool or gain a basic success.",
     "youngCharacter": {
       "description": "A young, relatively inexperienced character whose background is concentrated in a single Lifepath rather than spread across several roles.",
@@ -3069,7 +3069,8 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
       "resourceDotsProgress": "Resource dots {used} / {total}",
       "suggestedFocus": "Suggested Focus: {focus}",
       "currentCapHouse": "Current {current} · Cap {cap} · house-rule cap bonus +{bonus}",
-      "skillsLead": "Ratings earned through Lifepaths stay in place. Spend {count} additional Skill dots without reducing any Lifepath rating.",
+      "skillsLead": "Distribute {count} additional Skill dots on top of the dots already assigned through Lifepaths.",
+      "focusExamples": "Examples: {examples}.",
       "categoryPriority": "{category} category priority",
       "setAttribute": "Set {attribute} to {rating}",
       "readDescriptionScale": "Read {name} description and rating scale",
@@ -3398,7 +3399,7 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
       "s_c863282730d9": "Attributes define the character’s potential in Physical, Social, and Mental categories.",
       "s_4b0931b0a70e": "Assign primary, secondary, and tertiary category budgets. Each Attribute begins at 1. Use the Info button to read what each rating means; changing dots on mobile no longer opens the help drawer automatically.",
       "s_95dd68b6f8d5": "Skills define learned competency. Lifepaths contribute dots first, then you distribute the free Skill dots from the tier budget.",
-      "s_75e4b6763084": "House rule: the base chargen Skill cap is 3, and each selected Lifepath that lists a Skill raises that Skill’s cap by +1, whether or not a Lifepath dot was assigned to it. Focus selection is handled on the next page.",
+      "s_75e4b6763084": "House rule: the base chargen Skill cap is 3, and each selected Lifepath that lists a Skill raises that Skill’s cap by +1, whether or not a Lifepath dot was assigned to it. Focuses are selected on the next step.",
       "s_276ab8afd966": "A Skill has one Focus at rating 1, a second at 3, and a third at 5. Rating 2 therefore still has exactly one Focus.",
       "s_9d3594c5c91c": "All Focus slots are player choices. Parenthetical Focuses printed in selected Lifepaths are shown as recommendations during selection, alongside the Skill’s RAW example Focuses. They never lock or auto-fill a Focus, and you may type another relevant Focus.",
       "s_24e8ebf0392e": "Discipline dots unlock powers by rank. Clan Traits and Merits provide distinctive passive or activated abilities.",

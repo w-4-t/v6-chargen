@@ -2130,6 +2130,22 @@
       .skillRow.hasRating .skillNameBtn {
         color: var(--good);
       }
+      .skillNameWithInfo {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        min-width: 0;
+        margin-right: auto;
+      }
+      .skillNameLabel {
+        color: var(--text);
+        font-size: 15px;
+        line-height: 1.2;
+        font-weight: 850;
+      }
+      .skillRow.hasRating .skillNameLabel {
+        color: var(--good);
+      }
       .skillStat {
         display: inline-flex;
         align-items: center;
@@ -2152,6 +2168,7 @@
         margin-left: 3px;
       }
       .skillStat.cap {
+        margin-left: auto;
         border-color: #3b4650;
         color: var(--info);
       }
@@ -2705,14 +2722,14 @@
                 hidden
             /></label>
           </div>
-          <div class="versionLabel">v0.10.12</div>
+          <div class="versionLabel">v0.10.13</div>
         </div>
       </aside>
       <main class="main">
         <div class="mobileTop">
           <div class="mobileHead">
             <div class="mobileTitle" data-i18n="s_268e54a290da"></div>
-            <button class="btn mobileInfoBtn" id="mobileInfoTop" data-i18n="s_4b631f698425"></button>
+            <button class="btn mobileInfoBtn" id="mobileInfoTop" data-i18n-aria="s_4b631f698425">?</button>
           </div>
           <div class="mobileProgress" id="mobileProgress"></div>
           <div class="mobileActions">

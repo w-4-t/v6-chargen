@@ -1,6 +1,16 @@
-# VTM V6 Alpha Character Generator — v0.10.12
+# VTM V6 Alpha Character Generator — v0.10.13
 
 Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
+
+
+## v0.10.13 — Skills UI cleanup pass
+
+- Removed the visible project Skill-cap rule banner and redundant distributed-of-total text from Step 6.
+- Reworded the lead as a direct allocation instruction.
+- Skill rows now show only the Skill name, a compact `?`, the chargen cap, and the numeric stepper.
+- Skill descriptions and detailed allocation context live in the information panel.
+- Skills help explains Focus counts at 1/3/5 dots and shows localized examples from the Skill data.
+- The mobile top information control is now `?`.
 
 ## Source basis
 
@@ -184,4 +194,4 @@ The number of known Powers is a separate chargen budget from Discipline dots. A 
 
 ## Deployment
 
-Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.12`.
+Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.13`.

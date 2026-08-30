@@ -242,6 +242,22 @@ assert.deepStrictEqual(saved.focuses.athletics[0],{ref:'running'});
 
 // Built-in Focus refs render through the active locale rather than storing display text.
 const focusState=JSON.parse(run('en').store.get('vtm_v6_alpha_chargen_v0_9_0'));
+// Skills page keeps only actionable allocation data in the list; detailed rules stay in help.
+const skillsState=JSON.parse(run('uk').store.get('vtm_v6_alpha_chargen_v0_9_0'));
+skillsState.step=5;
+skillsState.lifepaths=[{id:'military',skillDots:{athletics:1,fighting:1,medicine:1,shooting:1,survival:1},resourceDots:{}}];
+skillsState.freeSkills={athletics:1};
+x=run('uk',{'vtm_v6_alpha_chargen_v0_9_0':JSON.stringify(skillsState)});
+const skillsHtml=x.get('mainCard').innerHTML;
+assert.ok(skillsHtml.includes('Розподіліть 8 додаткових точок Навичок'), 'UK Skills lead is not action-oriented');
+assert.ok(!skillsHtml.includes('Правило проєкту: базовий ліміт 3'), 'Skills page still exposes the house-rule banner');
+assert.ok(!skillsHtml.includes('Розподілено 1 із 8'), 'Skills page still exposes redundant distributed-of-total text');
+assert.ok(!skillsHtml.includes('Поточний <b>'), 'Skills rows still expose Current metadata');
+assert.ok(skillsHtml.includes('Ліміт <b>') && skillsHtml.includes('data-info-skill="athletics"'), 'Skills rows lost cap or ? help access');
+assert.ok(!skillsHtml.includes('Your physical training') && !skillsHtml.includes('Ваше фізичне тренування'), 'Skill description leaked back into the Skills list');
+x.get('mobileInfoTop').onclick();
+assert.ok(x.get('infoContent').innerHTML.includes('один Фокус на 1–2') && x.get('infoContent').innerHTML.includes('Уважність:') && x.get('infoContent').innerHTML.includes('Емпатія'), 'Skills step help does not include Focus thresholds/localized examples');
+
 focusState.step=6; focusState.freeSkills={athletics:1}; focusState.focuses={athletics:[{ref:'running'}]};
 x=run('uk',{'vtm_v6_alpha_chargen_v0_9_0':JSON.stringify(focusState)});
 assert.ok(x.get('mainCard').innerHTML.includes('value="Біг"'), 'Focus ref did not localize to UK');

@@ -1,4 +1,4 @@
-# QA — v0.10.12
+# QA — v0.10.13
 
 ## Data / logic separation
 
@@ -59,7 +59,7 @@
 
 - [x] Desktop Reset / Export / Import labels are short in EN and UA.
 - [x] `adaptive PWA` and the project-house-rules badge are absent from the desktop sidebar.
-- [x] Version `v0.10.12` is displayed beneath Export / Import.
+- [x] Version `v0.10.13` is displayed beneath Export / Import.
 - [x] Desktop Character Generator / Генератор Персонажа title is forced to one line.
 - [x] UA desktop navigation uses Істота / Сір / Фокус / Сили.
 - [x] Desktop navigation uses one aggregate `N/M` counter per step.
@@ -94,7 +94,7 @@
 - [x] `node --check` passes for `data/core.js`, `data/en.js`, `data/uk.js`, `src/data.js`, `src/i18n.js`, and `src/app.js`.
 - [x] `node tools/qa-data.cjs` passes.
 - [x] `node tools/smoke-app.cjs` passes.
-- [x] Service worker cache is `vtm-v6-alpha-chargen-v0.10.12` and includes all runtime data files.
+- [x] Service worker cache is `vtm-v6-alpha-chargen-v0.10.13` and includes all runtime data files.
 
 ## Manual browser checks still required
 
@@ -179,3 +179,12 @@ Current Ukrainian wording remains a working localization pass. Terminology chang
 - [x] Attribute category headers show compact `N/M` counters.
 - [x] Per-Attribute `Rating · max now` text is not rendered.
 - [x] Generic incomplete-step issue blocks have top spacing; Lifepath issues do not receive duplicate spacing.
+
+
+## v0.10.13 focused checks
+
+- [x] Step 6 no longer shows the project Skill-cap banner.
+- [x] Step 6 no longer shows redundant “N of M distributed” text.
+- [x] Skill rows omit Current and descriptions, retain Cap, and expose `?`.
+- [x] Skills help includes Focus thresholds, counts, and localized examples.
+- [x] Mobile top Info control renders as `?`.
