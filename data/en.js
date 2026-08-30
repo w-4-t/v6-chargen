@@ -3070,6 +3070,8 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
       "suggestedFocus": "Suggested Focus: {focus}",
       "currentCapHouse": "Current {current} · Cap {cap} · house-rule cap bonus +{bonus}",
       "skillsLead": "Distribute {count} additional Skill dots on top of the dots already assigned through Lifepaths.",
+      "skillFromLifepaths": "From Lifepaths: {dots}",
+      "skillFromLifepathsLabel": "From Lifepaths",
       "focusExamples": "Examples: {examples}.",
       "categoryPriority": "{category} category priority",
       "setAttribute": "Set {attribute} to {rating}",
@@ -3177,6 +3179,9 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.en = {
       "creatureYoungSkillCap": "{cap} dots for Skills listed by the Lifepath"
     },
     "text": {
+      "s_d24adedbaa09": "Close",
+      "s_7d7a050fe300": "Settings",
+      "s_6053d573cff5": "Language",
       "s_0173e8962fec": "VTM V6 Alpha Character Generator",
       "s_8f7d030265a6": "Character Generator",
       "s_268e54a290da": "VTM V6 Alpha Chargen",

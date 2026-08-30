@@ -1,7 +1,16 @@
-# VTM V6 Alpha Character Generator — v0.10.13
+# VTM V6 Alpha Character Generator — v0.10.14
 
 Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 
+
+## v0.10.14 — Mobile navigation / Lifepath matrix / Skill metadata pass
+
+- Mobile utility actions moved behind a compact gear menu beside the screen-level `?`: EN/UA, Export, Import, and Reset are no longer exposed as a permanent action row.
+- The screen-level mobile `?` always opens general help for the current chargen step; contextual `?` controls continue to open help for the specific Creature, Clan, Sire, Attribute, Skill, Resource, and similar item.
+- Mobile Lifepath Skill/Resource allocation now uses a stacked card presentation instead of the horizontally scrolling desktop matrix. Shared Skills/Resources still appear once per mobile presentation, with each contributing Lifepath shown inside that row/card. Desktop matrices are unchanged.
+- Built-in Lifepath tiles use tighter title-to-description spacing on mobile; user-created Lifepath spacing is unchanged.
+- Skill rows show both chargen Cap and dots contributed by Lifepaths on desktop. On mobile, both metadata badges are shown only when every Skill row can fit `name + metadata` on one line; if any row cannot fit, both badges are hidden for the entire mobile Skill list and remain available in contextual Skill help.
+- The mobile information-drawer close button is optically centered.
 
 ## v0.10.13 — Skills UI cleanup pass
 
@@ -194,4 +203,4 @@ The number of known Powers is a separate chargen budget from Discipline dots. A 
 
 ## Deployment
 
-Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.13`.
+Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.14`.

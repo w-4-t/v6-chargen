@@ -1160,6 +1160,9 @@
       .matrixSection {
         margin-top: 12px;
       }
+      .mobileLpMatrix {
+        display: none;
+      }
       .matrixSectionHead {
         display: flex;
         justify-content: space-between;
@@ -1726,17 +1729,25 @@
           pointer-events: auto;
         }
         .drawerClose {
-          display: block;
+          display: grid;
           position: absolute;
           top: 10px;
           right: 10px;
           width: 38px;
           height: 38px;
+          place-items: center;
+          padding: 0;
           border-radius: 50%;
           border: 1px solid var(--line);
           background: var(--panel2);
           color: var(--text);
           font-size: 20px;
+          line-height: 1;
+        }
+        .drawerClose > span {
+          display: block;
+          line-height: 1;
+          transform: translateY(-1px);
         }
         .mobileInfoBtn {
           display: inline-flex;
@@ -1795,6 +1806,183 @@
         }
         .skillRow {
           grid-template-columns: minmax(0, 1fr) auto;
+          align-items: center;
+        }
+        .skillTitleLine {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          flex-wrap: nowrap;
+          margin-bottom: 0;
+          min-width: 0;
+        }
+        .skillNameWithInfo {
+          flex: 0 1 auto;
+          min-width: 0;
+        }
+        .skillNameLabel {
+          white-space: nowrap;
+        }
+        .skillMetaLine {
+          justify-content: flex-end;
+          flex: 0 0 auto;
+          flex-wrap: nowrap;
+          margin: 0 0 0 auto;
+          gap: 5px;
+        }
+        .skillStat {
+          white-space: nowrap;
+        }
+        .mobileSkillMetaHidden .skillMetaLine {
+          display: none;
+        }
+        .mobileSkillMetaHidden .skillNameWithInfo {
+          flex: 1 1 auto;
+        }
+        .mobileSkillMetaHidden .skillNameLabel {
+          white-space: normal;
+          overflow-wrap: anywhere;
+        }
+        .desktopLpMatrix {
+          display: none;
+        }
+        .mobileLpMatrix {
+          display: block;
+        }
+        .mobileMatrixOrder {
+          display: grid;
+          gap: 6px;
+          margin-bottom: 8px;
+        }
+        .mobileMatrixPath {
+          display: grid;
+          grid-template-columns: minmax(0,1fr) auto;
+          align-items: center;
+          gap: 8px;
+          border: 1px solid var(--line);
+          border-radius: 10px;
+          padding: 7px 8px;
+          background: var(--panel3);
+        }
+        .mobileMatrixPathHead {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          min-width: 0;
+          font-size: 11px;
+          font-weight: 800;
+        }
+        .mobileMatrixPathHead > span {
+          min-width: 0;
+          overflow-wrap: anywhere;
+        }
+        .mobileMatrixPathHead small {
+          flex: 0 0 auto;
+          border-radius: 7px;
+          padding: 2px 6px;
+          color: #111216;
+          font-weight: 900;
+        }
+        .mobileMatrixPathHead small.good { background: var(--good); }
+        .mobileMatrixPathHead small.warn { background: var(--warn); }
+        .mobileMatrixPathHead small.danger { background: var(--danger); }
+        .mobileMatrixReorder {
+          display: flex;
+          gap: 3px;
+        }
+        .mobileMatrixReorder button {
+          width: 24px;
+          height: 24px;
+          padding: 0;
+          border: 1px solid var(--line);
+          border-radius: 7px;
+          background: var(--panel2);
+          color: var(--text);
+          font-weight: 900;
+        }
+        .mobileMatrixReorder button:disabled { opacity: .2; }
+        .mobileMatrixRows {
+          display: grid;
+          gap: 7px;
+        }
+        .mobileMatrixCard {
+          border: 1px solid var(--line);
+          border-radius: 11px;
+          background: var(--panel2);
+          overflow: hidden;
+        }
+        .mobileMatrixCardHead {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          padding: 8px 9px;
+          border-bottom: 1px solid var(--line);
+          background: var(--panel3);
+        }
+        .mobileMatrixCardTitle {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          min-width: 0;
+          font-weight: 850;
+        }
+        .mobileMatrixCardTitle > span {
+          min-width: 0;
+          overflow-wrap: anywhere;
+        }
+        .mobileMatrixTotalLabel {
+          flex: 0 0 auto;
+          font-size: 10px;
+          color: var(--muted);
+          white-space: nowrap;
+        }
+        .mobileMatrixTotalLabel b {
+          color: var(--text);
+          font-size: 12px;
+        }
+        .mobileMatrixAllocation {
+          display: grid;
+          grid-template-columns: minmax(0,1fr) auto;
+          align-items: center;
+          gap: 8px;
+          padding: 7px 9px;
+          border-bottom: 1px solid var(--line);
+        }
+        .mobileMatrixAllocation:last-child { border-bottom: 0; }
+        .mobileMatrixAllocationName {
+          min-width: 0;
+          overflow-wrap: anywhere;
+          color: var(--muted);
+          font-size: 11px;
+          line-height: 1.25;
+        }
+        .mobileMatrixAllocation .matrixStepper {
+          grid-template-columns: 28px 30px 28px;
+          gap: 3px;
+        }
+        .mobileMatrixAllocation .matrixStepper button {
+          width: 28px;
+          height: 28px;
+        }
+        .lifepathChoiceHead {
+          min-height: 0;
+          grid-template-rows: auto auto;
+        }
+        .lifepathChoiceTitleRow {
+          min-height: 29px;
+          align-items: flex-start;
+        }
+        .lifepathChoiceAliasSlot {
+          min-height: 0;
+          margin-top: 2px;
+        }
+        .lifepathChoiceAliasSlot.empty {
+          display: none;
+        }
+        .lifepathChoiceDescription {
+          margin-top: 6px;
         }
         .choiceCompact span {
           font-size: 11px;
@@ -2106,8 +2294,22 @@
         display: flex;
         align-items: center;
         gap: 7px;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         margin-bottom: 3px;
+        min-width: 0;
+      }
+      .skillMetaLine {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+        flex: 0 0 auto;
+        flex-wrap: nowrap;
+        margin: 0 0 0 auto;
+      }
+      .skillStat.lifepathDots {
+        border-color: #465247;
+        color: var(--good);
       }
       .skillNameBtn {
         appearance: none;
@@ -2168,7 +2370,6 @@
         margin-left: 3px;
       }
       .skillStat.cap {
-        margin-left: auto;
         border-color: #3b4650;
         color: var(--info);
       }
@@ -2663,20 +2864,59 @@
       .sheetBlock h3 .sheetInfoBtn {
         margin-left: 5px;
       }
-      .mobileActions {
+      .mobileHeadControls,
+      .mobileSettingsMenu {
         display: none;
       }
       @media (max-width: 900px) {
-        .mobileActions {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
+        .mobileHeadControls {
+          display: flex;
+          align-items: center;
           gap: 6px;
-          margin-top: 7px;
         }
-        .mobileActions .btn {
+        .mobileInfoBtn,
+        .mobileSettingsBtn {
+          width: 34px;
+          height: 34px;
           min-height: 34px;
-          padding: 6px 8px;
-          font-size: 11px;
+          padding: 0;
+          align-items: center;
+          justify-content: center;
+          line-height: 1;
+        }
+        .mobileSettingsBtn {
+          display: inline-flex;
+          font-size: 18px;
+        }
+        .mobileSettingsMenu {
+          position: absolute;
+          top: calc(100% - 6px);
+          right: 10px;
+          z-index: 45;
+          width: min(230px, calc(100vw - 20px));
+          padding: 8px;
+          border: 1px solid var(--line2);
+          border-radius: 12px;
+          background: rgba(24, 26, 31, .99);
+          box-shadow: 0 12px 36px rgba(0,0,0,.45);
+          gap: 7px;
+        }
+        .mobileSettingsMenu.open {
+          display: grid;
+        }
+        .mobileLanguageChoices {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 6px;
+        }
+        .mobileLanguageChoice.active {
+          background: var(--accent);
+          border-color: var(--accent);
+          color: #111216;
+        }
+        .mobileSettingsAction {
+          width: 100%;
+          min-height: 36px;
           text-align: center;
         }
         .mobileImportLabel {
@@ -2722,37 +2962,39 @@
                 hidden
             /></label>
           </div>
-          <div class="versionLabel">v0.10.13</div>
+          <div class="versionLabel">v0.10.14</div>
         </div>
       </aside>
       <main class="main">
         <div class="mobileTop">
           <div class="mobileHead">
             <div class="mobileTitle" data-i18n="s_268e54a290da"></div>
-            <button class="btn mobileInfoBtn" id="mobileInfoTop" data-i18n-aria="s_4b631f698425">?</button>
+            <div class="mobileHeadControls">
+              <button class="btn mobileInfoBtn" id="mobileInfoTop" data-i18n-aria="s_4b631f698425">?</button>
+              <button class="btn mobileSettingsBtn" id="mobileSettingsBtn" type="button" aria-expanded="false" aria-controls="mobileSettingsMenu" data-i18n-aria="s_7d7a050fe300">⚙</button>
+            </div>
           </div>
           <div class="mobileProgress" id="mobileProgress"></div>
-          <div class="mobileActions">
-            <button
-              class="btn langBtn"
-              id="mobileLangToggleBtn"
-              type="button"
-            ></button
-            ><button class="btn" id="mobileExportBtn" data-i18n="s_f3e4fadb9e37"></button
-            ><label class="btn mobileImportLabel"
+          <div class="mobileSettingsMenu" id="mobileSettingsMenu">
+            <div class="mobileLanguageChoices" role="group" data-i18n-aria="s_6053d573cff5">
+              <button type="button" class="btn mobileLanguageChoice" data-mobile-locale="en" aria-pressed="false">EN</button>
+              <button type="button" class="btn mobileLanguageChoice" data-mobile-locale="uk" aria-pressed="false">UA</button>
+            </div>
+            <button class="btn mobileSettingsAction" id="mobileExportBtn" data-i18n="s_f3e4fadb9e37"></button>
+            <label class="btn mobileImportLabel mobileSettingsAction"
               ><span id="mobileImportLabelText" data-i18n="s_d6fbc9d2bdd5"></span
               ><input
                 id="mobileImportFile"
                 type="file"
                 accept="application/json"
-                hidden /></label
-            ><button class="btn danger" id="mobileResetBtn" data-i18n="s_44c57abd888a"></button>
+                hidden /></label>
+            <button class="btn danger mobileSettingsAction" id="mobileResetBtn" data-i18n="s_44c57abd888a"></button>
           </div>
         </div>
         <div class="mainCard" id="mainCard"></div>
       </main>
       <aside class="infoPanel" id="infoPanel">
-        <button class="drawerClose" id="drawerClose">×</button>
+        <button class="drawerClose" id="drawerClose" data-i18n-aria="s_d24adedbaa09"><span aria-hidden="true">×</span></button>
         <div id="infoContent"></div>
       </aside>
     </div>

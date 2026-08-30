@@ -3070,6 +3070,8 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.uk = {
       "suggestedFocus": "Рекомендована Спеціалізація: {focus}",
       "currentCapHouse": "Поточний {current} · Ліміт {cap} · бонус ліміту за правилом проєкту +{bonus}",
       "skillsLead": "Розподіліть {count} додаткових точок Навичок до вже розподілених у Життєвих Шляхах.",
+      "skillFromLifepaths": "Від Шляхів: {dots}",
+      "skillFromLifepathsLabel": "Від Життєвих Шляхів",
       "focusExamples": "Приклади: {examples}.",
       "categoryPriority": "Пріоритет категорії «{category}»",
       "setAttribute": "Встановити значення «{attribute}»: {rating}",
@@ -3177,6 +3179,9 @@ window.V6_LOCALES = window.V6_LOCALES || {}; window.V6_LOCALES.uk = {
       "creatureYoungSkillCap": "{cap} точки для Навичок, перелічених у Життєвому Шляху"
     },
     "text": {
+      "s_d24adedbaa09": "Закрити",
+      "s_7d7a050fe300": "Налаштування",
+      "s_6053d573cff5": "Мова",
       "s_0173e8962fec": "VTM V6 Alpha — Генератор Персонажа",
       "s_8f7d030265a6": "Генератор Персонажа",
       "s_268e54a290da": "VTM V6 Alpha — Генератор",

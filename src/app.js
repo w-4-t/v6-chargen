@@ -953,6 +953,7 @@ ${M("focusExamples", { examples: focusExamplesForSkillHelp() })}`,
       meta: [
         [S("s_d917a6a13dfc"), String(finalSkill(id))],
         [S("s_e5d078fd7ca2"), String(skillCap(id))],
+        [M("skillFromLifepathsLabel"), String(lifepathSkillRating(id))],
         [
           S("s_5deaef543a60"),
           caps.length ? `+${caps.length} · ${caps.join(" · ")}` : "—",
@@ -1270,12 +1271,37 @@ ${D.lifepathCompetence}`,
     );
   }
   function openDrawer() {
+    closeMobileSettings();
     document.getElementById("infoPanel").classList.add("open");
     document.getElementById("drawerBack").classList.add("open");
   }
   function closeDrawer() {
     document.getElementById("infoPanel").classList.remove("open");
     document.getElementById("drawerBack").classList.remove("open");
+  }
+  function updateMobileSettingsLocale() {
+    const current = window.V6I18N?.getLocale?.();
+    document.querySelectorAll?.("[data-mobile-locale]")?.forEach((button) => {
+      const active = button.getAttribute("data-mobile-locale") === current;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+  }
+  function closeMobileSettings() {
+    const menu = document.getElementById("mobileSettingsMenu");
+    const button = document.getElementById("mobileSettingsBtn");
+    if (menu) menu.classList.remove("open");
+    if (button) button.setAttribute("aria-expanded", "false");
+  }
+  function toggleMobileSettings() {
+    const menu = document.getElementById("mobileSettingsMenu");
+    const button = document.getElementById("mobileSettingsBtn");
+    if (!menu || !button) return;
+    const open = !menu.classList.contains("open");
+    closeDrawer();
+    menu.classList.toggle("open", open);
+    button.setAttribute("aria-expanded", open ? "true" : "false");
+    if (open) updateMobileSettingsLocale();
   }
 
   function issue(severity, msg) {
@@ -1589,6 +1615,7 @@ ${D.lifepathCompetence}`,
     renderInfo();
     save();
     window.V6I18N?.apply(document);
+    updateMobileSkillMetaVisibility();
   }
   function stepProgressCounts(i) {
     const c = creature();
@@ -1886,15 +1913,48 @@ ${D.lifepathCompetence}`,
   function renderLifepathMatrixHeader(slot, def, used, total, selectedCount) {
     return `<th class="lpMatrixPath"><div class="matrixPathTitle"><span class="matrixPathName">${e(def.name)}</span><span class="matrixPathReorder"><button type="button" data-lp-move="${slot}:-1" ${slot <= 0 ? "disabled" : ""} aria-label="${e(M("moveLifepathEarlier", { name: def.name }))}">&lt;</button><button type="button" data-lp-move="${slot}:1" ${slot >= selectedCount - 1 ? "disabled" : ""} aria-label="${e(M("moveLifepathLater", { name: def.name }))}">&gt;</button></span></div><small class="${matrixBudgetClass(used, total)}">${used}/${total}</small></th>`;
   }
+  function renderMobileLifepathOrder(selected, kind) {
+    const total = kind === "skill" ? lpSkillBudget() : lpResourceBudget();
+    return `<div class="mobileMatrixOrder">${selected.map(({ slot, def }, index) => {
+      const used = kind === "skill" ? sum(state.lifepaths[slot].skillDots) : lpResourceSpent(slot);
+      return `<div class="mobileMatrixPath"><div class="mobileMatrixPathHead"><span>${e(def.name)}</span><small class="${matrixBudgetClass(used, total)}">${used}/${total}</small></div><div class="mobileMatrixReorder"><button type="button" data-lp-move="${slot}:-1" ${index <= 0 ? "disabled" : ""} aria-label="${e(M("moveLifepathEarlier", { name: def.name }))}">&lt;</button><button type="button" data-lp-move="${slot}:1" ${index >= selected.length - 1 ? "disabled" : ""} aria-label="${e(M("moveLifepathLater", { name: def.name }))}">&gt;</button></div></div>`;
+    }).join("")}</div>`;
+  }
+  function renderMobileLifepathSkillMatrix(selected, rows) {
+    return `<div class="mobileLpMatrix">${renderMobileLifepathOrder(selected, "skill")}<div class="mobileMatrixRows">${rows.map((skill) => {
+      const allocations = selected.map(({ slot, def }) => {
+        const allowed = (def.skills || []).some((x) => x.skill === skill.id);
+        if (!allowed) return "";
+        const n = Number(state.lifepaths[slot].skillDots?.[skill.id] || 0);
+        const canUp = sum(state.lifepaths[slot].skillDots) < lpSkillBudget() && finalSkill(skill.id) < skillCap(skill.id);
+        return `<div class="mobileMatrixAllocation"><span class="mobileMatrixAllocationName">${e(def.name)}</span>${matrixStepper(`lp-skill:${slot}:${skill.id}`, n, n > 0, canUp)}</div>`;
+      }).join("");
+      return `<div class="mobileMatrixCard"><div class="mobileMatrixCardHead"><div class="mobileMatrixCardTitle"><span>${e(skill.name)}</span><button type="button" class="fieldInfoBtn" data-info-lp-skill="${e(skill.id)}" aria-label="${e(M("readInformation", { name: skill.name }))}">?</button></div><span class="mobileMatrixTotalLabel">${e(M("total"))} <b>${lifepathSkillRating(skill.id)}</b></span></div>${allocations}</div>`;
+    }).join("")}</div></div>`;
+  }
+  function renderMobileLifepathResourceMatrix(selected, rows) {
+    return `<div class="mobileLpMatrix">${renderMobileLifepathOrder(selected, "resource")}<div class="mobileMatrixRows">${rows.map((row) => {
+      const label = lifepathResourceMatrixLabel(row);
+      const rowTotal = selected.reduce((n, {slot}) => { const r = row.cells.get(slot); return n + (r ? Number(state.lifepaths[slot].resourceDots?.[r.id] || 0) : 0); }, 0);
+      const allocations = selected.map(({ slot, def }) => {
+        const r = row.cells.get(slot);
+        if (!r) return "";
+        const n = Number(state.lifepaths[slot].resourceDots?.[r.id] || 0);
+        const canUp = lpResourceSpent(slot) < lpResourceBudget();
+        return `<div class="mobileMatrixAllocation"><span class="mobileMatrixAllocationName">${e(def.name)}</span>${matrixStepper(`lp-res:${slot}:${encodeURIComponent(r.id)}`, n, n > 0, canUp)}</div>`;
+      }).join("");
+      return `<div class="mobileMatrixCard"><div class="mobileMatrixCardHead"><div class="mobileMatrixCardTitle"><span>${e(label)}</span><button type="button" class="fieldInfoBtn" data-info-resource="${e(row.type)}" aria-label="${e(M("readInformation", { name: label }))}">?</button></div><span class="mobileMatrixTotalLabel">${e(M("total"))} <b>${rowTotal}</b></span></div>${allocations}</div>`;
+    }).join("")}</div></div>`;
+  }
   function renderLifepathSkillMatrix() {
     const selected = selectedLifepathSlots();
     const rows = lifepathSkillMatrixRows();
-    return `<div class="matrixSection"><div class="matrixSectionHead"><div><h3>${e(M("lifepathSkillMatrix"))}</h3><div class="meta">${e(M("lifepathSkillMatrixLead"))}</div></div></div><div class="lpMatrixWrap"><table class="lpMatrix"><thead><tr><th class="lpMatrixName">${e(M("skill"))}</th>${selected.map(({ slot, def }) => renderLifepathMatrixHeader(slot, def, sum(state.lifepaths[slot].skillDots), lpSkillBudget(), selected.length)).join("")}<th class="lpMatrixTotal">${e(M("total"))}</th></tr></thead><tbody>${rows.map((skill) => `<tr><th class="lpMatrixName"><div class="matrixRowName"><span>${e(skill.name)}</span><button type="button" class="fieldInfoBtn" data-info-lp-skill="${e(skill.id)}" aria-label="${e(M("readInformation", { name: skill.name }))}">?</button></div></th>${selected.map(({ slot, def }) => { const allowed = (def.skills || []).some((x) => x.skill === skill.id); const n = Number(state.lifepaths[slot].skillDots?.[skill.id] || 0); const canUp = sum(state.lifepaths[slot].skillDots) < lpSkillBudget() && finalSkill(skill.id) < skillCap(skill.id); return `<td class="lpMatrixCell">${allowed ? matrixStepper(`lp-skill:${slot}:${skill.id}`, n, n > 0, canUp) : `<span class="matrixDash">—</span>`}</td>`; }).join("")}<td class="lpMatrixTotal"><b>${lifepathSkillRating(skill.id)}</b></td></tr>`).join("")}</tbody></table></div></div>`;
+    return `<div class="matrixSection"><div class="matrixSectionHead"><div><h3>${e(M("lifepathSkillMatrix"))}</h3><div class="meta">${e(M("lifepathSkillMatrixLead"))}</div></div></div><div class="desktopLpMatrix"><div class="lpMatrixWrap"><table class="lpMatrix"><thead><tr><th class="lpMatrixName">${e(M("skill"))}</th>${selected.map(({ slot, def }) => renderLifepathMatrixHeader(slot, def, sum(state.lifepaths[slot].skillDots), lpSkillBudget(), selected.length)).join("")}<th class="lpMatrixTotal">${e(M("total"))}</th></tr></thead><tbody>${rows.map((skill) => `<tr><th class="lpMatrixName"><div class="matrixRowName"><span>${e(skill.name)}</span><button type="button" class="fieldInfoBtn" data-info-lp-skill="${e(skill.id)}" aria-label="${e(M("readInformation", { name: skill.name }))}">?</button></div></th>${selected.map(({ slot, def }) => { const allowed = (def.skills || []).some((x) => x.skill === skill.id); const n = Number(state.lifepaths[slot].skillDots?.[skill.id] || 0); const canUp = sum(state.lifepaths[slot].skillDots) < lpSkillBudget() && finalSkill(skill.id) < skillCap(skill.id); return `<td class="lpMatrixCell">${allowed ? matrixStepper(`lp-skill:${slot}:${skill.id}`, n, n > 0, canUp) : `<span class="matrixDash">—</span>`}</td>`; }).join("")}<td class="lpMatrixTotal"><b>${lifepathSkillRating(skill.id)}</b></td></tr>`).join("")}</tbody></table></div></div>${renderMobileLifepathSkillMatrix(selected, rows)}</div>`;
   }
   function renderLifepathResourceMatrix() {
     const selected = selectedLifepathSlots();
     const rows = lifepathResourceMatrixRows();
-    return `<div class="matrixSection"><div class="matrixSectionHead"><div><h3>${e(M("lifepathResourceMatrix"))}</h3><div class="meta">${e(M("lifepathResourceMatrixLead"))}</div></div></div><div class="lpMatrixWrap"><table class="lpMatrix"><thead><tr><th class="lpMatrixName">${e(M("resource"))}</th>${selected.map(({ slot, def }) => renderLifepathMatrixHeader(slot, def, lpResourceSpent(slot), lpResourceBudget(), selected.length)).join("")}<th class="lpMatrixTotal">${e(M("total"))}</th></tr></thead><tbody>${rows.map((row) => { const label = lifepathResourceMatrixLabel(row); const rowTotal = selected.reduce((n, {slot}) => { const r = row.cells.get(slot); return n + (r ? Number(state.lifepaths[slot].resourceDots?.[r.id] || 0) : 0); }, 0); return `<tr><th class="lpMatrixName"><div class="matrixRowName"><span>${e(label)}</span><button type="button" class="fieldInfoBtn" data-info-resource="${e(row.type)}" aria-label="${e(M("readInformation", { name: label }))}">?</button></div></th>${selected.map(({slot}) => { const r = row.cells.get(slot); const n = r ? Number(state.lifepaths[slot].resourceDots?.[r.id] || 0) : 0; const canUp = !!r && lpResourceSpent(slot) < lpResourceBudget(); return `<td class="lpMatrixCell">${r ? matrixStepper(`lp-res:${slot}:${encodeURIComponent(r.id)}`, n, n > 0, canUp) : `<span class="matrixDash">—</span>`}</td>`; }).join("")}<td class="lpMatrixTotal"><b>${rowTotal}</b></td></tr>`; }).join("")}</tbody></table></div></div>`;
+    return `<div class="matrixSection"><div class="matrixSectionHead"><div><h3>${e(M("lifepathResourceMatrix"))}</h3><div class="meta">${e(M("lifepathResourceMatrixLead"))}</div></div></div><div class="desktopLpMatrix"><div class="lpMatrixWrap"><table class="lpMatrix"><thead><tr><th class="lpMatrixName">${e(M("resource"))}</th>${selected.map(({ slot, def }) => renderLifepathMatrixHeader(slot, def, lpResourceSpent(slot), lpResourceBudget(), selected.length)).join("")}<th class="lpMatrixTotal">${e(M("total"))}</th></tr></thead><tbody>${rows.map((row) => { const label = lifepathResourceMatrixLabel(row); const rowTotal = selected.reduce((n, {slot}) => { const r = row.cells.get(slot); return n + (r ? Number(state.lifepaths[slot].resourceDots?.[r.id] || 0) : 0); }, 0); return `<tr><th class="lpMatrixName"><div class="matrixRowName"><span>${e(label)}</span><button type="button" class="fieldInfoBtn" data-info-resource="${e(row.type)}" aria-label="${e(M("readInformation", { name: label }))}">?</button></div></th>${selected.map(({slot}) => { const r = row.cells.get(slot); const n = r ? Number(state.lifepaths[slot].resourceDots?.[r.id] || 0) : 0; const canUp = !!r && lpResourceSpent(slot) < lpResourceBudget(); return `<td class="lpMatrixCell">${r ? matrixStepper(`lp-res:${slot}:${encodeURIComponent(r.id)}`, n, n > 0, canUp) : `<span class="matrixDash">—</span>`}</td>`; }).join("")}<td class="lpMatrixTotal"><b>${rowTotal}</b></td></tr>`; }).join("")}</tbody></table></div></div>${renderMobileLifepathResourceMatrix(selected, rows)}</div>`;
   }
   function matrixStepper(key, n, canDown, canUp) {
     return `<div class="matrixStepper"><button data-stepper="${e(key)}" data-delta="-1" ${canDown ? "" : "disabled"}>−</button><div class="n">${n}</div><button data-stepper="${e(key)}" data-delta="1" ${canUp ? "" : "disabled"}>+</button></div>`;
@@ -1977,8 +2037,30 @@ ${D.lifepathCompetence}`,
       cap = skillCap(s.id),
       canDown = free > 0,
       canUp = sum(state.freeSkills) < creature().freeSkillDots && total < cap;
-    return `<div class="skillRow ${total > 0 ? "hasRating" : ""}"><div class="skillRowMain"><div class="skillTitleLine"><div class="skillNameWithInfo"><span class="skillNameLabel">${e(s.name)}</span><button class="fieldInfoBtn" data-info-skill="${s.id}" aria-label="${e(M("readRules", { name: s.name }))}">?</button></div><span class="skillStat cap">${e(S("s_b38fd978df2c"))} <b>${cap}</b></span></div></div><div class="stepper"><button data-stepper="free-skill:${s.id}" data-delta="-1" ${canDown ? "" : "disabled"}>−</button><div class="n">${total}</div><button data-stepper="free-skill:${s.id}" data-delta="1" ${canUp ? "" : "disabled"}>+</button></div></div>`;
+    return `<div class="skillRow ${total > 0 ? "hasRating" : ""}"><div class="skillRowMain"><div class="skillTitleLine"><div class="skillNameWithInfo"><span class="skillNameLabel">${e(s.name)}</span><button class="fieldInfoBtn" data-info-skill="${s.id}" aria-label="${e(M("readRules", { name: s.name }))}">?</button></div><div class="skillMetaLine"><span class="skillStat lifepathDots">${e(M("skillFromLifepaths", { dots: base }))}</span><span class="skillStat cap">${e(S("s_b38fd978df2c"))} <b>${cap}</b></span></div></div></div><div class="stepper"><button data-stepper="free-skill:${s.id}" data-delta="-1" ${canDown ? "" : "disabled"}>−</button><div class="n">${total}</div><button data-stepper="free-skill:${s.id}" data-delta="1" ${canUp ? "" : "disabled"}>+</button></div></div>`;
   }
+  function updateMobileSkillMetaVisibility() {
+    const card = document.getElementById("mainCard");
+    if (!card) return;
+    card.classList.remove("mobileSkillMetaHidden");
+    if ((window.innerWidth || 9999) > 900 || state.step !== 5) return;
+    const measure = () => {
+      const lines = [...card.querySelectorAll(".skillTitleLine")];
+      if (!lines.length) return;
+      const overflow = lines.some((line) => {
+        const name = line.querySelector(".skillNameWithInfo");
+        const meta = line.querySelector(".skillMetaLine");
+        if (!name || !meta) return false;
+        const available = line.clientWidth;
+        if (!available) return false;
+        const gap = 7;
+        return name.scrollWidth + meta.scrollWidth + gap > available;
+      });
+      card.classList.toggle("mobileSkillMetaHidden", overflow);
+    };
+    measure();
+  }
+
   function renderFocuses() {
     ensureFocusSlots();
     const relevant = D.skills.filter((s) => requiredFocuses(s.id) > 0),
@@ -3009,35 +3091,49 @@ ${D.lifepathCompetence}`,
     };
     document.getElementById("resetBtn").onclick = reset;
     const me = document.getElementById("mobileExportBtn");
-    if (me) me.onclick = exportJson;
+    if (me) me.onclick = () => { closeMobileSettings(); exportJson(); };
     const mi = document.getElementById("mobileImportFile");
     if (mi)
       mi.onchange = (e) => {
+        closeMobileSettings();
         if (e.target.files[0]) importJson(e.target.files[0]);
         e.target.value = "";
       };
     const mr = document.getElementById("mobileResetBtn");
-    if (mr) mr.onclick = reset;
+    if (mr) mr.onclick = () => { closeMobileSettings(); reset(); };
     const lang = () => {
       window.V6I18N?.toggle();
       render();
+      updateMobileSettingsLocale();
     };
     const lb = document.getElementById("langToggleBtn");
     if (lb) lb.onclick = lang;
-    const mlb = document.getElementById("mobileLangToggleBtn");
-    if (mlb) mlb.onclick = lang;
+    document.querySelectorAll?.("[data-mobile-locale]")?.forEach((button) => {
+      button.onclick = () => {
+        window.V6I18N?.setLocale(button.getAttribute("data-mobile-locale"));
+        render();
+        updateMobileSettingsLocale();
+      };
+    });
+    const msb = document.getElementById("mobileSettingsBtn");
+    if (msb) msb.onclick = (ev) => { ev.stopPropagation(); toggleMobileSettings(); };
+    const msm = document.getElementById("mobileSettingsMenu");
+    if (msm) msm.onclick = (ev) => ev.stopPropagation();
+    if (typeof document.addEventListener === "function") document.addEventListener("click", closeMobileSettings);
     if (typeof window.addEventListener === "function")
-      window.addEventListener("resize", () =>
-        document.querySelectorAll?.(".autoGrowTextarea")?.forEach(autosizeTextarea),
-      );
+      window.addEventListener("resize", () => {
+        document.querySelectorAll?.(".autoGrowTextarea")?.forEach(autosizeTextarea);
+        updateMobileSkillMetaVisibility();
+      });
     document.getElementById("drawerClose").onclick = closeDrawer;
     document.getElementById("drawerBack").onclick = closeDrawer;
     document.getElementById("mobileInfoTop").onclick = () => {
-      renderInfo();
+      renderInfo(infoForStep(state.step));
       window.V6I18N?.apply(document);
       openDrawer();
     };
     window.V6I18N?.updateControls();
+    updateMobileSettingsLocale();
   }
   bindGlobal();
   render();

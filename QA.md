@@ -1,4 +1,4 @@
-# QA — v0.10.13
+# QA — v0.10.14
 
 ## Data / logic separation
 
@@ -24,12 +24,12 @@
 
 ## State migration
 
-- [x] Character state schema is version 2.
+- [x] Character state schema is version 3.
 - [x] v0.8.1 localStorage is included in legacy migration.
 - [x] Schema-v1 built-in Focus strings migrate to stable refs where a known EN or UA label exists.
 - [x] Unknown/user-defined Focus strings migrate as custom text.
 - [x] Schema-v1 Resource detail keys are migrated to stable Resource label keys.
-- [x] Schema-v1 and schema-v2 JSON imports are accepted.
+- [x] Schema-v1, schema-v2, and schema-v3 JSON imports are accepted.
 
 ## Rules / interpretation regression
 
@@ -38,7 +38,7 @@
 - [x] RAW Focus thresholds remain 1 / 3 / 5.
 - [x] Lifepath parenthetical Focuses remain recommendations, never mandatory or auto-filled.
 - [x] Project Lifepath Skill Cap house rule remains base 3 +1 for every selected Lifepath that lists the Skill.
-- [x] Variable Clan Discipline is resolved on the Clan page only.
+- [x] Variable Clan Discipline choices are resolved in the Powers step.
 - [x] Discipline Power eligibility remains `Power rank <= Discipline rating`; Power count is a separate budget.
 - [x] Important Item count remains one additional item per Lifepath.
 
@@ -59,7 +59,7 @@
 
 - [x] Desktop Reset / Export / Import labels are short in EN and UA.
 - [x] `adaptive PWA` and the project-house-rules badge are absent from the desktop sidebar.
-- [x] Version `v0.10.13` is displayed beneath Export / Import.
+- [x] Version `v0.10.14` is displayed beneath Export / Import.
 - [x] Desktop Character Generator / Генератор Персонажа title is forced to one line.
 - [x] UA desktop navigation uses Істота / Сір / Фокус / Сили.
 - [x] Desktop navigation uses one aggregate `N/M` counter per step.
@@ -94,7 +94,7 @@
 - [x] `node --check` passes for `data/core.js`, `data/en.js`, `data/uk.js`, `src/data.js`, `src/i18n.js`, and `src/app.js`.
 - [x] `node tools/qa-data.cjs` passes.
 - [x] `node tools/smoke-app.cjs` passes.
-- [x] Service worker cache is `vtm-v6-alpha-chargen-v0.10.13` and includes all runtime data files.
+- [x] Service worker cache is `vtm-v6-alpha-chargen-v0.10.14` and includes all runtime data files.
 
 ## Manual browser checks still required
 
@@ -102,7 +102,7 @@ Container Chromium remains unreliable in this runtime, so final real-browser che
 
 - [ ] Desktop: EN → UA → EN changes visible rules data and UI immediately without changing character state.
 - [ ] Desktop language button remains opposite Reset; Export / Import remain usable.
-- [ ] Mobile language button, Export, Import, Reset all remain accessible in the utility bar.
+- [ ] Mobile gear menu exposes EN/UA, Export, Import, and Reset without restoring the old permanent utility row.
 - [ ] Existing v0.8.1 character localStorage migrates without visible loss.
 - [ ] Built-in Focuses display in the active language after switching locale.
 - [ ] Lifepath Resource detail text remains attached to the same Resource after switching locale.
@@ -116,6 +116,10 @@ Container Chromium remains unreliable in this runtime, so final real-browser che
 - [ ] Selecting Neonate / Ancilla / Elder updates the right information panel immediately.
 - [ ] Enabling the one-Lifepath option exposes its detailed rule math only in the information panel.
 - [ ] PWA upgrade replaces the previous service-worker cache without retaining stale older files.
+- [ ] iPhone 13 Mini-class viewport: Lifepath Skill/Resource allocation uses the stacked mobile presentation without horizontal matrix manipulation.
+- [ ] Mobile Skills: if any localized Skill name plus Cap/Lifepath badges would overflow one line, both badges disappear from every Skill row; `?` still exposes both values.
+- [ ] Mobile header gear opens EN/UA, Export, Import, Reset and does not reintroduce the old permanent action row.
+- [ ] Mobile information drawer close `×` is visually centered in its circular button.
 
 ## Terminology status
 
@@ -161,7 +165,7 @@ Current Ukrainian wording remains a working localization pass. Terminology chang
 - [x] Previous Step 4 behavior remains: shared rows, localized alphabetical Resource rows, `?` help, independent Skill/Resource readiness, reset-allocation behavior, and portable `user_content`.
 
 
-## v0.10.12 focused checks
+## v0.10.11 focused checks
 
 - [x] Selection order `# N` remains on Lifepath tiles but is not repeated in Skill/Resource matrix headers.
 - [x] Matrix reorder controls use compact `<` / `>` overlays and do not contribute to the column width.
@@ -188,3 +192,16 @@ Current Ukrainian wording remains a working localization pass. Terminology chang
 - [x] Skill rows omit Current and descriptions, retain Cap, and expose `?`.
 - [x] Skills help includes Focus thresholds, counts, and localized examples.
 - [x] Mobile top Info control renders as `?`.
+
+## v0.10.14 focused checks
+
+- [x] Mobile header contains a screen-level `?` and a gear button; the old permanent EN/UA / Export / Import / Reset row is absent.
+- [x] Gear menu contains EN/UA, Export, Import, and Reset controls.
+- [x] Screen-level mobile `?` forces general help for the current step rather than reopening the last contextual item.
+- [x] Contextual `?` controls continue to open item-specific help.
+- [x] Desktop Lifepath Skill/Resource matrices remain table-based while mobile gets a stacked non-horizontal presentation.
+- [x] Built-in Lifepath title/description spacing is tightened only in the mobile layout.
+- [x] Skill rows expose Lifepath-contributed dots and Cap on desktop.
+- [x] Mobile Skill metadata is all-or-nothing: if one row cannot fit the Skill name plus both metadata badges, both badges are hidden for the entire mobile Skill list.
+- [x] Skill contextual help contains both current Lifepath contribution and current chargen Cap.
+- [x] Mobile drawer close glyph is centered by its own inner span.
