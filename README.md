@@ -1,4 +1,4 @@
-# VTM V6 Alpha Character Generator — v0.10.11
+# VTM V6 Alpha Character Generator — v0.10.12
 
 Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 
@@ -9,6 +9,15 @@ Static adaptive PWA for Vampire: The Masquerade V6 Alpha character creation.
 - No V5 / V5.5 hybrid rules are intentionally imported.
 
 
+
+## v0.10.12 — Attributes UI cleanup pass
+
+- Ukrainian Attribute priorities now use `Ключові / Допоміжні / Побічні` throughout the chargen-facing Attribute guidance.
+- The Attributes step now gives a short player instruction instead of implementation/math notes.
+- The long RAW Max Dots notice was removed from the main Attributes UI and replaced with the current creature type plus a `?` control for full details.
+- Category allocation status is reduced to compact `N/M` counters; the verbose distributed/remaining/final line was removed.
+- Per-Attribute `Rating N · max now M` copy was removed from the cards.
+- Incomplete-step issue blocks now receive the same top spacing as completed-state notices across the chargen; the existing Lifepath spacing is preserved without doubling.
 
 ## v0.10.11 — Lifepath tile stability and matrix reorder pass
 
@@ -175,4 +184,4 @@ The number of known Powers is a separate chargen budget from Discipline dots. A 
 
 ## Deployment
 
-Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.11`.
+Upload the folder contents to a static web host or GitHub Pages. The service-worker cache key is `vtm-v6-alpha-chargen-v0.10.12`.

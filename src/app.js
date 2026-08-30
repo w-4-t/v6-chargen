@@ -1922,21 +1922,20 @@ ${D.lifepathCompetence}`,
   }
   function renderAttributes() {
     const total = creature().attributeBudgets.reduce((a, b) => a + b, 0),
-      left = Math.max(0, total - totalAttributeSpent());
-    return `<section class="step active"><h1>[[s_d1491c761cf3]]</h1><div class="lead">[[s_93b9dac31ca1]]</div><div class="allocationStatus ${left === 0 ? "complete" : ""}"><div><span>[[s_d3bc3d68e50a]]</span><strong>${left}</strong><small>${e(M("distributedOf", { used: totalAttributeSpent(), total }))}</small></div><button class="btn resetStepBtn" data-action="reset-attributes">[[s_5e4e5bd526ff]]</button></div><div class="notice">[[s_4a6686dc5fae]]</div><div class="attrCols">${ATTR_CATEGORIES.map(renderAttrCat).join("")}</div><div class="derived" style="margin-top:10px"><div class="card"><div class="meta">[[s_a522e333addb]]</div><b>${vitaeMax()}</b><div class="meta">[[s_55471d5f3de4]]</div></div><div class="card"><div class="meta">[[s_815d46237b83]]</div><b>${willpowerMax()}</b><div class="meta">[[s_d3355d77c43a]]</div></div></div>${issuesHtml(4)}</section>`;
+      left = Math.max(0, total - totalAttributeSpent()),
+      currentCreature = creature();
+    return `<section class="step active"><h1>[[s_d1491c761cf3]]</h1><div class="lead">[[s_93b9dac31ca1]]</div><div class="allocationStatus ${left === 0 ? "complete" : ""}"><div><span>[[s_d3bc3d68e50a]]</span><strong>${left}</strong></div><button class="btn resetStepBtn" data-action="reset-attributes">[[s_5e4e5bd526ff]]</button></div><div class="attributeCreatureContext"><b>${e(currentCreature.name)}</b><button type="button" class="fieldInfoBtn" data-info-creature="${e(currentCreature.id)}" aria-label="${e(M("readRules", { name: currentCreature.name }))}">?</button></div><div class="attrCols">${ATTR_CATEGORIES.map(renderAttrCat).join("")}</div><div class="derived" style="margin-top:10px"><div class="card"><div class="meta">[[s_a522e333addb]]</div><b>${vitaeMax()}</b><div class="meta">[[s_55471d5f3de4]]</div></div><div class="card"><div class="meta">[[s_815d46237b83]]</div><b>${willpowerMax()}</b><div class="meta">[[s_d3355d77c43a]]</div></div></div>${issuesHtml(4)}</section>`;
   }
   function renderAttrCat(cat) {
     const key = cat,
       label = attrCategoryLabel(cat),
       target = roleBudget(cat),
-      spent = categorySpent(cat),
-      left = Math.max(0, target - spent),
-      finalTotal = categorySum(cat);
-    return `<div class="attrCol"><div class="attrColHead"><div><b>${e(label)}</b><div class="meta">${e(M("distributedLeftFinal", { used: spent, total: target, left, final: finalTotal }))}</div></div><select class="roleSelect" data-role="${key}" aria-label="${e(M("categoryPriority", { category: label }))}">${["primary", "secondary", "tertiary"].map((r) => `<option value="${r}" ${state.attributes.roles[key] === r ? "selected" : ""} ${roleSwapValid(key, r) ? "" : "disabled"}>${e(({ primary: S("s_a9a96ec01949"), secondary: S("s_025de599ea0a"), tertiary: S("s_b710a1f98200") })[r] || r)}</option>`).join("")}</select></div>${D.attributes
+      spent = categorySpent(cat);
+    return `<div class="attrCol"><div class="attrColHead"><div class="attrCategoryTitle"><b>${e(label)}</b><span class="attrBudgetCount ${spent === target ? "complete" : spent ? "partial" : "empty"}">${spent}/${target}</span></div><select class="roleSelect" data-role="${key}" aria-label="${e(M("categoryPriority", { category: label }))}">${["primary", "secondary", "tertiary"].map((r) => `<option value="${r}" ${state.attributes.roles[key] === r ? "selected" : ""} ${roleSwapValid(key, r) ? "" : "disabled"}>${e(({ primary: S("s_a9a96ec01949"), secondary: S("s_025de599ea0a"), tertiary: S("s_b710a1f98200") })[r] || r)}</option>`).join("")}</select></div>${D.attributes
       .filter((a) => a.category === cat)
       .map((a) => {
         const n = Number(state.attributes.ratings[a.id]);
-        return `<div class="attrItem"><div class="attrItemTop"><button class="attrNameBtn" data-info-attr="${a.id}">${e(a.name)}</button><span class="attrCurrent">${e(M("ratingMaxNow", { rating: n, max: maxLegalAttrRating(a) }))}</span></div><div class="attrRatings">${Array.from(
+        return `<div class="attrItem"><div class="attrItemTop"><button class="attrNameBtn" data-info-attr="${a.id}">${e(a.name)}</button></div><div class="attrRatings">${Array.from(
           { length: attrMax() },
           (_, i) => {
             const r = i + 1,

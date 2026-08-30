@@ -768,6 +768,47 @@
       .attrColHead b {
         font-size: 15px;
       }
+      .attrCategoryTitle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+      .attrBudgetCount {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 42px;
+        min-height: 26px;
+        padding: 3px 7px;
+        border: 1px solid var(--line2);
+        border-radius: 8px;
+        background: var(--panel3);
+        color: var(--warn);
+        font-size: 11px;
+        font-weight: 900;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+      }
+      .attrBudgetCount.empty { color: var(--danger); }
+      .attrBudgetCount.complete {
+        color: var(--good);
+        border-color: #39513d;
+      }
+      .attributeCreatureContext {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--panel2);
+        padding: 9px 11px;
+        margin: 0 0 12px;
+      }
+      .attributeCreatureContext b {
+        font-size: 12px;
+      }
       .roleSelect {
         min-height: 34px;
         border: 1px solid var(--line);
@@ -802,11 +843,6 @@
       }
       .attrNameBtn:hover {
         color: var(--info);
-      }
-      .attrCurrent {
-        font-size: 10px;
-        color: var(--muted);
-        white-space: nowrap;
       }
       .attrRatings {
         display: flex;
@@ -1418,6 +1454,10 @@
       .issues {
         display: grid;
         gap: 6px;
+        margin-top: 12px;
+      }
+      .lifepathIssues .issues {
+        margin-top: 0;
       }
       .issue {
         border: 1px solid var(--line);
@@ -2665,7 +2705,7 @@
                 hidden
             /></label>
           </div>
-          <div class="versionLabel">v0.10.11</div>
+          <div class="versionLabel">v0.10.12</div>
         </div>
       </aside>
       <main class="main">
