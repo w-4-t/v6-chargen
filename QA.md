@@ -1,4 +1,4 @@
-# QA — v0.10.14
+# QA — v0.10.15
 
 ## Data / logic separation
 
@@ -59,7 +59,7 @@
 
 - [x] Desktop Reset / Export / Import labels are short in EN and UA.
 - [x] `adaptive PWA` and the project-house-rules badge are absent from the desktop sidebar.
-- [x] Version `v0.10.14` is displayed beneath Export / Import.
+- [x] Version `v0.10.15` is displayed beneath Export / Import.
 - [x] Desktop Character Generator / Генератор Персонажа title is forced to one line.
 - [x] UA desktop navigation uses Істота / Сір / Фокус / Сили.
 - [x] Desktop navigation uses one aggregate `N/M` counter per step.
@@ -94,7 +94,7 @@
 - [x] `node --check` passes for `data/core.js`, `data/en.js`, `data/uk.js`, `src/data.js`, `src/i18n.js`, and `src/app.js`.
 - [x] `node tools/qa-data.cjs` passes.
 - [x] `node tools/smoke-app.cjs` passes.
-- [x] Service worker cache is `vtm-v6-alpha-chargen-v0.10.14` and includes all runtime data files.
+- [x] Service worker cache is `vtm-v6-alpha-chargen-v0.10.15` and includes all runtime data files.
 
 ## Manual browser checks still required
 
@@ -193,7 +193,7 @@ Current Ukrainian wording remains a working localization pass. Terminology chang
 - [x] Skills help includes Focus thresholds, counts, and localized examples.
 - [x] Mobile top Info control renders as `?`.
 
-## v0.10.14 focused checks
+## v0.10.15 focused checks
 
 - [x] Mobile header contains a screen-level `?` and a gear button; the old permanent EN/UA / Export / Import / Reset row is absent.
 - [x] Gear menu contains EN/UA, Export, Import, and Reset controls.
@@ -205,3 +205,10 @@ Current Ukrainian wording remains a working localization pass. Terminology chang
 - [x] Mobile Skill metadata is all-or-nothing: if one row cannot fit the Skill name plus both metadata badges, both badges are hidden for the entire mobile Skill list.
 - [x] Skill contextual help contains both current Lifepath contribution and current chargen Cap.
 - [x] Mobile drawer close glyph is centered by its own inner span.
+- [x] Skills with zero Lifepath contribution omit the Lifepath badge entirely.
+- [x] Lifepath badge uses the compact `Від Шляхів N` / `From Lifepaths N` pattern with no colon.
+- [x] Disabled Skill `+` / `−` buttons use the same muted unavailable treatment as other chargen controls.
+- [x] Skill numeric values identify minimum, intermediate, and cap states without changing layout geometry.
+- [x] Matching Lifepath minimum and Cap badges receive only color/background emphasis, with no size change.
+- [x] Mobile gear menu can be dismissed through a full-screen safe backdrop that consumes the outside tap.
+- [x] Mobile Lifepath order controls use `↑` / `↓` to match the vertical list.

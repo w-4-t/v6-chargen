@@ -286,3 +286,19 @@ x=run('uk',{'vtm_v6_alpha_chargen_v0_9_0':JSON.stringify(humanityState)});
 assert.ok(x.get('mainCard').innerHTML.includes('Чудовисько 1'), 'Humanity position label did not localize to UK');
 
 console.log('smoke-app: OK');
+
+// v0.10.15 Skill row metadata/state presentation.
+const skillState=JSON.parse(run('uk').store.get('vtm_v6_alpha_chargen_v0_9_0'));
+skillState.step=5;
+skillState.lifepaths=[
+  {id:'hunter',skillDots:{awareness:2,fighting:1,shooting:2},resourceDots:{}},
+  {id:'hound',skillDots:{fighting:1,shooting:2,subterfuge:2},resourceDots:{}}
+];
+skillState.freeSkills={fighting:1,knowledge:3,medicine:2,sabotage:2};
+x=run('uk',{'vtm_v6_alpha_chargen_v0_9_0':JSON.stringify(skillState)});
+const skillHtml=x.get('mainCard').innerHTML;
+assert.ok(skillHtml.includes('Від Шляхів <b>2</b>'), 'compact Lifepath Skill badge is missing or not parallel to Cap formatting');
+assert.ok(!skillHtml.includes('Від Шляхів:'), 'Lifepath Skill badge still contains a colon');
+assert.strictEqual((skillHtml.match(/skillStat lifepathDots/g)||[]).length,4,'Skills with zero Lifepath dots should not render a Lifepath badge');
+assert.ok(skillHtml.includes('skillLevel-minimum') && skillHtml.includes('skillLevel-intermediate') && skillHtml.includes('skillLevel-cap'), 'Skill rows do not expose minimum/intermediate/cap state classes');
+assert.ok(skillHtml.includes('data-delta="1" disabled'), 'Skill + controls are not disabled when the free-dot pool is exhausted or cap is reached');

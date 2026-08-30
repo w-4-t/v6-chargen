@@ -719,8 +719,21 @@
         font-weight: 850;
       }
       .stepper .n {
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         text-align: center;
         font-weight: 850;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        box-sizing: border-box;
+        transition: color .15s, border-color .15s, background .15s;
+      }
+      .stepper button:disabled {
+        opacity: 0.25;
+        color: var(--muted);
+        cursor: not-allowed;
       }
       .budgetBar {
         display: flex;
@@ -2308,8 +2321,13 @@
         margin: 0 0 0 auto;
       }
       .skillStat.lifepathDots {
-        border-color: #465247;
-        color: var(--good);
+        border-color: var(--line);
+        color: var(--muted);
+      }
+      .skillStat.lifepathDots.matched {
+        border-color: #596359;
+        background: rgba(183, 214, 182, 0.05);
+        color: var(--text);
       }
       .skillNameBtn {
         appearance: none;
@@ -2372,6 +2390,26 @@
       .skillStat.cap {
         border-color: #3b4650;
         color: var(--info);
+      }
+      .skillStat.cap.matched {
+        border-color: #596b59;
+        background: rgba(183, 214, 182, 0.06);
+        color: var(--good);
+      }
+      .stepper .skillLevelValue-minimum {
+        border-color: #45484e;
+        color: var(--muted);
+        background: rgba(255,255,255,.018);
+      }
+      .stepper .skillLevelValue-intermediate {
+        border-color: #5a5137;
+        color: var(--warn);
+        background: rgba(214, 190, 105, .045);
+      }
+      .stepper .skillLevelValue-cap {
+        border-color: #536453;
+        color: var(--good);
+        background: rgba(183, 214, 182, .055);
       }
 
       .fieldLabelRow,
@@ -2865,7 +2903,8 @@
         margin-left: 5px;
       }
       .mobileHeadControls,
-      .mobileSettingsMenu {
+      .mobileSettingsMenu,
+      .mobileSettingsBackdrop {
         display: none;
       }
       @media (max-width: 900px) {
@@ -2873,6 +2912,16 @@
           display: flex;
           align-items: center;
           gap: 6px;
+          position: relative;
+          z-index: 47;
+        }
+        .mobileSettingsBackdrop.open {
+          display: block;
+          position: fixed;
+          inset: 0;
+          z-index: 44;
+          background: transparent;
+          touch-action: manipulation;
         }
         .mobileInfoBtn,
         .mobileSettingsBtn {
@@ -2892,7 +2941,7 @@
           position: absolute;
           top: calc(100% - 6px);
           right: 10px;
-          z-index: 45;
+          z-index: 46;
           width: min(230px, calc(100vw - 20px));
           padding: 8px;
           border: 1px solid var(--line2);
@@ -2962,7 +3011,7 @@
                 hidden
             /></label>
           </div>
-          <div class="versionLabel">v0.10.14</div>
+          <div class="versionLabel">v0.10.15</div>
         </div>
       </aside>
       <main class="main">
@@ -2975,6 +3024,7 @@
             </div>
           </div>
           <div class="mobileProgress" id="mobileProgress"></div>
+          <div class="mobileSettingsBackdrop" id="mobileSettingsBackdrop" aria-hidden="true"></div>
           <div class="mobileSettingsMenu" id="mobileSettingsMenu">
             <div class="mobileLanguageChoices" role="group" data-i18n-aria="s_6053d573cff5">
               <button type="button" class="btn mobileLanguageChoice" data-mobile-locale="en" aria-pressed="false">EN</button>

@@ -1,4 +1,4 @@
-const CACHE = "vtm-v6-alpha-chargen-v0.10.14";
+const CACHE = "vtm-v6-alpha-chargen-v0.10.15";
 const ASSETS = [
   "./",
   "./index.html",

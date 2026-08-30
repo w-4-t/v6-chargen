@@ -189,7 +189,7 @@ for (const forbidden of ['Character Generator','V6 Alpha · project house rules 
   assert.ok(!html.includes(forbidden), `index.html embeds localized EN UI copy: ${forbidden}`);
 assert.ok(!html.includes('adaptive PWA'), 'desktop header still exposes adaptive PWA label');
 assert.ok(!html.includes('rawBadge'), 'removed project-house-rules badge still exists in desktop markup/CSS');
-assert.ok(html.includes('<div class="versionLabel">v0.10.14</div>'), 'version is not placed beneath desktop Export/Import controls');
+assert.ok(html.includes('<div class="versionLabel">v0.10.15</div>'), 'version is not placed beneath desktop Export/Import controls');
 assert.ok(html.includes('class="brandTitle"') && html.includes('white-space: nowrap'), 'desktop generator title is not constrained to one line');
 assert.ok(app.includes('data-info-creature=') && app.includes('data-info-young'), 'Creature choices are missing dedicated info controls');
 assert.ok(html.includes('.creatureGrid') && html.includes('grid-auto-rows: 1fr'), 'Creature tiles are not normalized to equal-height grid rows');
@@ -226,18 +226,25 @@ assert.ok(ctx.V6Data.locales.en.strings.messages.focusExamples.includes('{exampl
 assert.ok(app.includes('focusExamplesForSkillHelp') && app.includes('M("focusExamples"'), 'Skill help does not build examples from localized Skill/Focus data');
 
 
-// v0.10.14 mobile navigation, Lifepath matrix, and Skill metadata pass.
+// v0.10.15 mobile navigation, Lifepath matrix, and Skill metadata pass.
 assert.ok(html.includes('id="mobileSettingsBtn"') && html.includes('id="mobileSettingsMenu"'), 'mobile gear/settings controls are missing');
 assert.ok(!html.includes('class="mobileActions"'), 'legacy permanent mobile action row still exists');
 assert.ok(html.includes('data-mobile-locale="en"') && html.includes('data-mobile-locale="uk"') && html.includes('id="mobileExportBtn"') && html.includes('id="mobileImportFile"') && html.includes('id="mobileResetBtn"'), 'mobile settings menu is missing locale/export/import/reset actions');
 assert.ok(app.includes('renderInfo(infoForStep(state.step))'), 'screen-level mobile ? does not force general current-step help');
 assert.ok(app.includes('desktopLpMatrix') && app.includes('mobileLpMatrix') && html.includes('.desktopLpMatrix') && html.includes('.mobileLpMatrix'), 'separate desktop/mobile Lifepath allocation presentations are missing');
 assert.ok(html.includes('.lifepathChoiceAliasSlot.empty') && html.includes('display: none') && html.includes('.lifepathChoiceDescription') && html.includes('margin-top: 6px'), 'mobile built-in Lifepath title/description spacing was not tightened');
-assert.ok(app.includes('skillStat lifepathDots') && app.includes('M("skillFromLifepaths"'), 'Skill rows do not expose Lifepath-contributed dots');
+assert.ok(app.includes('skillStat lifepathDots') && app.includes('skillFromLifepathsCompactLabel') && app.includes('base > 0'), 'Skill rows do not conditionally expose compact Lifepath-contributed dots');
 assert.ok(app.includes('M("skillFromLifepathsLabel")') && app.includes('lifepathSkillRating(id)'), 'Skill contextual help does not expose Lifepath-contributed dots');
 assert.ok(app.includes('function updateMobileSkillMetaVisibility()') && app.includes('mobileSkillMetaHidden') && html.includes('.mobileSkillMetaHidden .skillMetaLine'), 'mobile all-or-nothing Skill metadata fit behavior is missing');
 assert.ok(html.includes('id="drawerClose" data-i18n-aria="s_d24adedbaa09"><span aria-hidden="true">×</span>') && html.includes('.drawerClose > span'), 'mobile drawer close glyph is not independently centered');
-assert.ok(ctx.V6Data.locales.en.strings.messages.skillFromLifepaths.includes('{dots}') && ctx.V6Data.locales.uk.strings.messages.skillFromLifepaths.includes('{dots}'), 'localized Lifepath-contribution Skill badge message is missing');
+assert.strictEqual(ctx.V6Data.locales.en.strings.messages.skillFromLifepathsCompactLabel, 'From Lifepaths');
+assert.strictEqual(ctx.V6Data.locales.uk.strings.messages.skillFromLifepathsCompactLabel, 'Від Шляхів');
+assert.ok(!ctx.V6Data.locales.uk.strings.messages.skillFromLifepaths.includes(':') && !ctx.V6Data.locales.en.strings.messages.skillFromLifepaths.includes(':'), 'legacy Lifepath-contribution message still contains a colon');
+assert.ok(html.includes('id="mobileSettingsBackdrop"') && app.includes('mobileSettingsBackdrop') && app.includes('msBackdrop.onclick'), 'mobile settings menu lacks a safe outside-tap backdrop');
+assert.ok(app.includes('>↑</button>') && app.includes('>↓</button>'), 'mobile Lifepath order controls do not match the vertical presentation');
+assert.ok(html.includes('.stepper button:disabled') && html.includes('opacity: 0.25'), 'disabled Skill +/- controls are not visually muted');
+assert.ok(app.includes('levelState = total >= cap ? "cap" : total <= base ? "minimum" : "intermediate"') && app.includes('skillLevel-${levelState}'), 'Skill minimum/intermediate/cap states are missing');
+assert.ok(html.includes('.skillLevelValue-minimum') && html.includes('.skillLevelValue-intermediate') && html.includes('.skillLevelValue-cap'), 'Skill level state styling is missing');
 
 // Runtime lookup is key-based only: no reverse English-value matching.
 {
@@ -262,7 +269,7 @@ assert.ok(ctx.V6Data.locales.en.strings.messages.skillFromLifepaths.includes('{d
 }
 
 const sw = fs.readFileSync('service-worker.js','utf8');
-assert.ok(sw.includes('vtm-v6-alpha-chargen-v0.10.14'), 'service worker cache key was not bumped to v0.10.14');
+assert.ok(sw.includes('vtm-v6-alpha-chargen-v0.10.15'), 'service worker cache key was not bumped to v0.10.15');
 for (const asset of ['./data/core.js','./data/en.js','./data/uk.js','./src/data.js','./src/i18n.js']) assert.ok(sw.includes(asset), `service worker missing ${asset}`);
 
 console.log('qa-data: OK');

@@ -1290,16 +1290,20 @@ ${D.lifepathCompetence}`,
   function closeMobileSettings() {
     const menu = document.getElementById("mobileSettingsMenu");
     const button = document.getElementById("mobileSettingsBtn");
+    const backdrop = document.getElementById("mobileSettingsBackdrop");
     if (menu) menu.classList.remove("open");
+    if (backdrop) backdrop.classList.remove("open");
     if (button) button.setAttribute("aria-expanded", "false");
   }
   function toggleMobileSettings() {
     const menu = document.getElementById("mobileSettingsMenu");
     const button = document.getElementById("mobileSettingsBtn");
+    const backdrop = document.getElementById("mobileSettingsBackdrop");
     if (!menu || !button) return;
     const open = !menu.classList.contains("open");
     closeDrawer();
     menu.classList.toggle("open", open);
+    if (backdrop) backdrop.classList.toggle("open", open);
     button.setAttribute("aria-expanded", open ? "true" : "false");
     if (open) updateMobileSettingsLocale();
   }
@@ -1917,7 +1921,7 @@ ${D.lifepathCompetence}`,
     const total = kind === "skill" ? lpSkillBudget() : lpResourceBudget();
     return `<div class="mobileMatrixOrder">${selected.map(({ slot, def }, index) => {
       const used = kind === "skill" ? sum(state.lifepaths[slot].skillDots) : lpResourceSpent(slot);
-      return `<div class="mobileMatrixPath"><div class="mobileMatrixPathHead"><span>${e(def.name)}</span><small class="${matrixBudgetClass(used, total)}">${used}/${total}</small></div><div class="mobileMatrixReorder"><button type="button" data-lp-move="${slot}:-1" ${index <= 0 ? "disabled" : ""} aria-label="${e(M("moveLifepathEarlier", { name: def.name }))}">&lt;</button><button type="button" data-lp-move="${slot}:1" ${index >= selected.length - 1 ? "disabled" : ""} aria-label="${e(M("moveLifepathLater", { name: def.name }))}">&gt;</button></div></div>`;
+      return `<div class="mobileMatrixPath"><div class="mobileMatrixPathHead"><span>${e(def.name)}</span><small class="${matrixBudgetClass(used, total)}">${used}/${total}</small></div><div class="mobileMatrixReorder"><button type="button" data-lp-move="${slot}:-1" ${index <= 0 ? "disabled" : ""} aria-label="${e(M("moveLifepathEarlier", { name: def.name }))}">↑</button><button type="button" data-lp-move="${slot}:1" ${index >= selected.length - 1 ? "disabled" : ""} aria-label="${e(M("moveLifepathLater", { name: def.name }))}">↓</button></div></div>`;
     }).join("")}</div>`;
   }
   function renderMobileLifepathSkillMatrix(selected, rows) {
@@ -2036,8 +2040,12 @@ ${D.lifepathCompetence}`,
       total = base + free,
       cap = skillCap(s.id),
       canDown = free > 0,
-      canUp = sum(state.freeSkills) < creature().freeSkillDots && total < cap;
-    return `<div class="skillRow ${total > 0 ? "hasRating" : ""}"><div class="skillRowMain"><div class="skillTitleLine"><div class="skillNameWithInfo"><span class="skillNameLabel">${e(s.name)}</span><button class="fieldInfoBtn" data-info-skill="${s.id}" aria-label="${e(M("readRules", { name: s.name }))}">?</button></div><div class="skillMetaLine"><span class="skillStat lifepathDots">${e(M("skillFromLifepaths", { dots: base }))}</span><span class="skillStat cap">${e(S("s_b38fd978df2c"))} <b>${cap}</b></span></div></div></div><div class="stepper"><button data-stepper="free-skill:${s.id}" data-delta="-1" ${canDown ? "" : "disabled"}>−</button><div class="n">${total}</div><button data-stepper="free-skill:${s.id}" data-delta="1" ${canUp ? "" : "disabled"}>+</button></div></div>`;
+      canUp = sum(state.freeSkills) < creature().freeSkillDots && total < cap,
+      levelState = total >= cap ? "cap" : total <= base ? "minimum" : "intermediate",
+      lpMeta = base > 0
+        ? `<span class="skillStat lifepathDots ${total === base ? "matched" : ""}">${e(M("skillFromLifepathsCompactLabel"))} <b>${base}</b></span>`
+        : "";
+    return `<div class="skillRow ${total > 0 ? "hasRating" : ""} skillLevel-${levelState}"><div class="skillRowMain"><div class="skillTitleLine"><div class="skillNameWithInfo"><span class="skillNameLabel">${e(s.name)}</span><button class="fieldInfoBtn" data-info-skill="${s.id}" aria-label="${e(M("readRules", { name: s.name }))}">?</button></div><div class="skillMetaLine">${lpMeta}<span class="skillStat cap ${total >= cap ? "matched" : ""}">${e(S("s_b38fd978df2c"))} <b>${cap}</b></span></div></div></div><div class="stepper"><button data-stepper="free-skill:${s.id}" data-delta="-1" ${canDown ? "" : "disabled"}>−</button><div class="n skillLevelValue-${levelState}">${total}</div><button data-stepper="free-skill:${s.id}" data-delta="1" ${canUp ? "" : "disabled"}>+</button></div></div>`;
   }
   function updateMobileSkillMetaVisibility() {
     const card = document.getElementById("mainCard");
@@ -3119,7 +3127,8 @@ ${D.lifepathCompetence}`,
     if (msb) msb.onclick = (ev) => { ev.stopPropagation(); toggleMobileSettings(); };
     const msm = document.getElementById("mobileSettingsMenu");
     if (msm) msm.onclick = (ev) => ev.stopPropagation();
-    if (typeof document.addEventListener === "function") document.addEventListener("click", closeMobileSettings);
+    const msBackdrop = document.getElementById("mobileSettingsBackdrop");
+    if (msBackdrop) msBackdrop.onclick = (ev) => { ev.preventDefault(); ev.stopPropagation(); closeMobileSettings(); };
     if (typeof window.addEventListener === "function")
       window.addEventListener("resize", () => {
         document.querySelectorAll?.(".autoGrowTextarea")?.forEach(autosizeTextarea);
